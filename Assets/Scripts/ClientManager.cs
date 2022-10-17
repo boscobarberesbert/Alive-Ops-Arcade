@@ -20,7 +20,6 @@ public class ClientManager : MonoBehaviour
     Thread serverThread;
     private int serverPort = 9050;
     private int clientPort = 9051;
-    private int recv;
 
     // Start is called before the first frame update
     void Start()
@@ -63,9 +62,11 @@ public class ClientManager : MonoBehaviour
     {
         IPEndPoint clientIEP = new IPEndPoint(IPAddress.Any, clientPort);
         EndPoint remote = (EndPoint)clientIEP;
+
         socketUDP.Bind(clientIEP);
+
         byte[] data = new byte[64];
-        recv = socketUDP.ReceiveFrom(data, ref remote);
+        int recv = socketUDP.ReceiveFrom(data, ref remote);
         Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
     }
 }

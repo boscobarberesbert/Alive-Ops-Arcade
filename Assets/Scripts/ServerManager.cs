@@ -8,52 +8,86 @@ using System.Threading;
 
 public class ServerManager : MonoBehaviour
 {
+    public enum Protocol
+    {
+        UDP,
+        TDP
+    }
+
+    public Protocol m_Protocol = Protocol.UDP;
+
     Thread serverThread;
+    Thread clientThread;
 
-    Socket socket;
+    private Socket socketUDP;
+    private Socket socketTDP;
 
-    byte[] data = new byte[1024];
-    int recv;
+    private int serverPort = 9050;
+    private int clientPort = 9051;
 
     // Start is called before the first frame update
     void Start()
     {
-        InitializeThread();
+        InitializeSocket();
     }
 
     private void OnDestroy()
     {
         Debug.Log("Destroying Scene");
 
-        socket.Close();
+        socketUDP.Close();
         serverThread.Abort();
+        clientThread.Abort();
     }
 
-    private void InitializeThread()
+    private void InitializeSocket()
     {
         Debug.Log("INITIALIZE THREAD");
 
-        serverThread = new Thread(ServerSetup);
-        //serverThread.IsBackground = true;
+        socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+        serverThread = new Thread(ServerSetupUDP);
+        serverThread.IsBackground = true;
         serverThread.Start();
+
+        clientThread = new Thread(ClientSetupUDP);
+        clientThread.IsBackground = true;
+        clientThread.Start();
+
+        //if (m_Protocol == Protocol.UDP)
+        //{
+        //    serverThread = new Thread(ServerSetupUDP);
+        //}
+        //else if(m_Protocol == Protocol.TDP)
+        //{
+        //    serverThread = new Thread(ServerSetupTDP);
+        //}
     }
 
-    void ServerSetup()
+    void ServerSetupUDP()
     {
-        IPEndPoint ipep = new IPEndPoint(IPAddress.Any, 9050);
+        IPEndPoint clientIEP = new IPEndPoint(IPAddress.Any, clientPort);
+        EndPoint remote = (EndPoint)(clientIEP);
 
-        socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        socketUDP.Bind(clientIEP);
 
-        socket.Bind(ipep);
-
-        IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
-        EndPoint Remote = (EndPoint)(sender);
-
-        string welcome = "Welcome to my test server";
-        data = Encoding.ASCII.GetBytes(welcome);
-        socket.SendTo(data, data.Length, SocketFlags.None, Remote);
-
-        recv = socket.ReceiveFrom(data, ref Remote);
+        byte[] data = new byte[64];
+        int recv = socketUDP.ReceiveFrom(data, ref remote);
         Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
     }
+
+    void ClientSetupUDP()
+    {
+        IPEndPoint serverIEP = new IPEndPoint(IPAddress.Parse("192.168.204.20"), serverPort);
+        EndPoint remote = (EndPoint)(serverIEP);
+
+        byte[] data = new byte[64];
+        data = Encoding.ASCII.GetBytes("Server Name is SI");
+        socketUDP.SendTo(data, data.Length, SocketFlags.None, remote);
+    }
+
+    //void ServerSetupTDP()
+    //{
+
+    //}
 }
