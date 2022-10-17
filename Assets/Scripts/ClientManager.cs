@@ -8,10 +8,18 @@ using System.Threading;
 
 public class ClientManager : MonoBehaviour
 {
-    private Socket socket;
+    enum Protocol { 
+        UDP,
+        TCP
+    }
+    public Protocol m_Protocol = Protocol.UDP
+    
+    private Socket socketUDP;
 
+    Thread clientThread;
     Thread serverThread;
-    private int port = 3005;
+    private int serverPort = 9050;
+    private int clientPort = 9051;
     private int recv;
 
     // Start is called before the first frame update
@@ -24,26 +32,40 @@ public class ClientManager : MonoBehaviour
     {
         Debug.Log("Destroying Scene!!!!!!");
 
-        socket.Close();
+        socketUDP.Close();
+        clientThread.Abort();
         serverThread.Abort();
     }
 
     private void InitializeSocket()
     {
-        serverThread = new Thread(ClientSetup);
+        socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        clientThread = new Thread(ClientSetupUDP);
+        clientThread.IsBackground = true;
+        clientThread.Start();
+
+        serverThread = new Thread(ServerSetupUDP);
         serverThread.IsBackground = true;
         serverThread.Start();
     }
 
-    private void ClientSetup()
+    private void ClientSetupUDP()
     {
-        socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        IPEndPoint ipep = new IPEndPoint(IPAddress.Parse("127.0.0.1"), port);
-        EndPoint remote = (EndPoint)ipep;
-        socket.Bind(ipep);
+        IPEndPoint serverIEP = new IPEndPoint(IPAddress.Parse("192.168.204.19"), serverPort);
+        EndPoint remote = (EndPoint)serverEndPoint;
 
         byte[] data = new byte[64];
         data = Encoding.ASCII.GetBytes("Hola yeray eres tontico.");
-        socket.SendTo(data, data.Length, SocketFlags.None, remote);
+        socketUDP.SendTo(data, data.Length, SocketFlags.None, remote);
+    }
+
+    private void ServerSetupUDP()
+    {
+        IPEndPoint clientIEP = new IPEndPoint(IPAddress.Any, clientPort);
+        EndPoint remote = (EndPoint)clientEndpoint;
+        socketUDP.Bind(clientEndponit);
+        byte[] data = new byte[64];
+        recv = socketUDP.ReceiveFrom(data,ref remote)
+        Debug.Log(Encoding.ASCII.GetString(data,0,recv))
     }
 }
