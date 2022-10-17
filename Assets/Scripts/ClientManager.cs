@@ -8,11 +8,11 @@ using System.Threading;
 
 public class ClientManager : MonoBehaviour
 {
-    enum Protocol { 
+    public enum Protocol { 
         UDP,
         TCP
     }
-    public Protocol m_Protocol = Protocol.UDP
+    public Protocol m_Protocol = Protocol.UDP;
     
     private Socket socketUDP;
 
@@ -52,7 +52,7 @@ public class ClientManager : MonoBehaviour
     private void ClientSetupUDP()
     {
         IPEndPoint serverIEP = new IPEndPoint(IPAddress.Parse("192.168.204.19"), serverPort);
-        EndPoint remote = (EndPoint)serverEndPoint;
+        EndPoint remote = (EndPoint)serverIEP;
 
         byte[] data = new byte[64];
         data = Encoding.ASCII.GetBytes("Hola yeray eres tontico.");
@@ -62,8 +62,8 @@ public class ClientManager : MonoBehaviour
     private void ServerSetupUDP()
     {
         IPEndPoint clientIEP = new IPEndPoint(IPAddress.Any, clientPort);
-        EndPoint remote = (EndPoint)clientEndpoint;
-        socketUDP.Bind(clientEndponit);
+        EndPoint remote = (EndPoint)clientIEP;
+        socketUDP.Bind(clientIEP);
         byte[] data = new byte[64];
         recv = socketUDP.ReceiveFrom(data, ref remote);
         Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
