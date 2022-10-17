@@ -37,7 +37,7 @@ public class ServerManager : MonoBehaviour
 
         socketUDP.Close();
         serverThread.Abort();
-        clientThread.Abort();
+        //clientThread.Abort();
     }
 
     private void InitializeSocket()
@@ -50,9 +50,9 @@ public class ServerManager : MonoBehaviour
         serverThread.IsBackground = true;
         serverThread.Start();
 
-        clientThread = new Thread(ClientSetupUDP);
-        clientThread.IsBackground = true;
-        clientThread.Start();
+        //clientThread = new Thread(ClientSetupUDP);
+        //clientThread.IsBackground = true;
+        //clientThread.Start();
 
         //if (m_Protocol == Protocol.UDP)
         //{
@@ -66,7 +66,7 @@ public class ServerManager : MonoBehaviour
 
     void ServerSetupUDP()
     {
-        IPEndPoint clientIEP = new IPEndPoint(IPAddress.Any, clientPort);
+        IPEndPoint clientIEP = new IPEndPoint(IPAddress.Any, serverPort);
         EndPoint remote = (EndPoint)(clientIEP);
 
         socketUDP.Bind(clientIEP);
@@ -78,7 +78,7 @@ public class ServerManager : MonoBehaviour
 
     void ClientSetupUDP()
     {
-        IPEndPoint serverIEP = new IPEndPoint(IPAddress.Parse("192.168.204.20"), serverPort);
+        IPEndPoint serverIEP = new IPEndPoint(IPAddress.Parse("192.168.204.20"), clientPort);
         EndPoint remote = (EndPoint)(serverIEP);
 
         byte[] data = new byte[64];
