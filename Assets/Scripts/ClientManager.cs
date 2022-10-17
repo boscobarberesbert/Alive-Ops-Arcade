@@ -65,7 +65,7 @@ public class ClientManager : MonoBehaviour
         EndPoint remote = (EndPoint)clientEndpoint;
         socketUDP.Bind(clientEndponit);
         byte[] data = new byte[64];
-        recv = socketUDP.ReceiveFrom(data,ref remote)
-        Debug.Log(Encoding.ASCII.GetString(data,0,recv))
+        recv = socketUDP.ReceiveFrom(data, ref remote);
+        Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
     }
 }
