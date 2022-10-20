@@ -22,6 +22,8 @@ public class ClientManager : MonoBehaviour
     private int serverPort = 9050;
     private int clientPort = 9051;
 
+    public string serverIP;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -51,37 +53,46 @@ public class ClientManager : MonoBehaviour
 
     private void ClientSetupUDP()
     {
+        //Debug.Log(MainMenu.serverIp.ToString());
+        //Debug.Log("192.168.204.19");
+        //string ipaddr = MainMenu.serverIp.Substring(0,MainMenu.serverIp.Length -1 );
+
+        //Assert.AreEqual(ipaddr, "192.168.204.19");
+        //var ipparse = IPAddress.Parse(ipaddr);
+        IPEndPoint serverIEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), serverPort);
+        EndPoint remote = (EndPoint)serverIEP;
+
         try
         {
-            Debug.Log(MainMenu.serverIp.ToString());
-            Debug.Log("192.168.204.19");
-            string ipaddr = MainMenu.serverIp.Substring(0,MainMenu.serverIp.Length -1 );
-
-            Assert.AreEqual(ipaddr, "192.168.204.19");
-            var ipparse = IPAddress.Parse(ipaddr);
-            IPEndPoint serverIEP = new IPEndPoint(ipparse, serverPort);
-            EndPoint remote = (EndPoint)serverIEP;
-
             byte[] data = new byte[64];
-            data = Encoding.ASCII.GetBytes("Hola yeray eres tontico.");
+            data = Encoding.ASCII.GetBytes("127.0.0.1");
             socketUDP.SendTo(data, data.Length, SocketFlags.None, remote);
+
+            // Start server thread
+            serverThread = new Thread(ServerSetupUDP);
+            serverThread.IsBackground = true;
+            serverThread.Start();
         }
         catch (System.Exception e)
         {
             Debug.LogError(e);
         }
-        
     }
 
     private void ServerSetupUDP()
     {
-        IPEndPoint clientIEP = new IPEndPoint(IPAddress.Any, clientPort);
-        EndPoint remote = (EndPoint)clientIEP;
+        IPEndPoint serverIEP = new IPEndPoint(IPAddress.Any, clientPort);
+        EndPoint remote = (EndPoint)serverIEP;
 
-        socketUDP.Bind(clientIEP);
+        socketUDP.Bind(serverIEP);
 
-        byte[] data = new byte[64];
-        int recv = socketUDP.ReceiveFrom(data, ref remote);
-        Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+        bool hasFinishedRoom = false; // We'll finish the chat with a button or a player left.
+
+        while (!hasFinishedRoom)
+        {
+            byte[] data = new byte[64];
+            int recv = socketUDP.ReceiveFrom(data, ref remote);
+            Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+        }
     }
 }
