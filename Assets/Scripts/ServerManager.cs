@@ -20,7 +20,7 @@ public class ServerManager : MonoBehaviour
 
     // Network
     private Socket socket;
-    private Socket clientSocket;
+
     EndPoint clientEndPointUDP;
 
     private int receivePort = 9050;
@@ -126,7 +126,7 @@ public class ServerManager : MonoBehaviour
 
         socket.Listen(10);
 
-        clientSocket = socket.Accept();
+        Socket clientSocket = socket.Accept();
         IPEndPoint clientIpep = (IPEndPoint)clientSocket.RemoteEndPoint;
 
         Debug.Log("Connected with " + clientIpep.Address.ToString() + " at port: " + clientIpep.Port);
@@ -147,7 +147,7 @@ public class ServerManager : MonoBehaviour
 
     private void SendChatMessageTCP(string messageToSend)
     {
-        byte[] data = Encoding.ASCII.GetBytes(messageToSend);
-        clientSocket.Send(data, data.Length, SocketFlags.None);
+        //byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+        //socketUDP.SendTo(data, data.Length, SocketFlags.None, endPoint);
     }
 }
