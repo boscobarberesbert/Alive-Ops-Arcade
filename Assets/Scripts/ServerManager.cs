@@ -33,6 +33,8 @@ public class ServerManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        chatList = new List<string>();
+
         InitializeSocket();
     }
 
@@ -54,11 +56,12 @@ public class ServerManager : MonoBehaviour
 
         foreach (var chat in chatList)
         {
-            GUI.Box(rectObj, chat, style);
+            Rect textRect = new Rect(40, 410 + 35 * chatList.IndexOf(chat), 200, 35);
+            GUI.TextArea(textRect, chat);
         }
 
-        message = GUI.TextField(new Rect(40, 420, 140, 20), message);
-        if (GUI.Button(new Rect(190, 420, 40, 20), "send"))
+        message = GUI.TextField(new Rect(40, 600, 140, 20), message);
+        if (GUI.Button(new Rect(190, 600, 40, 20), "send"))
         {
             SendChatMessage(message + "\n");
             message = "";
