@@ -137,7 +137,7 @@ public class ClientManager : MonoBehaviour
 
     private void SendChatMessageTCP(string messageToSend)
     {
-        //byte[] data = Encoding.ASCII.GetBytes(messageToSend);
-        //socketUDP.SendTo(data, data.Length, SocketFlags.None, ipep);
+
+        socket.Send(Encoding.ASCII.GetBytes(messageToSend));
     }
 }
