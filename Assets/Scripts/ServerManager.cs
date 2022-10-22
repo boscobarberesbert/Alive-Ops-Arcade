@@ -20,6 +20,7 @@ public class ServerManager : MonoBehaviour
 
     // Network
     private Socket socket;
+    private Socket clientSocket;
 
     EndPoint clientEndPointUDP;
 
@@ -44,6 +45,7 @@ public class ServerManager : MonoBehaviour
     {
         Debug.Log("Destroying Scene");
 
+        clientSocket.Close();
         socket.Close();
         serverThread.Abort();
     }
@@ -105,7 +107,7 @@ public class ServerManager : MonoBehaviour
 
         byte[] data = new byte[1024];
         int recv = socket.ReceiveFrom(data, ref clientEndPointUDP);
-        Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+        Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
 
         string welcomeMessage = "Welcome to the " + serverName + " server";
         data = Encoding.ASCII.GetBytes(welcomeMessage);
@@ -115,7 +117,7 @@ public class ServerManager : MonoBehaviour
         {
             data = new byte[1024];
             recv = socket.ReceiveFrom(data, ref clientEndPointUDP);
-            Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+            Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
             chatList.Add(Encoding.ASCII.GetString(data, 0, recv));
         }
     }
@@ -126,17 +128,26 @@ public class ServerManager : MonoBehaviour
 
         socket.Listen(10);
 
-        Socket clientSocket = socket.Accept();
+        clientSocket = socket.Accept();
         IPEndPoint clientIpep = (IPEndPoint)clientSocket.RemoteEndPoint;
 
         Debug.Log("Connected with " + clientIpep.Address.ToString() + " at port: " + clientIpep.Port);
 
         byte[] data = new byte[1024];
+        int recv = clientSocket.Receive(data);
+        Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
+
         string welcomeMessage = "Welcome to the " + serverName + " server";
         data = Encoding.ASCII.GetBytes(welcomeMessage);
         clientSocket.Send(data, data.Length, SocketFlags.None);
 
-        clientSocket.Close();
+        while (true)
+        {
+            data = new byte[1024];
+            recv = clientSocket.Receive(data);
+            Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
+            chatList.Add(Encoding.ASCII.GetString(data, 0, recv));
+        }
     }
 
     private void SendChatMessageUDP(string messageToSend)
@@ -147,7 +158,7 @@ public class ServerManager : MonoBehaviour
 
     private void SendChatMessageTCP(string messageToSend)
     {
-        //byte[] data = Encoding.ASCII.GetBytes(messageToSend);
-        //socketUDP.SendTo(data, data.Length, SocketFlags.None, endPoint);
+        byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+        clientSocket.Send(data, data.Length, SocketFlags.None);
     }
 }

@@ -44,6 +44,7 @@ public class ClientManager : MonoBehaviour
     {
         Debug.Log("Destroying Scene");
 
+        socket.Shutdown(SocketShutdown.Both);
         socket.Close();
         clientThread.Abort();
     }
@@ -107,7 +108,7 @@ public class ClientManager : MonoBehaviour
         {
             data = new byte[1024];
             int recv = socket.ReceiveFrom(data, ref clientEndPointUDP);
-            Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+            Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
             chatList.Add(Encoding.ASCII.GetString(data, 0, recv));
         }
     }
@@ -125,8 +126,16 @@ public class ClientManager : MonoBehaviour
         }
 
         byte[] data = new byte[1024];
-        int recv = socket.Receive(data);
-        Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+        data = Encoding.ASCII.GetBytes(userName + " joined the room.");
+        socket.Send(data, data.Length, SocketFlags.None);
+
+        while (true)
+        {
+            data = new byte[1024];
+            int recv = socket.Receive(data);
+            Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
+            chatList.Add(Encoding.ASCII.GetString(data, 0, recv));
+        }
     }
 
     private void SendChatMessageUDP(string messageToSend)
