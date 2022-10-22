@@ -153,6 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Protocol: 0
+  serverName: Panitas Lobby
 --- !u!4 &149158818
 Transform:
   m_ObjectHideFlags: 0

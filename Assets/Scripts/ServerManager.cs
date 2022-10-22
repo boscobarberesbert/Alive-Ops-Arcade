@@ -28,6 +28,7 @@ public class ServerManager : MonoBehaviour
 
     public string serverName;
     string message = "";
+    List<string> chatList;
 
     // Start is called before the first frame update
     void Start()
@@ -49,12 +50,18 @@ public class ServerManager : MonoBehaviour
         Rect rectObj = new Rect(40, 380, 200, 400);
         GUIStyle style = new GUIStyle();
         style.alignment = TextAnchor.UpperLeft;
-        GUI.Box(rectObj, "Hello madafaka", style);
+        GUI.Box(rectObj, "Chat", style);
+
+        foreach (var chat in chatList)
+        {
+            GUI.Box(rectObj, chat, style);
+        }
 
         message = GUI.TextField(new Rect(40, 420, 140, 20), message);
         if (GUI.Button(new Rect(190, 420, 40, 20), "send"))
         {
             SendChatMessage(message + "\n");
+            message = "";
         }
     }
 
@@ -83,7 +90,7 @@ public class ServerManager : MonoBehaviour
         int recv = socketUDP.ReceiveFrom(data, ref endPoint);
         Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
 
-        data = Encoding.ASCII.GetBytes("Welcome to the Panitas Server");
+        data = Encoding.ASCII.GetBytes("Welcome to the " + serverName);
         socketUDP.SendTo(data, data.Length, SocketFlags.None, endPoint);
 
         while (true)
@@ -91,6 +98,7 @@ public class ServerManager : MonoBehaviour
             data = new byte[1024];
             recv = socketUDP.ReceiveFrom(data, ref endPoint);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+            chatList.Add(Encoding.ASCII.GetString(data, 0, recv));
         }
     }
 

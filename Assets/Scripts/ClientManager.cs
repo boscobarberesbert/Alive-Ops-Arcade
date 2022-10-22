@@ -30,6 +30,7 @@ public class ClientManager : MonoBehaviour
     public string serverIP;
     public string userName;
     string message = "";
+    List<string> chatList;
 
     // Start is called before the first frame update
     void Start()
@@ -51,12 +52,18 @@ public class ClientManager : MonoBehaviour
         Rect rectObj = new Rect(40, 380, 200, 400);
         GUIStyle style = new GUIStyle();
         style.alignment = TextAnchor.UpperLeft;
-        GUI.Box(rectObj, "Hello madafaka", style);
+        GUI.Box(rectObj, "Chat", style);
+
+        foreach (var chat in chatList)
+        {
+            GUI.Box(rectObj, chat, style);
+        }
 
         message = GUI.TextField(new Rect(40, 420, 140, 20), message);
         if (GUI.Button(new Rect(190, 420, 40, 20), "send"))
         {
             SendChatMessage(message + "\n");
+            message = "";
         }
     }
 
@@ -85,6 +92,7 @@ public class ClientManager : MonoBehaviour
             data = new byte[1024];
             int recv = socketUDP.ReceiveFrom(data, ref endPoint);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+            chatList.Add(Encoding.ASCII.GetString(data, 0, recv));
         }
     }
 
