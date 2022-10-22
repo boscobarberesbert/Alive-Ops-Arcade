@@ -152,8 +152,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 032268be5303a8b48952cabf05cb7bb9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Protocol: 0
-  serverName: Panitas Lobby
+  m_Protocol: 1
+  serverName: Panitas
 --- !u!4 &149158818
 Transform:
   m_ObjectHideFlags: 0

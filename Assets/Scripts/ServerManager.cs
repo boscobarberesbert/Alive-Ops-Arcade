@@ -11,22 +11,24 @@ public class ServerManager : MonoBehaviour
     public enum Protocol
     {
         UDP,
-        TDP
+        TCP
     }
 
     public Protocol m_Protocol = Protocol.UDP;
 
     Thread serverThread;
 
-    private Socket socketUDP;
-    //private Socket socketTDP;
+    // Network
+    private Socket socket;
 
-    EndPoint endPoint;
+    EndPoint clientEndPointUDP;
 
     private int receivePort = 9050;
     private int sendPort = 9051;
 
+    // Chat & Lobby
     public string serverName;
+
     string message = "";
     List<string> chatList;
 
@@ -42,9 +44,8 @@ public class ServerManager : MonoBehaviour
     {
         Debug.Log("Destroying Scene");
 
-        socketUDP.Close();
+        socket.Close();
         serverThread.Abort();
-        //clientThread.Abort();
     }
 
     void OnGUI()
@@ -63,51 +64,90 @@ public class ServerManager : MonoBehaviour
         message = GUI.TextField(new Rect(40, 600, 140, 20), message);
         if (GUI.Button(new Rect(190, 600, 40, 20), "send"))
         {
-            SendChatMessage(message + "\n");
+            if (m_Protocol == Protocol.UDP)
+                SendChatMessageUDP(message + "\n");
+            else if (m_Protocol == Protocol.TCP)
+                SendChatMessageTCP(message + "\n");
+
             message = "";
         }
     }
 
     private void InitializeSocket()
     {
-        Debug.Log("INITIALIZE THREAD");
-
-        socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-
         IPEndPoint ipep = new IPEndPoint(IPAddress.Any, receivePort);
-        socketUDP.Bind(ipep);
 
-        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, sendPort);
-        endPoint = (EndPoint)(sendIpep);
+        if (m_Protocol == Protocol.UDP)
+        {
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
-        serverThread = new Thread(ServerSetupUDP);
+            serverThread = new Thread(ServerSetupUDP);
+        }
+        else if (m_Protocol == Protocol.TCP)
+        {
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+            serverThread = new Thread(ServerSetupTCP);
+        }
+
+        socket.Bind(ipep);
+
         serverThread.IsBackground = true;
         serverThread.Start();
     }
 
-    public void ServerSetupUDP()
+    private void ServerSetupUDP()
     {
-        Debug.Log("Server initialized listening....");
+        Debug.Log("Server UDP initialized listening....");
+
+        IPEndPoint clientIpep = new IPEndPoint(IPAddress.Any, sendPort);
+        clientEndPointUDP = (EndPoint)(clientIpep);
 
         byte[] data = new byte[1024];
-        int recv = socketUDP.ReceiveFrom(data, ref endPoint);
+        int recv = socket.ReceiveFrom(data, ref clientEndPointUDP);
         Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
 
-        data = Encoding.ASCII.GetBytes("Welcome to the " + serverName);
-        socketUDP.SendTo(data, data.Length, SocketFlags.None, endPoint);
+        string welcomeMessage = "Welcome to the " + serverName + " server";
+        data = Encoding.ASCII.GetBytes(welcomeMessage);
+        socket.SendTo(data, data.Length, SocketFlags.None, clientEndPointUDP);
 
         while (true)
         {
             data = new byte[1024];
-            recv = socketUDP.ReceiveFrom(data, ref endPoint);
+            recv = socket.ReceiveFrom(data, ref clientEndPointUDP);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
             chatList.Add(Encoding.ASCII.GetString(data, 0, recv));
         }
     }
 
-    private void SendChatMessage(string messageToSend)
+    private void ServerSetupTCP()
+    {
+        Debug.Log("Server TCP initialized listening....");
+
+        socket.Listen(10);
+
+        Socket clientSocket = socket.Accept();
+        IPEndPoint clientIpep = (IPEndPoint)clientSocket.RemoteEndPoint;
+
+        Debug.Log("Connected with " + clientIpep.Address.ToString() + " at port: " + clientIpep.Port);
+
+        byte[] data = new byte[1024];
+        string welcomeMessage = "Welcome to the " + serverName + " server";
+        data = Encoding.ASCII.GetBytes(welcomeMessage);
+        clientSocket.Send(data, data.Length, SocketFlags.None);
+
+        clientSocket.Close();
+    }
+
+    private void SendChatMessageUDP(string messageToSend)
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
-        socketUDP.SendTo(data, data.Length, SocketFlags.None, endPoint);
+        socket.SendTo(data, data.Length, SocketFlags.None, clientEndPointUDP);
+    }
+
+    private void SendChatMessageTCP(string messageToSend)
+    {
+        //byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+        //socketUDP.SendTo(data, data.Length, SocketFlags.None, endPoint);
     }
 }
