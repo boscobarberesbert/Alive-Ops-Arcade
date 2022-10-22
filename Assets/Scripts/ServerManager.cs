@@ -48,7 +48,6 @@ public class ServerManager : MonoBehaviour
         serverThread = new Thread(ServerSetupUDP);
         serverThread.IsBackground = true;
         serverThread.Start();
-
     }
 
     public void ServerSetupUDP()
@@ -58,22 +57,14 @@ public class ServerManager : MonoBehaviour
 
         Debug.Log("Server initialized listening....");
 
-        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, sendPort); //Maybe the port must be different??
+        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, sendPort);
         EndPoint endPoint = (EndPoint)(sendIpep);
 
-        byte[] data = new byte[128];
+        byte[] data = new byte[1024];
         int recv = socketUDP.ReceiveFrom(data, ref endPoint);
         Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
 
-        data = Encoding.ASCII.GetBytes("Hello Client");
+        data = Encoding.ASCII.GetBytes("Welcome to the Panitas Server");
         socketUDP.SendTo(data, recv, SocketFlags.None, endPoint);
-
-        // while (true)
-        // {
-        //     data = new byte[128];
-        //     recv = socketUDP.ReceiveFrom(data, ref endPoint);
-        //     Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-        //     socketUDP.SendTo(data, recv, SocketFlags.None, endPoint);
-        // }
     }
 }

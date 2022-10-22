@@ -25,6 +25,7 @@ public class ClientManager : MonoBehaviour
     private int sendPort = 9051;
 
     public string serverIP;
+    public string userName;
 
     // Start is called before the first frame update
     void Start()
@@ -52,17 +53,14 @@ public class ClientManager : MonoBehaviour
 
     private void ClientSetupUDP()
     {
-        byte[] data = new byte[128];
-
+        byte[] data = new byte[1024];
         IPEndPoint ipep = new IPEndPoint(IPAddress.Parse(serverIP), receivePort);
-
-        data = Encoding.ASCII.GetBytes("Hi server!");
+        data = Encoding.ASCII.GetBytes(userName + " joined the room.");
         socketUDP.SendTo(data, data.Length, SocketFlags.None, ipep);
 
         IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, sendPort);
         EndPoint endPoint = (EndPoint)sendIpep;
-
-        data = new byte[128];
+        data = new byte[1024];
         int recv = socketUDP.ReceiveFrom(data, ref endPoint);
         Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
     }
