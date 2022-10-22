@@ -21,8 +21,13 @@ public class ServerManager : MonoBehaviour
     private Socket socketUDP;
     //private Socket socketTDP;
 
+    EndPoint endPoint;
+
     private int receivePort = 9050;
     private int sendPort = 9051;
+
+    public string serverName;
+    string message = "";
 
     // Start is called before the first frame update
     void Start()
@@ -39,11 +44,31 @@ public class ServerManager : MonoBehaviour
         //clientThread.Abort();
     }
 
+    void OnGUI()
+    {
+        Rect rectObj = new Rect(40, 380, 200, 400);
+        GUIStyle style = new GUIStyle();
+        style.alignment = TextAnchor.UpperLeft;
+        GUI.Box(rectObj, "Hello madafaka", style);
+
+        message = GUI.TextField(new Rect(40, 420, 140, 20), message);
+        if (GUI.Button(new Rect(190, 420, 40, 20), "send"))
+        {
+            SendChatMessage(message + "\n");
+        }
+    }
+
     private void InitializeSocket()
     {
         Debug.Log("INITIALIZE THREAD");
 
         socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+        IPEndPoint ipep = new IPEndPoint(IPAddress.Any, receivePort);
+        socketUDP.Bind(ipep);
+
+        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, sendPort);
+        endPoint = (EndPoint)(sendIpep);
 
         serverThread = new Thread(ServerSetupUDP);
         serverThread.IsBackground = true;
@@ -52,19 +77,26 @@ public class ServerManager : MonoBehaviour
 
     public void ServerSetupUDP()
     {
-        IPEndPoint ipep = new IPEndPoint(IPAddress.Any, receivePort);
-        socketUDP.Bind(ipep);
-
         Debug.Log("Server initialized listening....");
-
-        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, sendPort);
-        EndPoint endPoint = (EndPoint)(sendIpep);
 
         byte[] data = new byte[1024];
         int recv = socketUDP.ReceiveFrom(data, ref endPoint);
         Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
 
         data = Encoding.ASCII.GetBytes("Welcome to the Panitas Server");
-        socketUDP.SendTo(data, recv, SocketFlags.None, endPoint);
+        socketUDP.SendTo(data, data.Length, SocketFlags.None, endPoint);
+
+        while (true)
+        {
+            data = new byte[1024];
+            recv = socketUDP.ReceiveFrom(data, ref endPoint);
+            Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+        }
+    }
+
+    private void SendChatMessage(string messageToSend)
+    {
+        byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+        socketUDP.SendTo(data, data.Length, SocketFlags.None, endPoint);
     }
 }
