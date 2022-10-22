@@ -39,7 +39,7 @@ public class ServerManager : MonoBehaviour
 
         socketUDP.Close();
         serverThread.Abort();
-        //clientThread.Abort();
+        clientThread.Abort();
     }
 
     private void InitializeSocket()
@@ -64,10 +64,10 @@ public class ServerManager : MonoBehaviour
 
     void ServerSetupUDP()
     {
-        IPEndPoint serverIEP = new IPEndPoint(IPAddress.Any, serverPort);
-        EndPoint remote = (EndPoint)(serverIEP);
+        IPEndPoint serverIPEP = new IPEndPoint(IPAddress.Any, serverPort);
+        EndPoint remote = (EndPoint)(serverIPEP);
 
-        socketUDP.Bind(serverIEP);
+        socketUDP.Bind(serverIPEP);
 
         bool hasStartedClientThread = false;
         bool hasFinishedRoom = false; // We'll finish the chat with a button or a player left.
@@ -77,7 +77,7 @@ public class ServerManager : MonoBehaviour
             byte[] data = new byte[64];
             int recv = socketUDP.ReceiveFrom(data, ref remote);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-            Debug.Log("CLIENT HAS SENT IP");
+            Debug.Log("SERVER HAS RECEIVED MESSAGE");
 
             if (!hasStartedClientThread && recv > 0)
             {
@@ -94,23 +94,19 @@ public class ServerManager : MonoBehaviour
 
     void ClientSetupUDP()
     {
-        IPEndPoint clientIEP = new IPEndPoint(IPAddress.Parse(/*"192.168.204.20"*/clientIP), clientPort);
-        EndPoint remote = (EndPoint)(clientIEP);
+        IPEndPoint clientIPEP = new IPEndPoint(IPAddress.Parse(/*"192.168.204.20"*/clientIP), clientPort);
+        EndPoint remote = (EndPoint)(clientIPEP);
 
         try
         {
             byte[] data = new byte[64];
-            data = Encoding.ASCII.GetBytes("I am the SERVER!!!");
+            data = Encoding.ASCII.GetBytes("I am the SERVER");
             socketUDP.SendTo(data, data.Length, SocketFlags.None, remote);
+            Debug.Log("SERVER HAS SENT MESSAGE");
         }
         catch (System.Exception e)
         {
             Debug.LogError(e);
         }
     }
-
-    //void ServerSetupTDP()
-    //{
-        
-    //}
 }

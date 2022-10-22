@@ -22,6 +22,7 @@ public class ClientManager : MonoBehaviour
     private int serverPort = 9050;
     private int clientPort = 9051;
 
+    public string clientIP;
     public string serverIP;
 
     // Start is called before the first frame update
@@ -36,19 +37,16 @@ public class ClientManager : MonoBehaviour
 
         socketUDP.Close();
         clientThread.Abort();
-        //serverThread.Abort();
+        serverThread.Abort();
     }
 
     private void InitializeSocket()
     {
         socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
         clientThread = new Thread(ClientSetupUDP);
         clientThread.IsBackground = true;
         clientThread.Start();
-
-        //serverThread = new Thread(ServerSetupUDP);
-        //serverThread.IsBackground = true;
-        //serverThread.Start();
     }
 
     private void ClientSetupUDP()
@@ -59,14 +57,15 @@ public class ClientManager : MonoBehaviour
 
         //Assert.AreEqual(ipaddr, "192.168.204.19");
         //var ipparse = IPAddress.Parse(ipaddr);
-        IPEndPoint serverIEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), serverPort);
-        EndPoint remote = (EndPoint)serverIEP;
+        IPEndPoint serverIPEP = new IPEndPoint(IPAddress.Parse(serverIP), serverPort);
+        EndPoint remote = (EndPoint)serverIPEP;
 
         try
         {
             byte[] data = new byte[64];
-            data = Encoding.ASCII.GetBytes("127.0.0.1");
+            data = Encoding.ASCII.GetBytes(clientIP);
             socketUDP.SendTo(data, data.Length, SocketFlags.None, remote);
+            Debug.Log("CLIENT HAS SENT MESSAGE");
 
             // Start server thread
             serverThread = new Thread(ServerSetupUDP);
@@ -81,10 +80,8 @@ public class ClientManager : MonoBehaviour
 
     private void ServerSetupUDP()
     {
-        IPEndPoint serverIEP = new IPEndPoint(IPAddress.Any, clientPort);
-        EndPoint remote = (EndPoint)serverIEP;
-
-        socketUDP.Bind(serverIEP);
+        IPEndPoint serverIPEP = new IPEndPoint(IPAddress.Parse(serverIP), clientPort);
+        EndPoint remote = (EndPoint)serverIPEP;
 
         bool hasFinishedRoom = false; // We'll finish the chat with a button or a player left.
 
@@ -93,6 +90,7 @@ public class ClientManager : MonoBehaviour
             byte[] data = new byte[64];
             int recv = socketUDP.ReceiveFrom(data, ref remote);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+            Debug.Log("CLIENT HAS RECEIVED MESSAGE");
         }
     }
 }
