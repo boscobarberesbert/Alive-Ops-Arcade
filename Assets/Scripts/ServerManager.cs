@@ -17,15 +17,12 @@ public class ServerManager : MonoBehaviour
     public Protocol m_Protocol = Protocol.UDP;
 
     Thread serverThread;
-    Thread clientThread;
 
     private Socket socketUDP;
-    private Socket socketTDP;
+    //private Socket socketTDP;
 
-    private int serverPort = 9050;
-    private int clientPort = 9051;
-
-    private string clientIP;
+    private int receivePort = 9050;
+    private int sendPort = 9051;
 
     // Start is called before the first frame update
     void Start()
@@ -39,7 +36,7 @@ public class ServerManager : MonoBehaviour
 
         socketUDP.Close();
         serverThread.Abort();
-        clientThread.Abort();
+        //clientThread.Abort();
     }
 
     private void InitializeSocket()
@@ -52,61 +49,31 @@ public class ServerManager : MonoBehaviour
         serverThread.IsBackground = true;
         serverThread.Start();
 
-        //if (m_Protocol == Protocol.UDP)
-        //{
-        //    serverThread = new Thread(ServerSetupUDP);
-        //}
-        //else if(m_Protocol == Protocol.TDP)
-        //{
-        //    serverThread = new Thread(ServerSetupTDP);
-        //}
     }
 
-    void ServerSetupUDP()
+    public void ServerSetupUDP()
     {
-        IPEndPoint serverIPEP = new IPEndPoint(IPAddress.Any, serverPort);
-        EndPoint remote = (EndPoint)(serverIPEP);
+        IPEndPoint ipep = new IPEndPoint(IPAddress.Any, receivePort);
+        socketUDP.Bind(ipep);
 
-        socketUDP.Bind(serverIPEP);
+        Debug.Log("Server initialized listening....");
 
-        bool hasStartedClientThread = false;
-        bool hasFinishedRoom = false; // We'll finish the chat with a button or a player left.
+        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, sendPort); //Maybe the port must be different??
+        EndPoint endPoint = (EndPoint)(sendIpep);
 
-        while(!hasFinishedRoom)
-        {
-            byte[] data = new byte[64];
-            int recv = socketUDP.ReceiveFrom(data, ref remote);
-            Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-            Debug.Log("SERVER HAS RECEIVED MESSAGE");
+        byte[] data = new byte[128];
+        int recv = socketUDP.ReceiveFrom(data, ref endPoint);
+        Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
 
-            if (!hasStartedClientThread && recv > 0)
-            {
-                hasStartedClientThread = true;
-                clientIP = Encoding.ASCII.GetString(data, 0, recv);
+        data = Encoding.ASCII.GetBytes("Hello Client");
+        socketUDP.SendTo(data, recv, SocketFlags.None, endPoint);
 
-                // Start client thread
-                clientThread = new Thread(ClientSetupUDP);
-                clientThread.IsBackground = true;
-                clientThread.Start();
-            }
-        }
-    }
-
-    void ClientSetupUDP()
-    {
-        IPEndPoint clientIPEP = new IPEndPoint(IPAddress.Parse(/*"192.168.204.20"*/clientIP), clientPort);
-        EndPoint remote = (EndPoint)(clientIPEP);
-
-        try
-        {
-            byte[] data = new byte[64];
-            data = Encoding.ASCII.GetBytes("I am the SERVER");
-            socketUDP.SendTo(data, data.Length, SocketFlags.None, remote);
-            Debug.Log("SERVER HAS SENT MESSAGE");
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError(e);
-        }
+        // while (true)
+        // {
+        //     data = new byte[128];
+        //     recv = socketUDP.ReceiveFrom(data, ref endPoint);
+        //     Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+        //     socketUDP.SendTo(data, recv, SocketFlags.None, endPoint);
+        // }
     }
 }
