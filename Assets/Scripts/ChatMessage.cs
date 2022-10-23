@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ChatMessage : MonoBehaviour
+public class ChatMessage
 {
    public string sender;
     public string message;
