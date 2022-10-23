@@ -76,16 +76,17 @@ public class ServerManager : MonoBehaviour
         GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 300, 300)) ;
         GUILayout.BeginVertical();
         scrollPosition = GUILayout.BeginScrollView(
-            scrollPosition, GUILayout.Width(100), GUILayout.Height(100));
+            scrollPosition, GUILayout.Width(Screen.width - 100), GUILayout.Height(Screen.height-100));
         foreach(var message in chat)
         {
+            Debug.Log(chat.Count);
             if (message.Key.Contains("server"))
             {
-                GUILayout.Label("server: "+message.Value);
+                GUILayout.TextArea("server: "+message.Value);
             }
             else
             {
-                GUILayout.Label("client: " + message.Value);
+                GUILayout.TextArea("client: " + message.Value);
 
             }
 
