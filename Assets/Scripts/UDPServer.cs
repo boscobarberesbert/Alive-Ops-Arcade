@@ -8,18 +8,19 @@ using System.Threading;
 
 public class UDPServer : MonoBehaviour
 {
-
     Thread serverThread;
+
+    // Network
     private Socket serverSocket;
     EndPoint endPoint;
     private int channel1Port = 9050;
     private int channel2Port = 9051;
+
     // Chat & Lobby
     public string serverName;
     string message = "";
     Dictionary<string, string> chat;
     Vector2 scrollPosition;
-
 
     // Start is called before the first frame update
     void Start()

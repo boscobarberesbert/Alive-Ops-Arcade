@@ -8,19 +8,21 @@ using System.Threading;
 
 public class UDPClient : MonoBehaviour
 {
-
     Thread clientThread;
+
+    // Network
     private Socket serverSocket;
     EndPoint endPoint;
+    IPEndPoint ipep;
     private int channel1Port = 9050;
     private int channel2Port = 9051;
+
     // Chat & Lobby
-    public string clientName;
     public string serverIP;
+    public string clientName;
     string message = "";
     Dictionary<string, string> chat;
     Vector2 scrollPosition;
-    IPEndPoint ipep;
 
     // Start is called before the first frame update
     void Start()
@@ -56,9 +58,8 @@ public class UDPClient : MonoBehaviour
             int recv = serverSocket.ReceiveFrom(data, ref endPoint);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
         }
-
-
     }
+
     private void SendChatMessage(string messageToSend)
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
