@@ -64,7 +64,7 @@ public class UDPServer : MonoBehaviour
             data = new byte[1024];
             recv = serverSocket.ReceiveFrom(data, ref endPoint);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-            chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv)));
+            chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
 
         }
     }
@@ -73,7 +73,7 @@ public class UDPServer : MonoBehaviour
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
-        chat.Add(new ChatMessage("client", messageToSend));
+        chat.Add(new ChatMessage("server", messageToSend));
     }
 
     private void OnGUI()
@@ -83,11 +83,27 @@ public class UDPServer : MonoBehaviour
         scrollPosition = GUILayout.BeginScrollView(
             scrollPosition, GUILayout.Width(450), GUILayout.Height(100));
 
-            foreach(var c in chat)
+        foreach (var c in chat)
         {
-            GUILayout.Label(c.message);
+            if (c.sender == "server")
+            {
+                GUI.contentColor = Color.red;
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(c.sender);
+                GUILayout.Label(c.message);
+                GUILayout.EndHorizontal();
+            }
+            else
+            {
+                GUI.contentColor = Color.green;
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(c.message);
+                GUILayout.Label(c.sender);
+                GUILayout.EndHorizontal();
+            }
         }
 
+        GUI.contentColor = Color.black;
 
         GUILayout.EndScrollView();
         message = GUILayout.TextField(message);
