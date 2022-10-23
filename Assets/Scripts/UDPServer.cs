@@ -31,37 +31,44 @@ public class UDPServer : MonoBehaviour
 
     private void InitializeSocket()
     {
+        Debug.Log("INITIALIZE THREAD");
+
         serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
         IPEndPoint ipep = new IPEndPoint(IPAddress.Any, channel1Port);
         serverSocket.Bind(ipep);
 
-        serverThread = new Thread(ServerSetupUDP);
+        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, channel2Port);
+        endPoint = (EndPoint)(sendIpep);
 
+        serverThread = new Thread(ServerSetupUDP);
         serverThread.IsBackground = true;
         serverThread.Start();
     }
 
     private void ServerSetupUDP()
     {
-        IPEndPoint senderIpep = new IPEndPoint(IPAddress.Any, channel2Port);
-        EndPoint endpoint = (EndPoint)(senderIpep);
-      
-        byte[] data = new byte[1024];
+        Debug.Log("Server initialized listening....");
 
-        int recv = serverSocket.ReceiveFrom(data, ref endpoint);
+        byte[] data = new byte[1024];
+        int recv = serverSocket.ReceiveFrom(data, ref endPoint);
         Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-        string welcome = "Welcome to my test server";
-        data = Encoding.ASCII.GetBytes(welcome);
+
+        data = Encoding.ASCII.GetBytes("Welcome to the " + serverName);
         serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
+
         while (true)
         {
             data = new byte[1024];
             recv = serverSocket.ReceiveFrom(data, ref endPoint);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-            //chatList.Add(Encoding.ASCII.GetString(data, 0, recv));
         }
     }
-    
+    private void SendChatMessage(string messageToSend)
+    {
+        byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+        serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
+    }
     private void OnGUI()
     {
         GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 300, 300));
@@ -87,7 +94,7 @@ public class UDPServer : MonoBehaviour
         if (GUILayout.Button("Send"))
         {
            
-                //SendChatMessageUDP(message + "\n");
+            SendChatMessage(message + "\n");
             
            
             message = "";

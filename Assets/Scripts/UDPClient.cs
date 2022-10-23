@@ -33,8 +33,12 @@ public class UDPClient : MonoBehaviour
     private void InitializeSocket()
     {
         serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-       
-        ipep = new IPEndPoint(IPAddress.Parse(serverIP), channel1Port) ;
+
+        ipep = new IPEndPoint(IPAddress.Parse(serverIP), channel1Port);
+
+        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, channel2Port);
+        endPoint = (EndPoint)sendIpep;
+
         clientThread = new Thread(ClientSetupUDP);
         clientThread.IsBackground = true;
         clientThread.Start();
@@ -43,12 +47,8 @@ public class UDPClient : MonoBehaviour
     private void ClientSetupUDP()
     {
         byte[] data = new byte[1024];
-        IPEndPoint senderIpep = new IPEndPoint(IPAddress.Any, channel2Port);
-        EndPoint endpoint = (EndPoint)(senderIpep);
-        string welcome = "Hello, are you there?";
-        data = Encoding.ASCII.GetBytes(welcome);
+        data = Encoding.ASCII.GetBytes(clientName + " joined the room.");
         serverSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
-
 
         while (true)
         {
@@ -57,8 +57,13 @@ public class UDPClient : MonoBehaviour
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
         }
 
-    }
 
+    }
+    private void SendChatMessage(string messageToSend)
+    {
+        byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+        serverSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
+    }
     private void OnGUI()
     {
         GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 300, 300));
@@ -84,7 +89,7 @@ public class UDPClient : MonoBehaviour
         if (GUILayout.Button("Send"))
         {
            
-                //SendChatMessageUDP(message + "\n");
+            SendChatMessage(message + "\n");
            
             message = "";
         }
