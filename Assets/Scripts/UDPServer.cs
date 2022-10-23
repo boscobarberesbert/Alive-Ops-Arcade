@@ -41,7 +41,7 @@ public class UDPServer : MonoBehaviour
 
     private void ServerSetupUDP()
     {
-        IPEndPoint senderIpep = new IPEndPoint(IPAddress.Any, 0);
+        IPEndPoint senderIpep = new IPEndPoint(IPAddress.Any, channel2Port);
         EndPoint endpoint = (EndPoint)(senderIpep);
         int recv;
         byte[] data = new byte[1024];
