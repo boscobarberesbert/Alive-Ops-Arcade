@@ -33,8 +33,9 @@ public class UDPClient : MonoBehaviour
     private void InitializeSocket()
     {
         serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        clientThread = new Thread(ClientSetupUDP);
+       
         ipep = new IPEndPoint(IPAddress.Parse(serverIP), channel1Port) ;
+        clientThread = new Thread(ClientSetupUDP);
         clientThread.IsBackground = true;
         clientThread.Start();
     }
@@ -42,19 +43,20 @@ public class UDPClient : MonoBehaviour
     private void ClientSetupUDP()
     {
         byte[] data = new byte[1024];
-      
+        IPEndPoint senderIpep = new IPEndPoint(IPAddress.Any, channel2Port);
+        EndPoint endpoint = (EndPoint)(senderIpep);
         string welcome = "Hello, are you there?";
         data = Encoding.ASCII.GetBytes(welcome);
         serverSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
 
-        IPEndPoint senderIpep = new IPEndPoint(IPAddress.Any,channel2Port);
-        EndPoint endpoint = (EndPoint)(senderIpep);
-        int recv;
-        data = new byte[1024];
 
-        recv = serverSocket.ReceiveFrom(data, ref endpoint);
-        Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-       
+        while (true)
+        {
+            data = new byte[1024];
+            int recv = serverSocket.ReceiveFrom(data, ref endPoint);
+            Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+        }
+
     }
 
     private void OnGUI()

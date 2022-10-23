@@ -32,9 +32,11 @@ public class UDPServer : MonoBehaviour
     private void InitializeSocket()
     {
         serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        serverThread = new Thread(ServerSetupUDP);
         IPEndPoint ipep = new IPEndPoint(IPAddress.Any, channel1Port);
         serverSocket.Bind(ipep);
+
+        serverThread = new Thread(ServerSetupUDP);
+
         serverThread.IsBackground = true;
         serverThread.Start();
     }
@@ -43,14 +45,21 @@ public class UDPServer : MonoBehaviour
     {
         IPEndPoint senderIpep = new IPEndPoint(IPAddress.Any, channel2Port);
         EndPoint endpoint = (EndPoint)(senderIpep);
-        int recv;
+      
         byte[] data = new byte[1024];
 
-        recv = serverSocket.ReceiveFrom(data, ref endpoint);
+        int recv = serverSocket.ReceiveFrom(data, ref endpoint);
         Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
         string welcome = "Welcome to my test server";
         data = Encoding.ASCII.GetBytes(welcome);
         serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
+        while (true)
+        {
+            data = new byte[1024];
+            recv = serverSocket.ReceiveFrom(data, ref endPoint);
+            Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+            //chatList.Add(Encoding.ASCII.GetString(data, 0, recv));
+        }
     }
     
     private void OnGUI()
