@@ -47,7 +47,7 @@ public class UDPClient : MonoBehaviour
         data = Encoding.ASCII.GetBytes(welcome);
         serverSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
 
-        IPEndPoint senderIpep = new IPEndPoint(IPAddress.Any, 0);
+        IPEndPoint senderIpep = new IPEndPoint(IPAddress.Any,channel2Port);
         EndPoint endpoint = (EndPoint)(senderIpep);
         int recv;
         data = new byte[1024];

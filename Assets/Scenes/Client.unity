@@ -345,3 +345,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ff3be296a6fd0e48919c8e4ee84c173, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  clientName: Alex
+  serverIP: 192.168.1.74
