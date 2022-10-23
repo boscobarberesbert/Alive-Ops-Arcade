@@ -15,7 +15,6 @@ public class TCPServer : MonoBehaviour
     private Socket clientSocket;
 
     private int channel1Port = 9050;
-    private int channel2Port = 9051;
 
     // Chat & Lobby
     public string serverName;
