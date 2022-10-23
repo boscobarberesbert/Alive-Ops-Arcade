@@ -11,9 +11,11 @@ public class UDPClient : MonoBehaviour
     Thread clientThread;
 
     // Network
-    private Socket serverSocket;
-    EndPoint endPoint;
+    private Socket clientSocket;
+
     IPEndPoint ipep;
+    EndPoint endPoint;
+
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
@@ -34,7 +36,7 @@ public class UDPClient : MonoBehaviour
 
     private void InitializeSocket()
     {
-        serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
         ipep = new IPEndPoint(IPAddress.Parse(serverIP), channel1Port);
 
@@ -50,12 +52,12 @@ public class UDPClient : MonoBehaviour
     {
         byte[] data = new byte[1024];
         data = Encoding.ASCII.GetBytes(clientName + " joined the room.");
-        serverSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
+        clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
 
         while (true)
         {
             data = new byte[1024];
-            int recv = serverSocket.ReceiveFrom(data, ref endPoint);
+            int recv = clientSocket.ReceiveFrom(data, ref endPoint);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
         }
     }
@@ -63,8 +65,9 @@ public class UDPClient : MonoBehaviour
     private void SendChatMessage(string messageToSend)
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
-        serverSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
+        clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
     }
+
     private void OnGUI()
     {
         GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 300, 300));
@@ -89,22 +92,20 @@ public class UDPClient : MonoBehaviour
         message = GUILayout.TextField(message);
         if (GUILayout.Button("Send"))
         {
-           
+
             SendChatMessage(message + "\n");
-           
+
             message = "";
         }
         GUILayout.EndVertical();
         GUILayout.EndArea();
     }
 
-
-
     private void OnDestroy()
     {
         Debug.Log("Destroying Scene");
 
-        serverSocket.Close();
+        clientSocket.Close();
         clientThread.Abort();
     }
 }

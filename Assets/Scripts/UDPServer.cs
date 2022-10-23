@@ -49,7 +49,7 @@ public class UDPServer : MonoBehaviour
 
     private void ServerSetupUDP()
     {
-        Debug.Log("Server initialized listening....");
+        Debug.Log("Server initialized listening...");
 
         byte[] data = new byte[1024];
         int recv = serverSocket.ReceiveFrom(data, ref endPoint);
@@ -65,17 +65,20 @@ public class UDPServer : MonoBehaviour
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
         }
     }
+
     private void SendChatMessage(string messageToSend)
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
     }
+
     private void OnGUI()
     {
         GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 300, 300));
         GUILayout.BeginVertical();
         scrollPosition = GUILayout.BeginScrollView(
             scrollPosition, GUILayout.Width(500), GUILayout.Height(100));
+
         foreach (var message in chat)
         {
             Debug.Log(chat.Count);
@@ -88,23 +91,19 @@ public class UDPServer : MonoBehaviour
                 GUILayout.TextArea("client: " + message.Value);
 
             }
-
         }
+
         GUILayout.EndScrollView();
         message = GUILayout.TextField(message);
+
         if (GUILayout.Button("Send"))
         {
-           
             SendChatMessage(message + "\n");
-            
-           
             message = "";
         }
         GUILayout.EndVertical();
         GUILayout.EndArea();
     }
-
-
 
     private void OnDestroy()
     {
