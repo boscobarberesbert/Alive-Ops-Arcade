@@ -82,21 +82,16 @@ public class UDPClient : MonoBehaviour
 
         foreach (var c in chat)
         {
-            if(c.sender == "server")
+            if (c.sender == "server")
             {
-                GUI.contentColor = Color.red;
-                GUILayout.BeginHorizontal();
-                GUILayout.Label(c.sender);
-                GUILayout.Label(c.message);
-                GUILayout.EndHorizontal();
+               
+                GUILayout.Label(c.message,GUI.skin.textArea);
             }
             else
             {
-                GUI.contentColor = Color.green;
-                GUILayout.BeginHorizontal();
-                GUILayout.Label(c.message);
-                GUILayout.Label(c.sender);
-                GUILayout.EndHorizontal();
+                GUIStyle style = GUI.skin.textArea;
+                style.alignment = TextAnchor.MiddleRight;
+                GUILayout.Label(c.message,style);
             }
         }
         GUI.contentColor = Color.black;

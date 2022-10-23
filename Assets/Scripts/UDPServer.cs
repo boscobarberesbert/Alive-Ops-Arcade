@@ -81,31 +81,26 @@ public class UDPServer : MonoBehaviour
         GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 450, 222));
         GUILayout.BeginVertical();
         scrollPosition = GUILayout.BeginScrollView(
-            scrollPosition, GUILayout.Width(450), GUILayout.Height(100));
+           new Vector2(0,scrollPosition.y+chat.Count),GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
         foreach (var c in chat)
         {
             if (c.sender == "server")
             {
-                GUI.contentColor = Color.red;
-                GUILayout.BeginHorizontal();
-                GUILayout.Label(c.sender);
-                GUILayout.Label(c.message);
-                GUILayout.EndHorizontal();
+                GUIStyle style = GUI.skin.textArea;
+                style.alignment = TextAnchor.MiddleRight;
+                GUILayout.Label(c.message,style);
             }
             else
             {
-                GUI.contentColor = Color.green;
-                GUILayout.BeginHorizontal();
-                GUILayout.Label(c.message);
-                GUILayout.Label(c.sender);
-                GUILayout.EndHorizontal();
+                GUILayout.Label(c.message, GUI.skin.textArea);
             }
         }
 
-        GUI.contentColor = Color.black;
+
 
         GUILayout.EndScrollView();
+
         message = GUILayout.TextField(message);
 
         if (GUILayout.Button("Send"))
@@ -113,6 +108,7 @@ public class UDPServer : MonoBehaviour
             SendChatMessage(message + "\n");
             message = "";
         }
+
         GUILayout.EndVertical();
         GUILayout.EndArea();
     }
