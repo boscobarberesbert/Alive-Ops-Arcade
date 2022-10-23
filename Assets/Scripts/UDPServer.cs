@@ -33,7 +33,7 @@ public class UDPServer : MonoBehaviour
     {
         serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         serverThread = new Thread(ServerSetupUDP);
-        IPEndPoint ipep = new IPEndPoint(IPAddress.Any, receivePort);
+        IPEndPoint ipep = new IPEndPoint(IPAddress.Any, channel1Port);
         serverSocket.Bind(ipep);
         serverThread.IsBackground = true;
         serverThread.Start();
@@ -77,15 +77,10 @@ public class UDPServer : MonoBehaviour
         message = GUILayout.TextField(message);
         if (GUILayout.Button("Send"))
         {
-            if (m_Protocol == Protocol.UDP)
-            {
-                SendChatMessageUDP(message + "\n");
-            }
-            else
-            {
-                SendChatMessageTCP(message + "\n");
-
-            }
+           
+                //SendChatMessageUDP(message + "\n");
+            
+           
             message = "";
         }
         GUILayout.EndVertical();
