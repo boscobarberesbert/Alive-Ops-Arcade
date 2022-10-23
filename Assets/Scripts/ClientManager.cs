@@ -31,6 +31,7 @@ public class ClientManager : MonoBehaviour
     public string userName;
     string message = "";
     Dictionary<string,string> chat;
+    Vector2 scrollPosition;
 
     // Start is called before the first frame update
     void Start()
@@ -72,7 +73,31 @@ public class ClientManager : MonoBehaviour
 
         //    message = "";
         //}
-        
+        GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 300, 300));
+        GUILayout.BeginVertical();
+        scrollPosition = GUILayout.BeginScrollView(
+            scrollPosition, GUILayout.Width(100), GUILayout.Height(100));
+        foreach (var message in chat)
+        {
+            GUILayout.Label(message.Value);
+        }
+        GUILayout.EndScrollView();
+        message = GUILayout.TextField(message);
+        if (GUILayout.Button("Send"))
+        {
+            if (m_Protocol == Protocol.UDP)
+            {
+                SendChatMessageUDP(message + "\n");
+            }
+            else
+            {
+                SendChatMessageTCP(message + "\n");
+
+            }
+            message = "";
+        }
+        GUILayout.EndVertical();
+        GUILayout.EndArea();
     }
 
     private void InitializeSocket()
