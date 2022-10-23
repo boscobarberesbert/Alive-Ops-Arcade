@@ -132,8 +132,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 149158818}
-  - component: {fileID: 149158819}
   - component: {fileID: 149158820}
+  - component: {fileID: 149158821}
   m_Layer: 0
   m_Name: ServerManager
   m_TagString: Untagged
@@ -156,19 +156,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &149158819
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 149158816}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a52d69c6729cabc4596ee89a19374607, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  serverName: Panitas server
 --- !u!114 &149158820
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -182,6 +169,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   serverName: Panitas server tcp
+--- !u!114 &149158821
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 149158816}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ff3be296a6fd0e48919c8e4ee84c173, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serverIP: 
+  clientName: 
 --- !u!1 &331460640
 GameObject:
   m_ObjectHideFlags: 0
