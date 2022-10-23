@@ -75,7 +75,7 @@ public class TCPServer : MonoBehaviour
     private void SendChatMessage(string messageToSend)
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
-        serverSocket.Send(data, data.Length, SocketFlags.None);
+        clientSocket.Send(data, data.Length, SocketFlags.None);
         chat.Add(new ChatMessage("server", messageToSend));
 
     }
