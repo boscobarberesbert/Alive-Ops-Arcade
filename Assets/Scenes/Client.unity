@@ -310,7 +310,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 956514973}
-  - component: {fileID: 956514974}
+  - component: {fileID: 956514975}
+  - component: {fileID: 956514976}
   m_Layer: 0
   m_Name: ClientManager
   m_TagString: Untagged
@@ -333,7 +334,21 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &956514974
+--- !u!114 &956514975
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 956514972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0e2a0f4392329347a742395d6e628d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serverIP: 192.168.1.74
+  clientName: Alex
+--- !u!114 &956514976
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -345,8 +360,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ff3be296a6fd0e48919c8e4ee84c173, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverIP: 192.168.1.92
-  clientName: Alex
+  serverIP: 
+  clientName: 
 --- !u!1 &1059425052
 GameObject:
   m_ObjectHideFlags: 0
