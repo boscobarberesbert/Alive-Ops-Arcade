@@ -360,8 +360,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ff3be296a6fd0e48919c8e4ee84c173, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverIP: 
-  clientName: 
+  serverIP: 192.168.1.74
+  clientName: Alex
 --- !u!1 &1059425052
 GameObject:
   m_ObjectHideFlags: 0
