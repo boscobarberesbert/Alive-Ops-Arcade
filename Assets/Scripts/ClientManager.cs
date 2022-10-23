@@ -145,7 +145,7 @@ public class ClientManager : MonoBehaviour
         while (true)
         {
             data = new byte[1024];
-            int recv = socket.ReceiveFrom(data, ref clientEndPointUDP);
+            recv = socket.ReceiveFrom(data, ref clientEndPointUDP);
             Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
             chat.Add("server+" + System.Guid.NewGuid().ToString(), Encoding.ASCII.GetString(data, 0, recv));
         }
