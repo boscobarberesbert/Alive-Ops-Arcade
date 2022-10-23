@@ -129,14 +129,14 @@ public class ClientManager : MonoBehaviour
         byte[] data = new byte[1024];
         data = Encoding.ASCII.GetBytes(userName + " joined the room.");
         socket.SendTo(data, data.Length, SocketFlags.None, ipep);
-        chat.Add("client", userName + " joined the room.");
+        chat.Add("client+" + System.Guid.NewGuid().ToString(), userName + " joined the room.");
 
         while (true)
         {
             data = new byte[1024];
             int recv = socket.ReceiveFrom(data, ref clientEndPointUDP);
             Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
-            chat.Add("server",Encoding.ASCII.GetString(data, 0, recv));
+            chat.Add("server+" + System.Guid.NewGuid().ToString(), Encoding.ASCII.GetString(data, 0, recv));
         }
     }
 
@@ -161,7 +161,7 @@ public class ClientManager : MonoBehaviour
             data = new byte[1024];
             int recv = socket.Receive(data);
             Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
-            chat.Add("server",Encoding.ASCII.GetString(data, 0, recv));
+            chat.Add("server+" + System.Guid.NewGuid().ToString(), Encoding.ASCII.GetString(data, 0, recv));
         }
     }
 
@@ -169,14 +169,14 @@ public class ClientManager : MonoBehaviour
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         socket.SendTo(data, data.Length, SocketFlags.None, ipep);
-        chat.Add("client", messageToSend);
+        chat.Add("client+" + System.Guid.NewGuid().ToString(), messageToSend);
     }
 
     private void SendChatMessageTCP(string messageToSend)
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         socket.Send(data, data.Length, SocketFlags.None);
-        chat.Add("client", messageToSend);
+        chat.Add("client+" + System.Guid.NewGuid().ToString(), messageToSend);
 
     }
 }

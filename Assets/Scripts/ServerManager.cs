@@ -137,14 +137,14 @@ public class ServerManager : MonoBehaviour
         string welcomeMessage = "Welcome to the " + serverName + " server";
         data = Encoding.ASCII.GetBytes(welcomeMessage);
         socket.SendTo(data, data.Length, SocketFlags.None, clientEndPointUDP);
-        chat.Add("server", welcomeMessage);
+        chat.Add("server+" + System.Guid.NewGuid().ToString(), welcomeMessage);
 
         while (true)
         {
             data = new byte[1024];
             recv = socket.ReceiveFrom(data, ref clientEndPointUDP);
             Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
-            chat.Add("client",Encoding.ASCII.GetString(data, 0, recv));
+            chat.Add("client+" + System.Guid.NewGuid().ToString(), Encoding.ASCII.GetString(data, 0, recv));
         }
     }
 
@@ -172,7 +172,7 @@ public class ServerManager : MonoBehaviour
             data = new byte[1024];
             recv = clientSocket.Receive(data);
             Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
-            chat.Add("client",Encoding.ASCII.GetString(data, 0, recv));
+            chat.Add("client+" + System.Guid.NewGuid().ToString(), Encoding.ASCII.GetString(data, 0, recv));
         }
     }
 
@@ -180,7 +180,7 @@ public class ServerManager : MonoBehaviour
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         socket.SendTo(data, data.Length, SocketFlags.None, clientEndPointUDP);
-        chat.Add("server", messageToSend);
+        chat.Add("server+" + System.Guid.NewGuid().ToString(), messageToSend);
 
     }
 
@@ -188,7 +188,7 @@ public class ServerManager : MonoBehaviour
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         clientSocket.Send(data, data.Length, SocketFlags.None);
-        chat.Add("server", messageToSend);
+        chat.Add("server+" + System.Guid.NewGuid().ToString(), messageToSend);
 
     }
 }
