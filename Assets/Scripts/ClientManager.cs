@@ -81,11 +81,11 @@ public class ClientManager : MonoBehaviour
         {
             if (message.Key.Contains("server"))
             {
-                GUILayout.Label("server: " + message.Value);
+                GUILayout.TextArea("server: " + message.Value);
             }
             else
             {
-                GUILayout.Label("client: " + message.Value);
+                GUILayout.TextArea("client: " + message.Value);
 
             }
         }
@@ -138,7 +138,10 @@ public class ClientManager : MonoBehaviour
         data = Encoding.ASCII.GetBytes(userName + " joined the room.");
         socket.SendTo(data, data.Length, SocketFlags.None, ipep);
         chat.Add("client+" + System.Guid.NewGuid().ToString(), userName + " joined the room.");
-      
+        data = new byte[1024];
+        int recv = socket.ReceiveFrom(data, ref clientEndPointUDP);
+        Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
+        chat.Add("server+" + System.Guid.NewGuid().ToString(), Encoding.ASCII.GetString(data, 0, recv));
         while (true)
         {
             data = new byte[1024];
