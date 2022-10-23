@@ -19,14 +19,13 @@ public class UDPServer : MonoBehaviour
     // Chat & Lobby
     public string serverName;
     string message = "";
-    Dictionary<string, string> chat;
-    Vector2 scrollPosition;
+    List<ChatMessage> chat;
+    Vector2 scrollPosition = new Vector2(0, 0);
 
     // Start is called before the first frame update
     void Start()
     {
-        chat = new Dictionary<string, string>();
-
+        chat = new List<ChatMessage>();
         InitializeSocket();
     }
 
@@ -53,6 +52,8 @@ public class UDPServer : MonoBehaviour
 
         byte[] data = new byte[1024];
         int recv = serverSocket.ReceiveFrom(data, ref endPoint);
+        chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
+
         Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
 
         data = Encoding.ASCII.GetBytes("Welcome to the " + serverName);
@@ -63,6 +64,8 @@ public class UDPServer : MonoBehaviour
             data = new byte[1024];
             recv = serverSocket.ReceiveFrom(data, ref endPoint);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+            chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv)));
+
         }
     }
 
@@ -70,28 +73,21 @@ public class UDPServer : MonoBehaviour
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
+        chat.Add(new ChatMessage("client", messageToSend));
     }
 
     private void OnGUI()
     {
-        GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 300, 300));
+        GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 450, 222));
         GUILayout.BeginVertical();
         scrollPosition = GUILayout.BeginScrollView(
-            scrollPosition, GUILayout.Width(500), GUILayout.Height(100));
+            scrollPosition, GUILayout.Width(450), GUILayout.Height(100));
 
-        foreach (var message in chat)
+            foreach(var c in chat)
         {
-            Debug.Log(chat.Count);
-            if (message.Key.Contains("server"))
-            {
-                GUILayout.TextArea("server: " + message.Value);
-            }
-            else
-            {
-                GUILayout.TextArea("client: " + message.Value);
-
-            }
+            GUILayout.Label(c.message);
         }
+
 
         GUILayout.EndScrollView();
         message = GUILayout.TextField(message);

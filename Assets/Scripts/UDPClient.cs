@@ -23,13 +23,13 @@ public class UDPClient : MonoBehaviour
     public string serverIP;
     public string clientName;
     string message = "";
-    Dictionary<string, string> chat;
+    List<ChatMessage> chat;
     Vector2 scrollPosition;
 
     // Start is called before the first frame update
     void Start()
     {
-        chat = new Dictionary<string, string>();
+        chat = new List<ChatMessage>();
 
         InitializeSocket();
     }
@@ -53,12 +53,15 @@ public class UDPClient : MonoBehaviour
         byte[] data = new byte[1024];
         data = Encoding.ASCII.GetBytes(clientName + " joined the room.");
         clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
+        chat.Add(new ChatMessage("client", clientName + " joined the room."));
 
         while (true)
         {
             data = new byte[1024];
             int recv = clientSocket.ReceiveFrom(data, ref endPoint);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+            chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv)));
+
         }
     }
 
@@ -66,35 +69,29 @@ public class UDPClient : MonoBehaviour
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
+        chat.Add(new ChatMessage("client",messageToSend));
+
     }
 
     private void OnGUI()
     {
-        GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 300, 300));
+        GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 450, 222));
         GUILayout.BeginVertical();
         scrollPosition = GUILayout.BeginScrollView(
-            scrollPosition, GUILayout.Width(500), GUILayout.Height(100));
-        foreach (var message in chat)
+            scrollPosition, GUILayout.Width(450), GUILayout.Height(100));
+
+        foreach (var c in chat)
         {
-            Debug.Log(chat.Count);
-            if (message.Key.Contains("server"))
-            {
-                GUILayout.TextArea("server: " + message.Value);
-            }
-            else
-            {
-                GUILayout.TextArea("client: " + message.Value);
-
-            }
-
+            GUILayout.Label(c.message);
         }
+
+
         GUILayout.EndScrollView();
         message = GUILayout.TextField(message);
+
         if (GUILayout.Button("Send"))
         {
-
             SendChatMessage(message + "\n");
-
             message = "";
         }
         GUILayout.EndVertical();
