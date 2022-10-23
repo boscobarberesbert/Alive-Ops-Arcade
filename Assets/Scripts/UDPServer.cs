@@ -85,7 +85,7 @@ public class UDPServer : MonoBehaviour
 
         foreach (var c in chat)
         {
-            if (c.sender == "server")
+            if (c.sender.Contains("server"))
             {
                 GUIStyle style = GUI.skin.textArea;
                 style.alignment = TextAnchor.MiddleRight;
@@ -93,7 +93,10 @@ public class UDPServer : MonoBehaviour
             }
             else
             {
-                GUILayout.Label(c.message, GUI.skin.textArea);
+
+                GUIStyle style = GUI.skin.textArea;
+                style.alignment = TextAnchor.MiddleLeft;
+                GUILayout.Label(c.message, style);
             }
         }
 

@@ -82,14 +82,15 @@ public class UDPClient : MonoBehaviour
 
         foreach (var c in chat)
         {
-            if (c.sender == "server")
+            if (c.sender.Contains("server"))
             {
-                
-                GUILayout.Label(c.message, GUI.skin.textArea);
-
+                GUIStyle style = GUI.skin.textArea;
+                style.alignment = TextAnchor.MiddleLeft;
+                GUILayout.Label(c.message, style);
             }
             else
             {
+
                 GUIStyle style = GUI.skin.textArea;
                 style.alignment = TextAnchor.MiddleRight;
                 GUILayout.Label(c.message, style);
