@@ -79,7 +79,15 @@ public class ClientManager : MonoBehaviour
             scrollPosition, GUILayout.Width(100), GUILayout.Height(100));
         foreach (var message in chat)
         {
-            GUILayout.Label(message.Value);
+            if (message.Key.Contains("server"))
+            {
+                GUILayout.Label("server: " + message.Value);
+            }
+            else
+            {
+                GUILayout.Label("client: " + message.Value);
+
+            }
         }
         GUILayout.EndScrollView();
         message = GUILayout.TextField(message);
@@ -130,7 +138,7 @@ public class ClientManager : MonoBehaviour
         data = Encoding.ASCII.GetBytes(userName + " joined the room.");
         socket.SendTo(data, data.Length, SocketFlags.None, ipep);
         chat.Add("client+" + System.Guid.NewGuid().ToString(), userName + " joined the room.");
-
+      
         while (true)
         {
             data = new byte[1024];
