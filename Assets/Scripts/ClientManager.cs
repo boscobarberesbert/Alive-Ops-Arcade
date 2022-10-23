@@ -76,7 +76,7 @@ public class ClientManager : MonoBehaviour
         GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 300, 300));
         GUILayout.BeginVertical();
         scrollPosition = GUILayout.BeginScrollView(
-            scrollPosition, GUILayout.Width(Screen.width - 100), GUILayout.Height(Screen.height - 100));
+            scrollPosition, GUILayout.Width(500), GUILayout.Height(100));
         foreach (var message in chat)
         {
             if (message.Key.Contains("server"))
