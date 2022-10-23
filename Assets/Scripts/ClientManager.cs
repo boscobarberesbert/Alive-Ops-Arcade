@@ -30,12 +30,12 @@ public class ClientManager : MonoBehaviour
     public string serverIP;
     public string userName;
     string message = "";
-    List<string> chatList;
+    Dictionary<string,string> chat;
 
     // Start is called before the first frame update
     void Start()
     {
-        chatList = new List<string>();
+        chat = new Dictionary<string, string>();
 
         InitializeSocket();
     }
@@ -51,27 +51,28 @@ public class ClientManager : MonoBehaviour
 
     void OnGUI()
     {
-        Rect rectObj = new Rect(40, 380, 200, 400);
-        GUIStyle style = new GUIStyle();
-        style.alignment = TextAnchor.UpperLeft;
-        GUI.Box(rectObj, "Chat", style);
+        //Rect rectObj = new Rect(40, 380, 200, 400);
+        //GUIStyle style = new GUIStyle();
+        //style.alignment = TextAnchor.UpperLeft;
+        //GUI.Box(rectObj, "Chat", style);
 
-        foreach (var chat in chatList)
-        {
-            Rect textRect = new Rect(40, 410 + 35 * chatList.IndexOf(chat), 200, 35);
-            GUI.TextArea(textRect, chat);
-        }
+        //foreach (var message in chat)
+        //{
+        //    Rect textRect = new Rect(40, 410 + 35 * chatList.IndexOf(chat), 200, 35);
+        //    GUI.TextArea(textRect, chat);
+        //}
 
-        message = GUI.TextField(new Rect(40, 600, 140, 20), message);
-        if (GUI.Button(new Rect(190, 600, 40, 20), "send"))
-        {
-            if (m_Protocol == Protocol.UDP)
-                SendChatMessageUDP(message + "\n");
-            else if (m_Protocol == Protocol.TCP)
-                SendChatMessageTCP(message + "\n");
+        //message = GUI.TextField(new Rect(40, 600, 140, 20), message);
+        //if (GUI.Button(new Rect(190, 600, 40, 20), "send"))
+        //{
+        //    if (m_Protocol == Protocol.UDP)
+        //        SendChatMessageUDP(message + "\n");
+        //    else if (m_Protocol == Protocol.TCP)
+        //        SendChatMessageTCP(message + "\n");
 
-            message = "";
-        }
+        //    message = "";
+        //}
+        
     }
 
     private void InitializeSocket()
@@ -103,13 +104,14 @@ public class ClientManager : MonoBehaviour
         byte[] data = new byte[1024];
         data = Encoding.ASCII.GetBytes(userName + " joined the room.");
         socket.SendTo(data, data.Length, SocketFlags.None, ipep);
+        chat.Add("client", userName + " joined the room.");
 
         while (true)
         {
             data = new byte[1024];
             int recv = socket.ReceiveFrom(data, ref clientEndPointUDP);
             Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
-            chatList.Add(Encoding.ASCII.GetString(data, 0, recv));
+            chat.Add("server",Encoding.ASCII.GetString(data, 0, recv));
         }
     }
 
@@ -134,7 +136,7 @@ public class ClientManager : MonoBehaviour
             data = new byte[1024];
             int recv = socket.Receive(data);
             Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
-            chatList.Add(Encoding.ASCII.GetString(data, 0, recv));
+            chat.Add("server",Encoding.ASCII.GetString(data, 0, recv));
         }
     }
 
@@ -142,11 +144,14 @@ public class ClientManager : MonoBehaviour
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         socket.SendTo(data, data.Length, SocketFlags.None, ipep);
+        chat.Add("client", messageToSend);
     }
 
     private void SendChatMessageTCP(string messageToSend)
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         socket.Send(data, data.Length, SocketFlags.None);
+        chat.Add("client", messageToSend);
+
     }
 }

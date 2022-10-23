@@ -31,12 +31,12 @@ public class ServerManager : MonoBehaviour
     public string serverName;
 
     string message = "";
-    List<string> chatList;
-
+    Dictionary<string,string> chat;
+    Vector2 scrollPosition;
     // Start is called before the first frame update
     void Start()
     {
-        chatList = new List<string>();
+        chat = new Dictionary<string, string>();
 
         InitializeSocket();
     }
@@ -52,27 +52,52 @@ public class ServerManager : MonoBehaviour
 
     void OnGUI()
     {
-        Rect rectObj = new Rect(40, 380, 200, 400);
-        GUIStyle style = new GUIStyle();
-        style.alignment = TextAnchor.UpperLeft;
-        GUI.Box(rectObj, "Chat", style);
+        //Rect rectObj = new Rect(40, 380, 200, 400);
+        //GUIStyle style = new GUIStyle();
+        //style.alignment = TextAnchor.UpperLeft;
+        //GUI.Box(rectObj, "Chat", style);
 
-        foreach (var chat in chatList)
+        //foreach (var chat in chatList)
+        //{
+        //    Rect textRect = new Rect(40, 410 + 35 * chatList.IndexOf(chat), 200, 35);
+        //    GUI.TextArea(textRect, chat);
+        //}
+
+        //message = GUI.TextField(new Rect(40, 600, 140, 20), message);
+        //if (GUI.Button(new Rect(190, 600, 40, 20), "send"))
+        //{
+        //    if (m_Protocol == Protocol.UDP)
+        //        SendChatMessageUDP(message + "\n");
+        //    else if (m_Protocol == Protocol.TCP)
+        //        SendChatMessageTCP(message + "\n");
+
+        //    message = "";
+        //}
+        GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 300, 300)) ;
+        GUILayout.BeginVertical();
+        scrollPosition = GUILayout.BeginScrollView(
+            scrollPosition, GUILayout.Width(100), GUILayout.Height(100));
+        foreach(var message in chat)
         {
-            Rect textRect = new Rect(40, 410 + 35 * chatList.IndexOf(chat), 200, 35);
-            GUI.TextArea(textRect, chat);
+            GUILayout.Label(message.Value);
         }
-
-        message = GUI.TextField(new Rect(40, 600, 140, 20), message);
-        if (GUI.Button(new Rect(190, 600, 40, 20), "send"))
+        GUILayout.EndScrollView();
+        message = GUILayout.TextField(message);
+        if (GUILayout.Button("Send"))
         {
-            if (m_Protocol == Protocol.UDP)
+            if(m_Protocol == Protocol.UDP)
+            {
                 SendChatMessageUDP(message + "\n");
-            else if (m_Protocol == Protocol.TCP)
+            }
+            else
+            {
                 SendChatMessageTCP(message + "\n");
 
+            }
             message = "";
         }
+        GUILayout.EndVertical();
+        GUILayout.EndArea();
     }
 
     private void InitializeSocket()
@@ -112,13 +137,14 @@ public class ServerManager : MonoBehaviour
         string welcomeMessage = "Welcome to the " + serverName + " server";
         data = Encoding.ASCII.GetBytes(welcomeMessage);
         socket.SendTo(data, data.Length, SocketFlags.None, clientEndPointUDP);
+        chat.Add("server", welcomeMessage);
 
         while (true)
         {
             data = new byte[1024];
             recv = socket.ReceiveFrom(data, ref clientEndPointUDP);
             Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
-            chatList.Add(Encoding.ASCII.GetString(data, 0, recv));
+            chat.Add("client",Encoding.ASCII.GetString(data, 0, recv));
         }
     }
 
@@ -146,7 +172,7 @@ public class ServerManager : MonoBehaviour
             data = new byte[1024];
             recv = clientSocket.Receive(data);
             Debug.Log("Message received: " + Encoding.ASCII.GetString(data, 0, recv));
-            chatList.Add(Encoding.ASCII.GetString(data, 0, recv));
+            chat.Add("client",Encoding.ASCII.GetString(data, 0, recv));
         }
     }
 
@@ -154,11 +180,15 @@ public class ServerManager : MonoBehaviour
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         socket.SendTo(data, data.Length, SocketFlags.None, clientEndPointUDP);
+        chat.Add("server", messageToSend);
+
     }
 
     private void SendChatMessageTCP(string messageToSend)
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         clientSocket.Send(data, data.Length, SocketFlags.None);
+        chat.Add("server", messageToSend);
+
     }
 }
