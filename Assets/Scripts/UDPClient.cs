@@ -75,7 +75,7 @@ public class UDPClient : MonoBehaviour
 
     private void OnGUI()
     {
-        GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 450, 222));
+        GUILayout.BeginArea(new Rect(Screen.width / 2-225, Screen.height / 2-111, 450, 222));
         GUILayout.BeginVertical();
         scrollPosition = GUILayout.BeginScrollView(
             scrollPosition, GUILayout.Width(450), GUILayout.Height(100));
