@@ -104,7 +104,10 @@ public class UDPServer : MonoBehaviour
 
         GUILayout.EndScrollView();
 
+        GUILayout.BeginVertical();
+        GUILayout.Label("Write your message:");
         message = GUILayout.TextField(message);
+        GUILayout.EndVertical();
 
         if (GUILayout.Button("Send"))
         {
