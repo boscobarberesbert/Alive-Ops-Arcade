@@ -78,7 +78,7 @@ public class UDPClient : MonoBehaviour
         GUILayout.BeginArea(new Rect(Screen.width / 2-225, Screen.height / 2-111, 450, 222));
         GUILayout.BeginVertical();
         scrollPosition = GUILayout.BeginScrollView(
-            scrollPosition, GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
+          new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
         foreach (var c in chat)
         {
