@@ -19,13 +19,13 @@ public class TCPServer : MonoBehaviour
     // Chat & Lobby
     public string serverName;
     string message = "";
-    Dictionary<string, string> chat;
+    List<ChatMessage> chat;
     Vector2 scrollPosition;
 
     // Start is called before the first frame update
     void Start()
     {
-        chat = new Dictionary<string, string>();
+        chat = new List<ChatMessage>();
 
         InitializeSocket();
     }
@@ -58,6 +58,7 @@ public class TCPServer : MonoBehaviour
         byte[] data = new byte[1024];
         int recv = clientSocket.Receive(data);
         Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+        chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
 
         data = Encoding.ASCII.GetBytes("Welcome to the " + serverName);
         clientSocket.Send(data, data.Length, SocketFlags.None);
@@ -67,6 +68,7 @@ public class TCPServer : MonoBehaviour
             data = new byte[1024];
             recv = clientSocket.Receive(data);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+            chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
         }
     }
 
@@ -78,33 +80,43 @@ public class TCPServer : MonoBehaviour
 
     private void OnGUI()
     {
-        GUILayout.BeginArea(new Rect(Screen.width / 2, Screen.height / 2, 300, 300));
+        GUILayout.BeginArea(new Rect(Screen.width / 2 - 225, Screen.height / 2 - 111, 450, 222));
         GUILayout.BeginVertical();
         scrollPosition = GUILayout.BeginScrollView(
-            scrollPosition, GUILayout.Width(500), GUILayout.Height(100));
+           new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
-        foreach (var message in chat)
+        foreach (var c in chat)
         {
-            Debug.Log(chat.Count);
-            if (message.Key.Contains("server"))
+            if (c.sender.Contains("server"))
             {
-                GUILayout.TextArea("server: " + message.Value);
+                GUIStyle style = GUI.skin.textArea;
+                style.alignment = TextAnchor.MiddleRight;
+                GUILayout.Label(c.message, style);
             }
             else
             {
-                GUILayout.TextArea("client: " + message.Value);
 
+                GUIStyle style = GUI.skin.textArea;
+                style.alignment = TextAnchor.MiddleLeft;
+                GUILayout.Label(c.message, style);
             }
         }
 
+
+
         GUILayout.EndScrollView();
+
+        GUILayout.BeginVertical();
+        GUILayout.Label("Write your message:");
         message = GUILayout.TextField(message);
+        GUILayout.EndVertical();
 
         if (GUILayout.Button("Send"))
         {
             SendChatMessage(message + "\n");
             message = "";
         }
+
         GUILayout.EndVertical();
         GUILayout.EndArea();
     }
