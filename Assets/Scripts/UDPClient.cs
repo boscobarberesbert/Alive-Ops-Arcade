@@ -53,7 +53,6 @@ public class UDPClient : MonoBehaviour
         byte[] data = new byte[1024];
         data = Encoding.ASCII.GetBytes(clientName);
         clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
-        chat.Add(new ChatMessage("client", clientName));
 
         while (true)
         {
@@ -61,7 +60,6 @@ public class UDPClient : MonoBehaviour
             int recv = clientSocket.ReceiveFrom(data, ref endPoint);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
             chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv)));
-
         }
     }
 
@@ -69,8 +67,7 @@ public class UDPClient : MonoBehaviour
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
-        chat.Add(new ChatMessage("client",messageToSend));
-
+        chat.Add(new ChatMessage("client", messageToSend));
     }
 
     private void OnGUI()
@@ -96,8 +93,6 @@ public class UDPClient : MonoBehaviour
                 GUILayout.Label(c.message, style);
             }
         }
-
-
 
         GUILayout.EndScrollView();
         GUILayout.BeginVertical();
