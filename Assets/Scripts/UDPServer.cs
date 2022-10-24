@@ -16,6 +16,8 @@ public class UDPServer : MonoBehaviour
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
+    Dictionary<IPEndPoint, string> clients;
+
     // Chat & Lobby
     public string serverName;
     string message = "";
@@ -26,6 +28,7 @@ public class UDPServer : MonoBehaviour
     void Start()
     {
         chat = new List<ChatMessage>();
+        clients = new Dictionary<IPEndPoint, string>();
         InitializeSocket();
     }
 
@@ -38,33 +41,42 @@ public class UDPServer : MonoBehaviour
         IPEndPoint ipep = new IPEndPoint(IPAddress.Any, channel1Port);
         serverSocket.Bind(ipep);
 
-        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, channel2Port);
-        endPoint = (EndPoint)(sendIpep);
+        endPoint = new IPEndPoint(IPAddress.Any, channel2Port);
 
-        serverThread = new Thread(ServerSetupUDP);
+        serverThread = new Thread(ServerRoomBroadcast);
         serverThread.IsBackground = true;
         serverThread.Start();
     }
 
-    private void ServerSetupUDP()
+    private void ServerRoomBroadcast()
     {
         Debug.Log("Server initialized listening...");
 
-        byte[] data = new byte[1024];
-        int recv = serverSocket.ReceiveFrom(data, ref endPoint);
-        chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
-
-        Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-
-        data = Encoding.ASCII.GetBytes("Welcome to the " + serverName);
-        serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
-
         while (true)
         {
-            data = new byte[1024];
-            recv = serverSocket.ReceiveFrom(data, ref endPoint);
+            byte[] data = new byte[1024];
+            int recv = serverSocket.ReceiveFrom(data, ref endPoint);
+            string receivedMessage = Encoding.ASCII.GetString(data, 0, recv);
+
+            if (!clients.ContainsKey((IPEndPoint)endPoint))
+            {
+                // As it is a new client, the received message is its username
+                clients.Add((IPEndPoint)endPoint, receivedMessage);
+
+                receivedMessage += " joined the room.";
+
+                data = Encoding.ASCII.GetBytes("Welcome to the " + serverName);
+                serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
+            }
+
+            chat.Add(new ChatMessage("client", receivedMessage));
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-            chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
+
+            foreach (KeyValuePair<IPEndPoint, string> entry in clients)
+            {
+                data = Encoding.ASCII.GetBytes(receivedMessage);
+                serverSocket.SendTo(data, data.Length, SocketFlags.None, entry.Key);
+            }
         }
     }
 

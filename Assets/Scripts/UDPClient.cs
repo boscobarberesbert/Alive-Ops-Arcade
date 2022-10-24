@@ -51,9 +51,9 @@ public class UDPClient : MonoBehaviour
     private void ClientSetupUDP()
     {
         byte[] data = new byte[1024];
-        data = Encoding.ASCII.GetBytes(clientName + " joined the room.");
+        data = Encoding.ASCII.GetBytes(clientName);
         clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
-        chat.Add(new ChatMessage("client", clientName + " joined the room."));
+        chat.Add(new ChatMessage("client", clientName));
 
         while (true)
         {

@@ -40,9 +40,6 @@ public class TCPClient : MonoBehaviour
 
         ipep = new IPEndPoint(IPAddress.Parse(serverIP), channel1Port);
 
-        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, channel2Port);
-        endPoint = (EndPoint)sendIpep;
-
         clientThread = new Thread(ClientSetupTCP);
         clientThread.IsBackground = true;
         clientThread.Start();
@@ -73,7 +70,6 @@ public class TCPClient : MonoBehaviour
 
         }
         serverSocket.Close();
-
     }
 
     private void SendChatMessage(string messageToSend)
@@ -99,14 +95,11 @@ public class TCPClient : MonoBehaviour
             }
             else
             {
-
                 GUIStyle style = GUI.skin.textArea;
                 style.alignment = TextAnchor.MiddleRight;
                 GUILayout.Label(c.message, style);
             }
         }
-
-
 
         GUILayout.EndScrollView();
         GUILayout.BeginVertical();
