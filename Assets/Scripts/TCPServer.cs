@@ -16,7 +16,6 @@ public class TCPServer : MonoBehaviour
 
     ArrayList clientList;
 
-    ArrayList copyClientList;
 
     private int channel1Port = 9050;
 
@@ -78,20 +77,26 @@ public class TCPServer : MonoBehaviour
         }
 
     }
+
+   
     private void ServerRoomBroadcast()
     {
+        ArrayList readableClients = new ArrayList();
+        ArrayList writableClients = new ArrayList();
         while (true)
         {
-            lock (myLock)
+            lock(myLock)
             {
-                copyClientList = new ArrayList(clientList);
+                readableClients = new ArrayList(clientList);
+                writableClients = new ArrayList(clientList);
             }
-            if (copyClientList.Count == 0)
+            
+            if (readableClients.Count == 0)
             {
                 continue;
             }
-            Socket.Select(copyClientList, null, null, 1000);
-            foreach (Socket client in copyClientList)
+            Socket.Select(readableClients, null, null, 1000);
+            foreach (Socket client in readableClients)
             {
                 byte[] data = new byte[1024];
                 int recv = client.Receive(data);
@@ -120,7 +125,12 @@ public class TCPServer : MonoBehaviour
                 {
                     Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
                     chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
-                    foreach(Socket c in clientList)
+                    if (writableClients.Count == 0)
+                    {
+                        continue;
+                    }
+                    Socket.Select(null, writableClients, null, 1000);
+                    foreach (Socket c in clientList)
                     {
                         c.Send(data, recv, SocketFlags.None);
                     }
@@ -131,6 +141,7 @@ public class TCPServer : MonoBehaviour
 
     private void SendChatMessage(string messageToSend)
     {
+        ArrayList copyClientList = new ArrayList(clientList);
         lock (myLock)
         {
             copyClientList = new ArrayList(clientList);
