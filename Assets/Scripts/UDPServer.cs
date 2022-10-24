@@ -118,11 +118,10 @@ public class UDPServer : MonoBehaviour
                 else
                     style.alignment = TextAnchor.MiddleLeft;
 
-                GUILayout.BeginHorizontal(style);
+                GUILayout.BeginVertical(style);
                 GUILayout.Label(c.username);
-                GUILayout.EndHorizontal();
-
-                GUILayout.Label(c.message, style);
+                GUILayout.Label(c.message);
+                GUILayout.EndVertical();
             }
         }
 
