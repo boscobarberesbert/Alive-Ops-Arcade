@@ -75,7 +75,7 @@ public class UDPServer : MonoBehaviour
 
             lock (chatLock)
             {
-                chat.Add(new ChatMessage("client", receivedMessage));
+                chat.Add(new ChatMessage("client", clients[endPoint] + ": " + receivedMessage));
             }
             Debug.Log(receivedMessage);
 
@@ -83,7 +83,7 @@ public class UDPServer : MonoBehaviour
             {
                 if (!entry.Key.Equals(endPoint))
                 {
-                    data = Encoding.ASCII.GetBytes(receivedMessage);
+                    data = Encoding.ASCII.GetBytes(clients[endPoint] + ": " + receivedMessage);
                     serverSocket.SendTo(data, data.Length, SocketFlags.None, entry.Key);
                 }
             }
@@ -116,6 +116,8 @@ public class UDPServer : MonoBehaviour
                 {
                     GUIStyle style = GUI.skin.textArea;
                     style.alignment = TextAnchor.MiddleRight;
+                    //GUILayout.BeginHorizontal(style);
+                    //GUILayout.Label();
                     GUILayout.Label(c.message, style);
                 }
                 else
