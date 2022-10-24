@@ -97,7 +97,6 @@ public class TCPServer : MonoBehaviour
             
             if (readableClients.Count == 0)
             {
-                Debug.Log("READABLE CLIENTS COUNT IS 0");
                 continue;
             }
             Socket.Select(readableClients, null, null, 1000);
@@ -144,7 +143,8 @@ public class TCPServer : MonoBehaviour
                     Socket.Select(null, writableClients, null, 1000);
                     foreach (Socket clientToBroadcast in writableClients)
                     {
-                        clientToBroadcast.Send(data, recv, SocketFlags.None);
+                        if (!(clientToBroadcast == client))
+                            clientToBroadcast.Send(data, recv, SocketFlags.None);
                     }
                 }
             }
@@ -168,7 +168,7 @@ public class TCPServer : MonoBehaviour
         }
         lock (chat)
         {
-            chat.Add(new ChatMessage("client", messageToSend));
+            chat.Add(new ChatMessage("server", messageToSend));
         }
     }
 

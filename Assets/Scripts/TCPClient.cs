@@ -128,7 +128,7 @@ public class TCPClient : MonoBehaviour
         GUILayout.EndArea();
     }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
         Debug.Log("Destroying Scene");
 
