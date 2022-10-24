@@ -9,6 +9,7 @@ using System.Threading;
 public class UDPClient : MonoBehaviour
 {
     Thread clientThread;
+    private object myLock;
 
     // Network
     private Socket clientSocket;
@@ -30,7 +31,7 @@ public class UDPClient : MonoBehaviour
     void Start()
     {
         chat = new List<ChatMessage>();
-
+        myLock = new object();
         InitializeSocket();
     }
 
@@ -59,7 +60,10 @@ public class UDPClient : MonoBehaviour
             data = new byte[1024];
             int recv = clientSocket.ReceiveFrom(data, ref endPoint);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-            chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv)));
+            lock (myLock)
+            {
+                chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv)));
+            }
         }
     }
 
@@ -67,30 +71,37 @@ public class UDPClient : MonoBehaviour
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
-        chat.Add(new ChatMessage("client", messageToSend));
+        lock (myLock)
+        {
+            chat.Add(new ChatMessage("client", messageToSend));
+        }
     }
 
     private void OnGUI()
     {
         GUILayout.BeginArea(new Rect(Screen.width / 2 - 225, Screen.height / 2 - 111, 450, 222));
         GUILayout.BeginVertical();
-        scrollPosition = GUILayout.BeginScrollView(
-           new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
-        foreach (var c in chat)
+        lock (myLock)
         {
-            if (c.sender.Contains("server"))
-            {
-                GUIStyle style = GUI.skin.textArea;
-                style.alignment = TextAnchor.MiddleLeft;
-                GUILayout.Label(c.message, style);
-            }
-            else
-            {
+            scrollPosition = GUILayout.BeginScrollView(
+               new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
-                GUIStyle style = GUI.skin.textArea;
-                style.alignment = TextAnchor.MiddleRight;
-                GUILayout.Label(c.message, style);
+            foreach (var c in chat)
+            {
+                if (c.sender.Contains("server"))
+                {
+                    GUIStyle style = GUI.skin.textArea;
+                    style.alignment = TextAnchor.MiddleLeft;
+                    GUILayout.Label(c.message, style);
+                }
+                else
+                {
+
+                    GUIStyle style = GUI.skin.textArea;
+                    style.alignment = TextAnchor.MiddleRight;
+                    GUILayout.Label(c.message, style);
+                }
             }
         }
 

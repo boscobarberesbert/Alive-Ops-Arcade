@@ -9,6 +9,7 @@ using System.Threading;
 public class UDPServer : MonoBehaviour
 {
     Thread serverThread;
+    private object myLock;
 
     // Network
     private Socket serverSocket;
@@ -16,7 +17,7 @@ public class UDPServer : MonoBehaviour
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
-    Dictionary<IPEndPoint, string> clients;
+    Dictionary<EndPoint, string> clients;
 
     // Chat & Lobby
     public string serverName;
@@ -28,7 +29,8 @@ public class UDPServer : MonoBehaviour
     void Start()
     {
         chat = new List<ChatMessage>();
-        clients = new Dictionary<IPEndPoint, string>();
+        clients = new Dictionary<EndPoint, string>();
+        myLock = new object();
         InitializeSocket();
     }
 
@@ -58,10 +60,10 @@ public class UDPServer : MonoBehaviour
             int recv = serverSocket.ReceiveFrom(data, ref endPoint);
             string receivedMessage = Encoding.ASCII.GetString(data, 0, recv);
 
-            if (!clients.ContainsKey((IPEndPoint)endPoint))
+            if (!clients.ContainsKey(endPoint))
             {
                 // As it is a new client, the received message is its username
-                clients.Add((IPEndPoint)endPoint, receivedMessage);
+                clients.Add(endPoint, receivedMessage);
 
                 receivedMessage += " joined the room.";
 
@@ -69,13 +71,19 @@ public class UDPServer : MonoBehaviour
                 serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
             }
 
-            chat.Add(new ChatMessage("client", receivedMessage));
-            Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-
-            foreach (KeyValuePair<IPEndPoint, string> entry in clients)
+            lock (myLock)
             {
-                data = Encoding.ASCII.GetBytes(receivedMessage);
-                serverSocket.SendTo(data, data.Length, SocketFlags.None, entry.Key);
+                chat.Add(new ChatMessage("client", receivedMessage));
+            }
+            Debug.Log(receivedMessage);
+
+            foreach (KeyValuePair<EndPoint, string> entry in clients)
+            {
+                if (!entry.Key.Equals(endPoint))
+                {
+                    data = Encoding.ASCII.GetBytes(receivedMessage);
+                    serverSocket.SendTo(data, data.Length, SocketFlags.None, entry.Key);
+                }
             }
         }
     }
@@ -84,34 +92,38 @@ public class UDPServer : MonoBehaviour
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
-        chat.Add(new ChatMessage("server", messageToSend));
+        lock (myLock)
+        {
+            chat.Add(new ChatMessage("server", messageToSend));
+        }
     }
 
     private void OnGUI()
     {
-        GUILayout.BeginArea(new Rect(Screen.width / 2 - 225, Screen.height / 2-111, 450, 222));
+        GUILayout.BeginArea(new Rect(Screen.width / 2 - 225, Screen.height / 2 - 111, 450, 222));
         GUILayout.BeginVertical();
-        scrollPosition = GUILayout.BeginScrollView(
-           new Vector2(0,scrollPosition.y+chat.Count),GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
-        foreach (var c in chat)
+        lock (myLock)
         {
-            if (c.sender.Contains("server"))
-            {
-                GUIStyle style = GUI.skin.textArea;
-                style.alignment = TextAnchor.MiddleRight;
-                GUILayout.Label(c.message,style);
-            }
-            else
-            {
+            scrollPosition = GUILayout.BeginScrollView(
+               new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
-                GUIStyle style = GUI.skin.textArea;
-                style.alignment = TextAnchor.MiddleLeft;
-                GUILayout.Label(c.message, style);
+            foreach (var c in chat)
+            {
+                if (c.sender.Contains("server"))
+                {
+                    GUIStyle style = GUI.skin.textArea;
+                    style.alignment = TextAnchor.MiddleRight;
+                    GUILayout.Label(c.message, style);
+                }
+                else
+                {
+                    GUIStyle style = GUI.skin.textArea;
+                    style.alignment = TextAnchor.MiddleLeft;
+                    GUILayout.Label(c.message, style);
+                }
             }
         }
-
-
 
         GUILayout.EndScrollView();
 
