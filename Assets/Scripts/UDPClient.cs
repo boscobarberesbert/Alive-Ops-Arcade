@@ -20,9 +20,11 @@ public class UDPClient : MonoBehaviour
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
-    // Chat & Lobby
+    // Lobby & Chat
     public string serverIP;
-    public string clientName;
+    public string username;
+    private string serverName;
+
     string message = "";
     List<ChatMessage> chat;
     Vector2 scrollPosition;
@@ -53,17 +55,22 @@ public class UDPClient : MonoBehaviour
     private void ClientSetupUDP()
     {
         byte[] data = new byte[1024];
-        data = Encoding.ASCII.GetBytes(clientName);
+        data = Encoding.ASCII.GetBytes(username);
         clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
+
+        data = new byte[1024];
+        int recv = clientSocket.ReceiveFrom(data, ref endPoint);
+        serverName = Encoding.ASCII.GetString(data, 0, recv);
+        Debug.Log(serverName);
 
         while (true)
         {
             data = new byte[1024];
-            int recv = clientSocket.ReceiveFrom(data, ref endPoint);
+            recv = clientSocket.ReceiveFrom(data, ref endPoint);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
             lock (chatLock)
             {
-                chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv), clientName));
+                chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv), serverName));
             }
         }
     }
@@ -74,7 +81,7 @@ public class UDPClient : MonoBehaviour
         clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
         lock (chatLock)
         {
-            chat.Add(new ChatMessage("client", messageToSend, clientName));
+            chat.Add(new ChatMessage("client", messageToSend, username));
         }
     }
 
@@ -88,21 +95,15 @@ public class UDPClient : MonoBehaviour
             scrollPosition = GUILayout.BeginScrollView(
                new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
-            foreach (var c in chat)
+            GUIStyle style = GUI.skin.textArea;
+            foreach (var chatEntry in chat)
             {
-                if (c.sender.Contains("server"))
-                {
-                    GUIStyle style = GUI.skin.textArea;
+                if (chatEntry.senderType.Contains("server"))
                     style.alignment = TextAnchor.MiddleLeft;
-                    GUILayout.Label(c.message, style);
-                }
                 else
-                {
-
-                    GUIStyle style = GUI.skin.textArea;
                     style.alignment = TextAnchor.MiddleRight;
-                    GUILayout.Label(c.message, style);
-                }
+
+                GUILayout.Label(chatEntry.senderName + ": " + chatEntry.message, style);
             }
         }
 
@@ -122,7 +123,7 @@ public class UDPClient : MonoBehaviour
         GUILayout.EndArea();
     }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
         Debug.Log("Destroying Scene");
 

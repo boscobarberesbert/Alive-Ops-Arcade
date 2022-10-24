@@ -19,8 +19,9 @@ public class UDPServer : MonoBehaviour
 
     Dictionary<EndPoint, string> clients;
 
-    // Chat & Lobby
+    // Lobby & Chat
     public string serverName;
+
     string message = "";
     List<ChatMessage> chat;
     Vector2 scrollPosition = new Vector2(0, 0);
@@ -69,7 +70,7 @@ public class UDPServer : MonoBehaviour
 
                 receivedMessage += " joined the room.";
 
-                data = Encoding.ASCII.GetBytes("Welcome to the " + serverName);
+                data = Encoding.ASCII.GetBytes(serverName);
                 serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
             }
 
@@ -111,17 +112,14 @@ public class UDPServer : MonoBehaviour
                new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
             GUIStyle style = GUI.skin.textArea;
-            foreach (var c in chat)
+            foreach (var chatEntry in chat)
             {
-                if (c.sender.Contains("server"))
+                if (chatEntry.senderType.Contains("server"))
                     style.alignment = TextAnchor.MiddleRight;
                 else
                     style.alignment = TextAnchor.MiddleLeft;
 
-                GUILayout.BeginVertical(style);
-                GUILayout.Label(c.username);
-                GUILayout.Label(c.message);
-                GUILayout.EndVertical();
+                GUILayout.Label(chatEntry.senderName + ": " + chatEntry.message, style);
             }
         }
 
@@ -142,7 +140,7 @@ public class UDPServer : MonoBehaviour
         GUILayout.EndArea();
     }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
         Debug.Log("Destroying Scene");
 

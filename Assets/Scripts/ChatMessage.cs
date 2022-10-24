@@ -4,13 +4,13 @@ using UnityEngine;
 
 public class ChatMessage
 {
-    public string sender;
+    public string senderType;
     public string message;
-    public string username;
-    public ChatMessage(string sender, string message, string username)
+    public string senderName;
+    public ChatMessage(string senderType, string message, string senderName)
     {
-        this.sender = sender;
+        this.senderType = senderType;
         this.message = message;
-        this.username = username;
+        this.senderName = senderName;
     }
 }

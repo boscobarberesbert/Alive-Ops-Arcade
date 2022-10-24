@@ -93,20 +93,15 @@ public class TCPClient : MonoBehaviour
             scrollPosition = GUILayout.BeginScrollView(
                new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
-            foreach (var c in chat)
+            GUIStyle style = GUI.skin.textArea;
+            foreach (var chatEntry in chat)
             {
-                if (c.sender.Contains("server"))
-                {
-                    GUIStyle style = GUI.skin.textArea;
+                if (chatEntry.senderType.Contains("server"))
                     style.alignment = TextAnchor.MiddleLeft;
-                    GUILayout.Label(c.message, style);
-                }
                 else
-                {
-                    GUIStyle style = GUI.skin.textArea;
                     style.alignment = TextAnchor.MiddleRight;
-                    GUILayout.Label(c.message, style);
-                }
+
+                GUILayout.Label(chatEntry.message, style);
             }
         }
 
