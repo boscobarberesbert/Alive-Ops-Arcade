@@ -71,7 +71,7 @@ public class TCPServer : MonoBehaviour
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
             lock (chatLock)
             {
-                chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
+                chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv), serverName));
             }
 
             data = Encoding.ASCII.GetBytes("Welcome to the " + serverName);
@@ -130,7 +130,7 @@ public class TCPServer : MonoBehaviour
                     Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
                     lock (chatLock)
                     {
-                        chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
+                        chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv), serverName));
                     }
 
                     if (writableClients.Count == 0)
@@ -168,7 +168,7 @@ public class TCPServer : MonoBehaviour
         }
         lock (chat)
         {
-            chat.Add(new ChatMessage("server", messageToSend));
+            chat.Add(new ChatMessage("server", messageToSend, serverName));
         }
     }
 

@@ -68,11 +68,10 @@ public class TCPClient : MonoBehaviour
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
             lock (chatLock)
             {
-                chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv)));
+                chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv), clientName));
             }
 
         }
-        serverSocket.Close();
     }
 
     private void SendChatMessage(string messageToSend)
@@ -81,7 +80,7 @@ public class TCPClient : MonoBehaviour
         serverSocket.Send(data, data.Length, SocketFlags.None);
         lock (chat)
         {
-            chat.Add(new ChatMessage("client", messageToSend));
+            chat.Add(new ChatMessage("client", messageToSend, clientName));
         }
     }
 

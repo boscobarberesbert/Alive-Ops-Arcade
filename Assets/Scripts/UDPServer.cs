@@ -75,7 +75,7 @@ public class UDPServer : MonoBehaviour
 
             lock (chatLock)
             {
-                chat.Add(new ChatMessage("client", clients[endPoint] + ": " + receivedMessage));
+                chat.Add(new ChatMessage("client", receivedMessage, clients[endPoint]));
             }
             Debug.Log(receivedMessage);
 
@@ -96,7 +96,7 @@ public class UDPServer : MonoBehaviour
         serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
         lock (chatLock)
         {
-            chat.Add(new ChatMessage("server", messageToSend));
+            chat.Add(new ChatMessage("server", messageToSend, serverName));
         }
     }
 
@@ -110,22 +110,18 @@ public class UDPServer : MonoBehaviour
             scrollPosition = GUILayout.BeginScrollView(
                new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
+            GUIStyle style = GUI.skin.textArea;
             foreach (var c in chat)
             {
                 if (c.sender.Contains("server"))
-                {
-                    GUIStyle style = GUI.skin.textArea;
                     style.alignment = TextAnchor.MiddleRight;
-                    //GUILayout.BeginHorizontal(style);
-                    //GUILayout.Label();
-                    GUILayout.Label(c.message, style);
-                }
                 else
-                {
-                    GUIStyle style = GUI.skin.textArea;
                     style.alignment = TextAnchor.MiddleLeft;
-                    GUILayout.Label(c.message, style);
-                }
+
+                GUILayout.BeginHorizontal(style);
+                GUILayout.Label(c.username);
+                GUILayout.Label(c.message);
+                GUILayout.EndHorizontal();
             }
         }
 

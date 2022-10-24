@@ -63,7 +63,7 @@ public class UDPClient : MonoBehaviour
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
             lock (chatLock)
             {
-                chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv)));
+                chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv), clientName));
             }
         }
     }
@@ -74,7 +74,7 @@ public class UDPClient : MonoBehaviour
         clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
         lock (chatLock)
         {
-            chat.Add(new ChatMessage("client", messageToSend));
+            chat.Add(new ChatMessage("client", messageToSend, clientName));
         }
     }
 
