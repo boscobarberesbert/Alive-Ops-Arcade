@@ -16,11 +16,12 @@ public class TCPClient : MonoBehaviour
 
     IPEndPoint ipep;
 
-    private int channel1Port = 9050;
+    private int port = 9050;
 
-    // Chat & Lobby
+    // Lobby & Chat
     public string serverIP;
-    public string clientName;
+    public string username;
+
     string message = "";
     List<ChatMessage> chat;
     Vector2 scrollPosition;
@@ -36,9 +37,12 @@ public class TCPClient : MonoBehaviour
 
     private void InitializeSocket()
     {
+        Debug.Log(MainMenu.serverIp.ToString());
+        serverIP = MainMenu.serverIp.Substring(0, MainMenu.serverIp.Length - 1);
+
         serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-        ipep = new IPEndPoint(IPAddress.Parse(serverIP), channel1Port);
+        ipep = new IPEndPoint(IPAddress.Parse(serverIP), port);
 
         clientThread = new Thread(ClientSetupTCP);
         clientThread.IsBackground = true;
@@ -58,7 +62,7 @@ public class TCPClient : MonoBehaviour
         }
 
         byte[] data = new byte[1024];
-        data = Encoding.ASCII.GetBytes(clientName + " joined the room.");
+        data = Encoding.ASCII.GetBytes(username + " joined the room.");
         serverSocket.Send(data, data.Length, SocketFlags.None);
 
         while (true)
@@ -68,7 +72,7 @@ public class TCPClient : MonoBehaviour
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
             lock (chatLock)
             {
-                chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv), clientName));
+                chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv), username));
             }
         }
     }
@@ -79,7 +83,7 @@ public class TCPClient : MonoBehaviour
         serverSocket.Send(data, data.Length, SocketFlags.None);
         lock (chat)
         {
-            chat.Add(new ChatMessage("client", messageToSend, clientName));
+            chat.Add(new ChatMessage("client", messageToSend, username));
         }
     }
 
@@ -111,7 +115,7 @@ public class TCPClient : MonoBehaviour
         message = GUILayout.TextField(message);
         GUILayout.EndVertical();
 
-        if (GUILayout.Button("Send"))
+        if (GUILayout.Button("Send") && message != "")
         {
             SendChatMessage(message + "\n");
             message = "";

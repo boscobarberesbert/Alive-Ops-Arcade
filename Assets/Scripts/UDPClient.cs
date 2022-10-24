@@ -40,6 +40,9 @@ public class UDPClient : MonoBehaviour
 
     private void InitializeSocket()
     {
+        Debug.Log(MainMenu.serverIp.ToString());
+        serverIP = MainMenu.serverIp.Substring(0, MainMenu.serverIp.Length - 1);
+
         clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
         ipep = new IPEndPoint(IPAddress.Parse(serverIP), channel1Port);
@@ -113,7 +116,7 @@ public class UDPClient : MonoBehaviour
         message = GUILayout.TextField(message);
         GUILayout.EndVertical();
 
-        if (GUILayout.Button("Send"))
+        if (GUILayout.Button("Send") && message != "")
         {
             SendChatMessage(message + "\n");
             message = "";

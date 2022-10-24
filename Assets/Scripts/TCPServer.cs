@@ -17,10 +17,11 @@ public class TCPServer : MonoBehaviour
     private Socket serverSocket;
 
     ArrayList clientList;
-    private int channel1Port = 9050;
+    private int port = 9050;
 
-    // Chat & Lobby
+    // Lobby & Chat
     public string serverName;
+
     string message = "";
     List<ChatMessage> chat;
     Vector2 scrollPosition;
@@ -43,7 +44,7 @@ public class TCPServer : MonoBehaviour
 
         serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-        IPEndPoint ipep = new IPEndPoint(IPAddress.Any, channel1Port);
+        IPEndPoint ipep = new IPEndPoint(IPAddress.Any, port);
         serverSocket.Bind(ipep);
 
         connectionThread = new Thread(ServerConnectionListener);
@@ -201,7 +202,7 @@ public class TCPServer : MonoBehaviour
         message = GUILayout.TextField(message);
         GUILayout.EndVertical();
 
-        if (GUILayout.Button("Send"))
+        if (GUILayout.Button("Send") && message != "")
         {
             SendChatMessage(message + "\n");
             message = "";

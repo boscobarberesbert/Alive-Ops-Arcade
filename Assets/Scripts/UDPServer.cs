@@ -93,8 +93,11 @@ public class UDPServer : MonoBehaviour
 
     private void SendChatMessage(string messageToSend)
     {
-        byte[] data = Encoding.ASCII.GetBytes(messageToSend);
-        serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
+        if (clients.Count != 0)
+        {
+            byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+            serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
+        }
         lock (chatLock)
         {
             chat.Add(new ChatMessage("server", messageToSend, serverName));
@@ -130,7 +133,7 @@ public class UDPServer : MonoBehaviour
         message = GUILayout.TextField(message);
         GUILayout.EndVertical();
 
-        if (GUILayout.Button("Send"))
+        if (GUILayout.Button("Send") && message != "")
         {
             SendChatMessage(message + "\n");
             message = "";

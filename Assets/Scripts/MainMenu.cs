@@ -14,6 +14,7 @@ public class MainMenu : MonoBehaviour
     {
         CreateRoom();
     }
+
     public void JoinRoomBtn()
     {
         menuCanvas.gameObject.SetActive(false);
@@ -27,10 +28,12 @@ public class MainMenu : MonoBehaviour
             JoinRoom();
         }
     }
+
     private void CreateRoom()
     {
         SceneManager.LoadScene("Server");
     }
+
     private void JoinRoom()
     {
         serverIp = inputFieldText.text.Trim();
