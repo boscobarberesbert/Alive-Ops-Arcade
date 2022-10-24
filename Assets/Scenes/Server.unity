@@ -168,7 +168,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96794fa8c65af6748b93d7b3038fa81f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverName: Panitas Server TCP
+  serverName: BatCat Server TCP
 --- !u!114 &149158821
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -181,7 +181,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a52d69c6729cabc4596ee89a19374607, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverName: Panitas Server UDP
+  serverName: BatCat Server UDP
 --- !u!1 &331460640
 GameObject:
   m_ObjectHideFlags: 0

@@ -43,7 +43,7 @@ public class UDPClient : MonoBehaviour
         serverIP = MainMenu.serverIp.Substring(0, MainMenu.serverIp.Length - 1);
         Debug.Log(serverIP);
 
-        username = MainMenu.username.ToString();
+        username = MainMenu.username.Substring(0, MainMenu.username.Length - 1);
         Debug.Log(username);
 
         clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
