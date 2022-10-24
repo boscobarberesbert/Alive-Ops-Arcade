@@ -9,7 +9,7 @@ using System.Threading;
 public class UDPServer : MonoBehaviour
 {
     Thread serverThread;
-    private object myLock;
+    private object chatLock;
 
     // Network
     private Socket serverSocket;
@@ -29,8 +29,10 @@ public class UDPServer : MonoBehaviour
     void Start()
     {
         chat = new List<ChatMessage>();
+        chatLock = new object();
+
         clients = new Dictionary<EndPoint, string>();
-        myLock = new object();
+
         InitializeSocket();
     }
 
@@ -71,7 +73,7 @@ public class UDPServer : MonoBehaviour
                 serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
             }
 
-            lock (myLock)
+            lock (chatLock)
             {
                 chat.Add(new ChatMessage("client", receivedMessage));
             }
@@ -92,7 +94,7 @@ public class UDPServer : MonoBehaviour
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
-        lock (myLock)
+        lock (chatLock)
         {
             chat.Add(new ChatMessage("server", messageToSend));
         }
@@ -103,7 +105,7 @@ public class UDPServer : MonoBehaviour
         GUILayout.BeginArea(new Rect(Screen.width / 2 - 225, Screen.height / 2 - 111, 450, 222));
         GUILayout.BeginVertical();
 
-        lock (myLock)
+        lock (chatLock)
         {
             scrollPosition = GUILayout.BeginScrollView(
                new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));

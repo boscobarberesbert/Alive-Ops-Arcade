@@ -9,15 +9,14 @@ using System.Threading;
 public class TCPClient : MonoBehaviour
 {
     Thread clientThread;
+    private object chatLock;
 
     // Network
     private Socket serverSocket;
 
     IPEndPoint ipep;
-    EndPoint endPoint;
 
     private int channel1Port = 9050;
-    private int channel2Port = 9051;
 
     // Chat & Lobby
     public string serverIP;
@@ -30,6 +29,7 @@ public class TCPClient : MonoBehaviour
     void Start()
     {
         chat = new List<ChatMessage>();
+        chatLock = new object();
 
         InitializeSocket();
     }
@@ -66,7 +66,10 @@ public class TCPClient : MonoBehaviour
             data = new byte[1024];
             int recv = serverSocket.Receive(data);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-            chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv)));
+            lock (chatLock)
+            {
+                chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv)));
+            }
 
         }
         serverSocket.Close();
@@ -82,22 +85,26 @@ public class TCPClient : MonoBehaviour
     {
         GUILayout.BeginArea(new Rect(Screen.width / 2 - 225, Screen.height / 2 - 111, 450, 222));
         GUILayout.BeginVertical();
-        scrollPosition = GUILayout.BeginScrollView(
-           new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
-        foreach (var c in chat)
+        lock (chatLock)
         {
-            if (c.sender.Contains("server"))
+            scrollPosition = GUILayout.BeginScrollView(
+               new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
+
+            foreach (var c in chat)
             {
-                GUIStyle style = GUI.skin.textArea;
-                style.alignment = TextAnchor.MiddleLeft;
-                GUILayout.Label(c.message, style);
-            }
-            else
-            {
-                GUIStyle style = GUI.skin.textArea;
-                style.alignment = TextAnchor.MiddleRight;
-                GUILayout.Label(c.message, style);
+                if (c.sender.Contains("server"))
+                {
+                    GUIStyle style = GUI.skin.textArea;
+                    style.alignment = TextAnchor.MiddleLeft;
+                    GUILayout.Label(c.message, style);
+                }
+                else
+                {
+                    GUIStyle style = GUI.skin.textArea;
+                    style.alignment = TextAnchor.MiddleRight;
+                    GUILayout.Label(c.message, style);
+                }
             }
         }
 

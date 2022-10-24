@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ChatMessage
 {
-   public string sender;
+    public string sender;
     public string message;
     public ChatMessage(string sender, string message)
     {

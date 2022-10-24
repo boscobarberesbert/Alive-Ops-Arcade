@@ -10,13 +10,13 @@ public class TCPServer : MonoBehaviour
 {
     Thread connectionThread;
     Thread serverThread;
-    private object myLock;
+    private object clientListLock;
+    private object chatLock;
+
     // Network
     private Socket serverSocket;
 
     ArrayList clientList;
-
-
     private int channel1Port = 9050;
 
     // Chat & Lobby
@@ -29,7 +29,9 @@ public class TCPServer : MonoBehaviour
     void Start()
     {
         chat = new List<ChatMessage>();
-        myLock = new object();
+        chatLock = new object();
+
+        clientListLock = new object();
         clientList = new ArrayList();
 
         InitializeSocket();
@@ -56,6 +58,7 @@ public class TCPServer : MonoBehaviour
     private void ServerConnectionListener()
     {
         serverSocket.Listen(10);
+
         while (clientList.Count < 11)
         {
             Socket newClient = serverSocket.Accept();
@@ -66,18 +69,19 @@ public class TCPServer : MonoBehaviour
             byte[] data = new byte[1024];
             int recv = newClient.Receive(data);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-            chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
+            lock (chatLock)
+            {
+                chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
+            }
 
             data = Encoding.ASCII.GetBytes("Welcome to the " + serverName);
             newClient.Send(data, data.Length, SocketFlags.None);
-            lock (myLock)
+            lock (clientListLock)
             {
                 clientList.Add(newClient);
             }
         }
-
     }
-
    
     private void ServerRoomBroadcast()
     {
@@ -85,7 +89,7 @@ public class TCPServer : MonoBehaviour
         ArrayList writableClients = new ArrayList();
         while (true)
         {
-            lock(myLock)
+            lock(clientListLock)
             {
                 readableClients = new ArrayList(clientList);
                 writableClients = new ArrayList(clientList);
@@ -93,6 +97,7 @@ public class TCPServer : MonoBehaviour
             
             if (readableClients.Count == 0)
             {
+                Debug.Log("READABLE CLIENTS COUNT IS 0");
                 continue;
             }
             Socket.Select(readableClients, null, null, 1000);
@@ -104,12 +109,12 @@ public class TCPServer : MonoBehaviour
                 if (recv == 0)
                 {
                     IPEndPoint iep = (IPEndPoint)client.RemoteEndPoint;
-                    Debug.Log("Client {0} disconnected." + iep.ToString());
+                    Debug.Log("Client " + iep.ToString() + " disconnected.");
                     client.Close();
 
                     int clientCount;
 
-                    lock (myLock)
+                    lock (clientListLock)
                     {
                         clientList.Remove(client);
                         clientCount = clientList.Count;
@@ -124,15 +129,22 @@ public class TCPServer : MonoBehaviour
                 else
                 {
                     Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-                    chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
+                    lock (chatLock)
+                    {
+                        chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
+                    }
+
                     if (writableClients.Count == 0)
                     {
+                        Debug.Log("WRITABLE CLIENTS COUNT IS 0");
                         continue;
                     }
+
+                    // Broadcast the message received to all clients available
                     Socket.Select(null, writableClients, null, 1000);
-                    foreach (Socket c in clientList)
+                    foreach (Socket clientToBroadcast in writableClients)
                     {
-                        c.Send(data, recv, SocketFlags.None);
+                        clientToBroadcast.Send(data, recv, SocketFlags.None);
                     }
                 }
             }
@@ -142,7 +154,7 @@ public class TCPServer : MonoBehaviour
     private void SendChatMessage(string messageToSend)
     {
         ArrayList copyClientList = new ArrayList(clientList);
-        lock (myLock)
+        lock (clientListLock)
         {
             copyClientList = new ArrayList(clientList);
         }
@@ -154,31 +166,37 @@ public class TCPServer : MonoBehaviour
             data = Encoding.ASCII.GetBytes(messageToSend);
             client.Send(data, data.Length, SocketFlags.None);
         }
-        chat.Add(new ChatMessage("client", messageToSend));
-
+        lock (chat)
+        {
+            chat.Add(new ChatMessage("client", messageToSend));
+        }
     }
 
     private void OnGUI()
     {
         GUILayout.BeginArea(new Rect(Screen.width / 2 - 225, Screen.height / 2 - 111, 450, 222));
         GUILayout.BeginVertical();
-        scrollPosition = GUILayout.BeginScrollView(
-           new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
-        foreach (var c in chat)
+        lock (chatLock)
         {
-            if (c.sender.Contains("server"))
-            {
-                GUIStyle style = GUI.skin.textArea;
-                style.alignment = TextAnchor.MiddleRight;
-                GUILayout.Label(c.message, style);
-            }
-            else
-            {
+            scrollPosition = GUILayout.BeginScrollView(
+               new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
 
-                GUIStyle style = GUI.skin.textArea;
-                style.alignment = TextAnchor.MiddleLeft;
-                GUILayout.Label(c.message, style);
+            foreach (var c in chat)
+            {
+                if (c.sender.Contains("server"))
+                {
+                    GUIStyle style = GUI.skin.textArea;
+                    style.alignment = TextAnchor.MiddleRight;
+                    GUILayout.Label(c.message, style);
+                }
+                else
+                {
+
+                    GUIStyle style = GUI.skin.textArea;
+                    style.alignment = TextAnchor.MiddleLeft;
+                    GUILayout.Label(c.message, style);
+                }
             }
         }
 

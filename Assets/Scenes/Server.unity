@@ -168,7 +168,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96794fa8c65af6748b93d7b3038fa81f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverName: Panitas server tcp
+  serverName: Panitas Server TCP
 --- !u!114 &149158821
 MonoBehaviour:
   m_ObjectHideFlags: 0
