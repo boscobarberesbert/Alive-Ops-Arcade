@@ -120,7 +120,7 @@ public class TCPServer : MonoBehaviour
                 {
                     Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
                     chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
-                    foreach(Socket c in copyClientList)
+                    foreach(Socket c in clientList)
                     {
                         c.Send(data, recv, SocketFlags.None);
                     }
@@ -136,15 +136,15 @@ public class TCPServer : MonoBehaviour
             copyClientList = new ArrayList(clientList);
         }
 
-        Socket.Select(copyClientList, null, null, 1000);
+        Socket.Select(null, copyClientList, null, 1000);
         foreach (Socket client in copyClientList)
         {
             byte[] data = new byte[1024];
             data = Encoding.ASCII.GetBytes(messageToSend);
             client.Send(data, data.Length, SocketFlags.None);
-            chat.Add(new ChatMessage("client", messageToSend));
-
         }
+        chat.Add(new ChatMessage("client", messageToSend));
+
     }
 
     private void OnGUI()
