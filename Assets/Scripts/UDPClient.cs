@@ -66,6 +66,11 @@ public class UDPClient : MonoBehaviour
         serverName = Encoding.ASCII.GetString(data, 0, recv);
         Debug.Log(serverName);
 
+        lock (chatLock)
+        {
+            chat.Add(new ChatMessage("server", "Welcome to the " + serverName, serverName));
+        }
+
         while (true)
         {
             data = new byte[1024];
