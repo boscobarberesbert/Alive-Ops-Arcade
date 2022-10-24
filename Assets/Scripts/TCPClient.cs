@@ -79,6 +79,10 @@ public class TCPClient : MonoBehaviour
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         serverSocket.Send(data, data.Length, SocketFlags.None);
+        lock (chat)
+        {
+            chat.Add(new ChatMessage("client", messageToSend));
+        }
     }
 
     private void OnGUI()
