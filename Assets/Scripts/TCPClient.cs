@@ -63,7 +63,6 @@ public class TCPClient : MonoBehaviour
         byte[] data = new byte[1024];
         data = Encoding.ASCII.GetBytes(clientName + " joined the room.");
         clientSocket.Send(data, data.Length, SocketFlags.None);
-        chat.Add(new ChatMessage("client", clientName + " joined the room."));
 
         while (true)
         {
@@ -73,14 +72,14 @@ public class TCPClient : MonoBehaviour
             chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv)));
 
         }
+        clientSocket.Close();
+
     }
 
     private void SendChatMessage(string messageToSend)
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
         clientSocket.Send(data, data.Length, SocketFlags.None);
-        chat.Add(new ChatMessage("client", messageToSend));
-
     }
 
     private void OnGUI()

@@ -8,11 +8,15 @@ using System.Threading;
 
 public class TCPServer : MonoBehaviour
 {
+    Thread connectionThread;
     Thread serverThread;
-
+    private object myLock;
     // Network
     private Socket serverSocket;
-    private Socket clientSocket;
+
+    ArrayList clientList;
+
+    ArrayList copyClientList;
 
     private int channel1Port = 9050;
 
@@ -26,6 +30,8 @@ public class TCPServer : MonoBehaviour
     void Start()
     {
         chat = new List<ChatMessage>();
+        myLock = new object();
+        clientList = new ArrayList();
 
         InitializeSocket();
     }
@@ -39,45 +45,106 @@ public class TCPServer : MonoBehaviour
         IPEndPoint ipep = new IPEndPoint(IPAddress.Any, channel1Port);
         serverSocket.Bind(ipep);
 
-        serverThread = new Thread(ServerSetupTCP);
+        connectionThread = new Thread(ServerConnectionListener);
+        connectionThread.IsBackground = true;
+        connectionThread.Start();
+
+        serverThread = new Thread(ServerRoomBroadcast);
         serverThread.IsBackground = true;
         serverThread.Start();
     }
 
-    private void ServerSetupTCP()
+    private void ServerConnectionListener()
     {
-        Debug.Log("Server initialized listening...");
-
         serverSocket.Listen(10);
-
-        clientSocket = serverSocket.Accept();
-        IPEndPoint clientIpep = (IPEndPoint)clientSocket.RemoteEndPoint;
-
-        Debug.Log("Connected with " + clientIpep.Address.ToString() + " at port: " + clientIpep.Port);
-
-        byte[] data = new byte[1024];
-        int recv = clientSocket.Receive(data);
-        Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
-        chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
-
-        data = Encoding.ASCII.GetBytes("Welcome to the " + serverName);
-        clientSocket.Send(data, data.Length, SocketFlags.None);
-
-        while (true)
+        while (clientList.Count < 11)
         {
-            data = new byte[1024];
-            recv = clientSocket.Receive(data);
+            Socket newClient = serverSocket.Accept();
+            IPEndPoint clientIpep = (IPEndPoint)newClient.RemoteEndPoint;
+
+            Debug.Log("Connected with " + clientIpep.Address.ToString() + " at port: " + clientIpep.Port);
+
+            byte[] data = new byte[1024];
+            int recv = newClient.Receive(data);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
             chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
+
+            data = Encoding.ASCII.GetBytes("Welcome to the " + serverName);
+            newClient.Send(data, data.Length, SocketFlags.None);
+            lock (myLock)
+            {
+                clientList.Add(newClient);
+            }
+        }
+
+    }
+    private void ServerRoomBroadcast()
+    {
+        while (true)
+        {
+            lock (myLock)
+            {
+                copyClientList = new ArrayList(clientList);
+            }
+            if (copyClientList.Count == 0)
+            {
+                continue;
+            }
+            Socket.Select(copyClientList, null, null, 1000);
+            foreach (Socket client in copyClientList)
+            {
+                byte[] data = new byte[1024];
+                int recv = client.Receive(data);
+
+                if (recv == 0)
+                {
+                    IPEndPoint iep = (IPEndPoint)client.RemoteEndPoint;
+                    Debug.Log("Client {0} disconnected." + iep.ToString());
+                    client.Close();
+
+                    int clientCount;
+
+                    lock (myLock)
+                    {
+                        clientList.Remove(client);
+                        clientCount = clientList.Count;
+                    }
+
+                    if (clientCount == 0)
+                    {
+                        Debug.Log("Last client disconnected, bye");
+                        return;
+                    }
+                }
+                else
+                {
+                    Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+                    chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
+                    foreach(Socket client in copyClientList)
+                    {
+                        client.Send(data, recv, SocketFlags.None);
+                    }
+                }
+            }
         }
     }
 
     private void SendChatMessage(string messageToSend)
     {
-        byte[] data = Encoding.ASCII.GetBytes(messageToSend);
-        clientSocket.Send(data, data.Length, SocketFlags.None);
-        chat.Add(new ChatMessage("server", messageToSend));
+        lock (myLock)
+        {
+            copyClientList = new ArrayList(clientList);
+        }
 
+        Socket.Select(copyClientList, null, null, 1000);
+        foreach (Socket client in copyClientList)
+        {
+            byte[] data = new byte[1024];
+            data = Encoding.ASCII.GetBytes(messageToSend);
+            client.Send(data, data.Length, SocketFlags.None);
+            chat.Add(new ChatMessage("client", messageToSend));
+
+        }
     }
 
     private void OnGUI()
@@ -104,8 +171,6 @@ public class TCPServer : MonoBehaviour
             }
         }
 
-
-
         GUILayout.EndScrollView();
 
         GUILayout.BeginVertical();
@@ -123,12 +188,11 @@ public class TCPServer : MonoBehaviour
         GUILayout.EndArea();
     }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
         Debug.Log("Destroying Scene");
 
         serverSocket.Close();
-        clientSocket.Close();
         serverThread.Abort();
     }
 }
