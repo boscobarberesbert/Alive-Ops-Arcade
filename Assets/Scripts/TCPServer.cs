@@ -120,9 +120,9 @@ public class TCPServer : MonoBehaviour
                 {
                     Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
                     chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
-                    foreach(Socket client in copyClientList)
+                    foreach(Socket c in copyClientList)
                     {
-                        client.Send(data, recv, SocketFlags.None);
+                        c.Send(data, recv, SocketFlags.None);
                     }
                 }
             }
