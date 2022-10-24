@@ -40,8 +40,11 @@ public class UDPClient : MonoBehaviour
 
     private void InitializeSocket()
     {
-        Debug.Log(MainMenu.serverIp.ToString());
         serverIP = MainMenu.serverIp.Substring(0, MainMenu.serverIp.Length - 1);
+        Debug.Log(serverIP);
+
+        username = MainMenu.username.ToString();
+        Debug.Log(username);
 
         clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 

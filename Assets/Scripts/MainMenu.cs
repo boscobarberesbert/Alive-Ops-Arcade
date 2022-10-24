@@ -6,10 +6,12 @@ using TMPro;
 public class MainMenu : MonoBehaviour
 {
     public static string serverIp;
+    public static string username;
     [SerializeField] Canvas menuCanvas;
     [SerializeField] Canvas joinRoomCanvas;
-    [SerializeField] TMP_Text inputFieldText;
-    
+    [SerializeField] TMP_Text inputFieldTextIP;
+    [SerializeField] TMP_Text inputFieldTextName;
+
     public void CreateRoomBtn()
     {
         CreateRoom();
@@ -23,7 +25,7 @@ public class MainMenu : MonoBehaviour
 
     public void JoinBtn()
     {
-        if (inputFieldText.text.Length > 0)
+        if (inputFieldTextIP.text.Length > 0 && inputFieldTextName.text.Length > 0)
         {
             JoinRoom();
         }
@@ -36,7 +38,8 @@ public class MainMenu : MonoBehaviour
 
     private void JoinRoom()
     {
-        serverIp = inputFieldText.text.Trim();
+        serverIp = inputFieldTextIP.text.Trim();
+        username = inputFieldTextName.text.Trim();
         SceneManager.LoadScene("Client");
     }
 }
