@@ -65,7 +65,6 @@ public class UDPServer : MonoBehaviour
             recv = serverSocket.ReceiveFrom(data, ref endPoint);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
             chat.Add(new ChatMessage("client", Encoding.ASCII.GetString(data, 0, recv)));
-
         }
     }
 

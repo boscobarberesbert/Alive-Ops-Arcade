@@ -11,7 +11,7 @@ public class TCPClient : MonoBehaviour
     Thread clientThread;
 
     // Network
-    private Socket clientSocket;
+    private Socket serverSocket;
 
     IPEndPoint ipep;
     EndPoint endPoint;
@@ -36,7 +36,7 @@ public class TCPClient : MonoBehaviour
 
     private void InitializeSocket()
     {
-        clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
         ipep = new IPEndPoint(IPAddress.Parse(serverIP), channel1Port);
 
@@ -52,7 +52,7 @@ public class TCPClient : MonoBehaviour
     {
         try
         {
-            clientSocket.Connect(ipep);
+            serverSocket.Connect(ipep);
         }
         catch (SocketException e)
         {
@@ -62,24 +62,24 @@ public class TCPClient : MonoBehaviour
 
         byte[] data = new byte[1024];
         data = Encoding.ASCII.GetBytes(clientName + " joined the room.");
-        clientSocket.Send(data, data.Length, SocketFlags.None);
+        serverSocket.Send(data, data.Length, SocketFlags.None);
 
         while (true)
         {
             data = new byte[1024];
-            int recv = clientSocket.Receive(data);
+            int recv = serverSocket.Receive(data);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
             chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv)));
 
         }
-        clientSocket.Close();
+        serverSocket.Close();
 
     }
 
     private void SendChatMessage(string messageToSend)
     {
         byte[] data = Encoding.ASCII.GetBytes(messageToSend);
-        clientSocket.Send(data, data.Length, SocketFlags.None);
+        serverSocket.Send(data, data.Length, SocketFlags.None);
     }
 
     private void OnGUI()
@@ -128,7 +128,7 @@ public class TCPClient : MonoBehaviour
     {
         Debug.Log("Destroying Scene");
 
-        clientSocket.Close();
+        serverSocket.Close();
         clientThread.Abort();
     }
 }
