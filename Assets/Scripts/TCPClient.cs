@@ -70,7 +70,6 @@ public class TCPClient : MonoBehaviour
             {
                 chat.Add(new ChatMessage("server", Encoding.ASCII.GetString(data, 0, recv), clientName));
             }
-
         }
     }
 

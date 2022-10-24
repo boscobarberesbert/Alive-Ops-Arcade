@@ -120,8 +120,9 @@ public class UDPServer : MonoBehaviour
 
                 GUILayout.BeginHorizontal(style);
                 GUILayout.Label(c.username);
-                GUILayout.Label(c.message);
                 GUILayout.EndHorizontal();
+
+                GUILayout.Label(c.message, style);
             }
         }
 
