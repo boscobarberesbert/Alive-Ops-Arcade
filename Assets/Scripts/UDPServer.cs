@@ -9,7 +9,6 @@ using System.Threading;
 public class UDPServer : MonoBehaviour
 {
     Thread serverThread;
-    private object chatLock;
 
     // Network
     private Socket serverSocket;
@@ -19,19 +18,11 @@ public class UDPServer : MonoBehaviour
 
     Dictionary<EndPoint, string> clients;
 
-    // Lobby & Chat
     public string serverName;
-
-    string message = "";
-    List<ChatMessage> chat;
-    Vector2 scrollPosition = new Vector2(0, 0);
 
     // Start is called before the first frame update
     void Start()
     {
-        chat = new List<ChatMessage>();
-        chatLock = new object();
-
         clients = new Dictionary<EndPoint, string>();
 
         InitializeSocket();
@@ -39,8 +30,6 @@ public class UDPServer : MonoBehaviour
 
     private void InitializeSocket()
     {
-        Debug.Log("INITIALIZE THREAD");
-
         serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
         IPEndPoint ipep = new IPEndPoint(IPAddress.Any, channel1Port);
@@ -53,31 +42,20 @@ public class UDPServer : MonoBehaviour
         serverThread.Start();
     }
 
+    // Update is called once per frame
+    void Update()
+    {
+        
+    }
+
     private void ServerRoomBroadcast()
     {
-        Debug.Log("Server initialized listening...");
-
         while (true)
         {
             byte[] data = new byte[1024];
             int recv = serverSocket.ReceiveFrom(data, ref endPoint);
             string receivedMessage = Encoding.ASCII.GetString(data, 0, recv);
 
-            if (!clients.ContainsKey(endPoint))
-            {
-                // As it is a new client, the received message is its username
-                clients.Add(endPoint, receivedMessage);
-
-                receivedMessage += " joined the room.";
-
-                data = Encoding.ASCII.GetBytes(serverName);
-                serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
-            }
-
-            lock (chatLock)
-            {
-                chat.Add(new ChatMessage("client", receivedMessage, clients[endPoint]));
-            }
             Debug.Log(receivedMessage);
 
             foreach (KeyValuePair<EndPoint, string> entry in clients)
@@ -89,58 +67,6 @@ public class UDPServer : MonoBehaviour
                 }
             }
         }
-    }
-
-    private void SendChatMessage(string messageToSend)
-    {
-        if (clients.Count != 0)
-        {
-            byte[] data = Encoding.ASCII.GetBytes(messageToSend);
-            serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
-        }
-        lock (chatLock)
-        {
-            chat.Add(new ChatMessage("server", messageToSend, serverName));
-        }
-    }
-
-    private void OnGUI()
-    {
-        GUILayout.BeginArea(new Rect(Screen.width / 2 - 225, Screen.height / 2 - 111, 450, 222));
-        GUILayout.BeginVertical();
-
-        lock (chatLock)
-        {
-            scrollPosition = GUILayout.BeginScrollView(
-               new Vector2(0, scrollPosition.y + chat.Count), GUI.skin.box, GUILayout.Width(450), GUILayout.Height(100));
-
-            GUIStyle style = GUI.skin.textArea;
-            foreach (var chatEntry in chat)
-            {
-                if (chatEntry.senderType.Contains("server"))
-                    style.alignment = TextAnchor.MiddleRight;
-                else
-                    style.alignment = TextAnchor.MiddleLeft;
-
-                GUILayout.Label(chatEntry.senderName + ": " + chatEntry.message, style);
-            }
-        }
-
-        GUILayout.EndScrollView();
-
-        GUILayout.BeginVertical();
-        GUILayout.Label("Write your message:");
-        message = GUILayout.TextField(message);
-        GUILayout.EndVertical();
-
-        if (GUILayout.Button("Send") && message != "")
-        {
-            SendChatMessage(message + "\n");
-            message = "";
-        }
-
-        GUILayout.EndVertical();
-        GUILayout.EndArea();
     }
 
     private void OnDisable()

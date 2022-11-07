@@ -181,7 +181,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a52d69c6729cabc4596ee89a19374607, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverName: BatCat Server UDP
+  serverName: 
 --- !u!1 &331460640
 GameObject:
   m_ObjectHideFlags: 0
