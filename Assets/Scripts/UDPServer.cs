@@ -18,7 +18,7 @@ public class UDPServer : MonoBehaviour
 
     Dictionary<EndPoint, string> clients;
 
-    public string serverName;
+    
 
     // Start is called before the first frame update
     void Start()
@@ -42,11 +42,6 @@ public class UDPServer : MonoBehaviour
         serverThread.Start();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 
     private void ServerRoomBroadcast()
     {
