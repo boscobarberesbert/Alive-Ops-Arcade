@@ -9,6 +9,7 @@ using System.Threading;
 public class UDPClient : MonoBehaviour
 {
     Thread clientThread;
+    private object chatLock;
 
     // Network
     private Socket clientSocket;
@@ -19,55 +20,69 @@ public class UDPClient : MonoBehaviour
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
-    public string username;
-    public string serverIP;
+
+
 
     // Start is called before the first frame update
     void Start()
     {
-        InitializeSocket();
-    }
+        chatLock = new object();
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        InitializeSocket();
     }
 
     private void InitializeSocket()
     {
-        serverIP = MainMenu.serverIp.Substring(0, MainMenu.serverIp.Length - 1);
-        Debug.Log(serverIP);
-
-        username = MainMenu.username.Substring(0, MainMenu.username.Length - 1);
-        Debug.Log(username);
 
         clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+        string serverIP = PlayerData.connectToIP.Substring(0,PlayerData.connectToIP.Length - 1);
 
         ipep = new IPEndPoint(IPAddress.Parse(serverIP), channel1Port);
 
         IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, channel2Port);
         endPoint = (EndPoint)sendIpep;
 
-        clientThread = new Thread(ClientSetup);
+        clientThread = new Thread(ClientSetupUDP);
         clientThread.IsBackground = true;
         clientThread.Start();
     }
 
-    private void ClientSetup()
+    private void ClientSetupUDP()
     {
         byte[] data = new byte[1024];
-        //data = Encoding.ASCII.GetBytes("");
-        //clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
+        data = Encoding.ASCII.GetBytes(PlayerData.username);
+        clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
+
+        data = new byte[1024];
+        int recv = clientSocket.ReceiveFrom(data, ref endPoint);
+        string serverName = Encoding.ASCII.GetString(data, 0, recv);
+        Debug.Log(serverName);
+
+        lock (chatLock)
+        {
+        }
 
         while (true)
         {
             data = new byte[1024];
-            int recv = clientSocket.ReceiveFrom(data, ref endPoint);
-
+            recv = clientSocket.ReceiveFrom(data, ref endPoint);
             Debug.Log(Encoding.ASCII.GetString(data, 0, recv));
+            lock (chatLock)
+            {
+            }
         }
     }
+
+    private void SendChatMessage(string messageToSend)
+    {
+        byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+        clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
+        lock (chatLock)
+        {
+        }
+    }
+
 
     private void OnDisable()
     {
