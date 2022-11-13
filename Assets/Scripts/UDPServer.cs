@@ -9,6 +9,7 @@ using System.Threading;
 public class UDPServer : MonoBehaviour
 {
     Thread serverThread;
+    private object chatLock;
 
     // Network
     private Socket serverSocket;
@@ -17,12 +18,13 @@ public class UDPServer : MonoBehaviour
     private int channel2Port = 9051;
 
     Dictionary<EndPoint, string> clients;
-
-    
-
+    public delegate void OnClientAdded();
+    public OnClientAdded onClientAdded;
     // Start is called before the first frame update
     void Start()
     {
+        chatLock = new object();
+
         clients = new Dictionary<EndPoint, string>();
 
         InitializeSocket();
@@ -30,6 +32,8 @@ public class UDPServer : MonoBehaviour
 
     private void InitializeSocket()
     {
+        Debug.Log("INITIALIZE THREAD");
+
         serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
         IPEndPoint ipep = new IPEndPoint(IPAddress.Any, channel1Port);
@@ -42,15 +46,33 @@ public class UDPServer : MonoBehaviour
         serverThread.Start();
     }
 
-
     private void ServerRoomBroadcast()
     {
+        Debug.Log("Server initialized listening...");
+
         while (true)
         {
             byte[] data = new byte[1024];
             int recv = serverSocket.ReceiveFrom(data, ref endPoint);
             string receivedMessage = Encoding.ASCII.GetString(data, 0, recv);
 
+            if (!clients.ContainsKey(endPoint))
+            {
+                clients.Add(endPoint, receivedMessage);
+
+                receivedMessage += " joined the room.";
+
+                //data = Encoding.ASCII.GetBytes(serverName);
+                //serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
+            }
+
+            lock (chatLock)
+            {
+                if(onClientAdded != null)
+                {
+                    onClientAdded();
+                }
+            }
             Debug.Log(receivedMessage);
 
             foreach (KeyValuePair<EndPoint, string> entry in clients)
@@ -64,6 +86,20 @@ public class UDPServer : MonoBehaviour
         }
     }
 
+    private void SendChatMessage(string messageToSend)
+    {
+        if (clients.Count != 0)
+        {
+            byte[] data = Encoding.ASCII.GetBytes(messageToSend);
+            serverSocket.SendTo(data, data.Length, SocketFlags.None, endPoint);
+        }
+        lock (chatLock)
+        {
+            //chat.Add(new ChatMessage("server", messageToSend, serverName));
+        }
+    }
+
+   
     private void OnDisable()
     {
         Debug.Log("Destroying Scene");

@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Net;
 using UnityEngine;
 using System.Threading;
+using System;
 
 public class Lobby : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class Lobby : MonoBehaviour
     [SerializeField] GameObject clientPrefab;
     [SerializeField] GameObject clientManagerPrefab;
     [SerializeField] Transform[] positions;
+    GameObject serverManager;
     // Start is called before the first frame update
     void Start()
     {
@@ -19,7 +21,9 @@ public class Lobby : MonoBehaviour
         {
             //If there is not a host create one
             Instantiate(serverPrefab, positions[0].transform.position, positions[0].transform.rotation);
-            Instantiate(serverManagerPrefab);
+           serverManager =  Instantiate(serverManagerPrefab);
+            serverManager.GetComponent<UDPServer>().onClientAdded += SpawnClient;
+
         }
         else
         {
@@ -30,9 +34,8 @@ public class Lobby : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
-    void Update()
+    void SpawnClient()
     {
-        
+        Instantiate(clientPrefab, positions[1].transform.position, positions[1].transform.rotation);
     }
 }
