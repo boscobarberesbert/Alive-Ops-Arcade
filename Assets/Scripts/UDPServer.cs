@@ -55,6 +55,7 @@ public class UDPServer : MonoBehaviour
             byte[] data = new byte[1024];
             int recv = serverSocket.ReceiveFrom(data, ref endPoint);
             string receivedMessage = Encoding.ASCII.GetString(data, 0, recv);
+            Debug.Log(receivedMessage);
 
             if (!clients.ContainsKey(endPoint))
             {
@@ -73,7 +74,6 @@ public class UDPServer : MonoBehaviour
                     onClientAdded();
                 }
             }
-            Debug.Log(receivedMessage);
 
             foreach (KeyValuePair<EndPoint, string> entry in clients)
             {
