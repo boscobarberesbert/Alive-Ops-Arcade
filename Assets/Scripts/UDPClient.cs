@@ -20,9 +20,6 @@ public class UDPClient : MonoBehaviour
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
-
-
-
     // Start is called before the first frame update
     void Start()
     {
