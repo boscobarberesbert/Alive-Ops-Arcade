@@ -14,14 +14,11 @@ public static class PlayerData
 
 public class MainMenu : MonoBehaviour
 {
-    public static string serverIp;
-    public static string username;
     [SerializeField] Canvas menuCanvas;
     [SerializeField] Canvas joinRoomCanvas;
     [SerializeField] Canvas createRoomCanvas;
     [SerializeField] TMP_Text inputFieldTextConnectToIP;
-    [SerializeField] TMP_Text inputFieldTextClientUsername;
-    [SerializeField] TMP_Text inputFieldTextServerUsername;
+    [SerializeField] TMP_Text inputFieldTextUsername;
 
     public void CreateRoomBtn()
     {
@@ -37,7 +34,7 @@ public class MainMenu : MonoBehaviour
 
     public void JoinBtn()
     {
-        if (inputFieldTextConnectToIP.text.Length > 0 && inputFieldTextClientUsername.text.Length > 0)
+        if (inputFieldTextConnectToIP.text.Length > 0 && inputFieldTextUsername.text.Length > 0)
         {
             JoinRoom();
         }
@@ -45,7 +42,7 @@ public class MainMenu : MonoBehaviour
 
     public void CreateBtn()
     {
-        if (inputFieldTextConnectToIP.text.Length > 0 && inputFieldTextClientUsername.text.Length > 0)
+        if (inputFieldTextConnectToIP.text.Length > 0 && inputFieldTextUsername.text.Length > 0)
         {
             CreateRoom();
         }
@@ -53,15 +50,21 @@ public class MainMenu : MonoBehaviour
 
     private void CreateRoom()
     {
-        PlayerData.username = inputFieldTextClientUsername.text.Trim();
+        string name = inputFieldTextUsername.text.Trim();
+        PlayerData.username = name.Substring(0, name.Length - 1);
         PlayerData.client = false;
+
         SceneManager.LoadScene("Lobby");
     }
 
     private void JoinRoom()
     {
-        PlayerData.connectToIP = inputFieldTextConnectToIP.text.Trim();
-        PlayerData.username = inputFieldTextClientUsername.text.Trim();
+        string inputText = inputFieldTextConnectToIP.text.Trim();
+        PlayerData.connectToIP = inputText.Substring(0, inputText.Length - 1);
+
+        inputText = inputFieldTextUsername.text.Trim();
+        PlayerData.username = inputText.Substring(0, inputText.Length - 1);
+
         SceneManager.LoadScene("Lobby");
     }
 }
