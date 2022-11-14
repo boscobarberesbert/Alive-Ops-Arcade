@@ -18,7 +18,8 @@ public class MainMenu : MonoBehaviour
     [SerializeField] Canvas joinRoomCanvas;
     [SerializeField] Canvas createRoomCanvas;
     [SerializeField] TMP_Text inputFieldTextConnectToIP;
-    [SerializeField] TMP_Text inputFieldTextUsername;
+    [SerializeField] TMP_Text inputFieldTextClientUsername;
+    [SerializeField] TMP_Text inputFieldTextServerUsername;
 
     public void CreateRoomBtn()
     {
@@ -34,7 +35,7 @@ public class MainMenu : MonoBehaviour
 
     public void JoinBtn()
     {
-        if (inputFieldTextConnectToIP.text.Length > 0 && inputFieldTextUsername.text.Length > 0)
+        if (inputFieldTextConnectToIP.text.Length > 0 && inputFieldTextClientUsername.text.Length > 0)
         {
             JoinRoom();
         }
@@ -42,7 +43,7 @@ public class MainMenu : MonoBehaviour
 
     public void CreateBtn()
     {
-        if (inputFieldTextConnectToIP.text.Length > 0 && inputFieldTextUsername.text.Length > 0)
+        if (inputFieldTextServerUsername.text.Length > 0)
         {
             CreateRoom();
         }
@@ -50,7 +51,7 @@ public class MainMenu : MonoBehaviour
 
     private void CreateRoom()
     {
-        string name = inputFieldTextUsername.text.Trim();
+        string name = inputFieldTextServerUsername.text.Trim();
         PlayerData.username = name.Substring(0, name.Length - 1);
         PlayerData.client = false;
 
@@ -62,7 +63,7 @@ public class MainMenu : MonoBehaviour
         string inputText = inputFieldTextConnectToIP.text.Trim();
         PlayerData.connectToIP = inputText.Substring(0, inputText.Length - 1);
 
-        inputText = inputFieldTextUsername.text.Trim();
+        inputText = inputFieldTextClientUsername.text.Trim();
         PlayerData.username = inputText.Substring(0, inputText.Length - 1);
 
         SceneManager.LoadScene("Lobby");
