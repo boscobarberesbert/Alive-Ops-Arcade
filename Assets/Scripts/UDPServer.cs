@@ -5,7 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-
+using UnityEngine.Events;
 public class UDPServer : MonoBehaviour
 {
     Thread serverThread;
@@ -19,15 +19,29 @@ public class UDPServer : MonoBehaviour
 
     Dictionary<EndPoint, string> clients;
     public delegate void OnClientAdded();
-    public OnClientAdded onClientAdded;
+    public event OnClientAdded onClientAdded;
+    bool triggerOnClientAdded = false;
     // Start is called before the first frame update
     void Start()
     {
+
         chatLock = new object();
 
         clients = new Dictionary<EndPoint, string>();
 
         InitializeSocket();
+    }
+
+    private void Update()
+    {
+        if (triggerOnClientAdded)
+        {
+            if (onClientAdded != null)
+            {
+                onClientAdded();
+            }
+            triggerOnClientAdded = false;
+        }
     }
 
     private void InitializeSocket()
@@ -69,10 +83,7 @@ public class UDPServer : MonoBehaviour
 
             lock (chatLock)
             {
-                if(onClientAdded != null)
-                {
-                    onClientAdded();
-                }
+                triggerOnClientAdded = true;
             }
 
             foreach (KeyValuePair<EndPoint, string> entry in clients)

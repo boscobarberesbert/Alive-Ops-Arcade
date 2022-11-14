@@ -458,10 +458,11 @@ MonoBehaviour:
   serverManagerPrefab: {fileID: 1545707539182856778, guid: fc1abe47594a46943bf8e158b50c05c4, type: 3}
   clientPrefab: {fileID: 8080713299842227144, guid: 05a3533afee27fc4982af1c548333c8e, type: 3}
   clientManagerPrefab: {fileID: 7540554399704650630, guid: ee650664f15ef4b4d84f6c81d03e4f0b, type: 3}
-  positions:
+  spawnPoints:
   - {fileID: 1196065385}
   - {fileID: 352142213}
   - {fileID: 1807938120}
+  - {fileID: 1765505810}
 --- !u!4 &1973127781
 Transform:
   m_ObjectHideFlags: 0

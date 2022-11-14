@@ -33,9 +33,8 @@ public class UDPClient : MonoBehaviour
 
         clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
-        string serverIP = PlayerData.connectToIP.Substring(0,PlayerData.connectToIP.Length - 1);
 
-        ipep = new IPEndPoint(IPAddress.Parse(serverIP), channel1Port);
+        ipep = new IPEndPoint(IPAddress.Parse(PlayerData.connectToIP), channel1Port);
 
         IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, channel2Port);
         endPoint = (EndPoint)sendIpep;
