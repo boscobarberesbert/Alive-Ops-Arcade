@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     public float speed = 3f;
+    public float gravity = -9.8f;
 
     PlayerInput playerInput;
     CharacterController characterController;
@@ -48,7 +49,6 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            float gravity = -9.8f;
             currentMovement.y += gravity;
         }
     }
