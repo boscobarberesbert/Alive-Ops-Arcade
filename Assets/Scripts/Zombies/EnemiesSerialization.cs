@@ -40,25 +40,26 @@ public class EnemiesSerialization : MonoBehaviour
             enemiesPositions.Add(enemies[i].transform.position);
         }
 
-        SerializeJson(enemiesIDs, enemiesPositions);
-        EnemiesState enemiesState = DeserializeJson();
+        EnemiesState enemiesStateToSerialize = new EnemiesState();
+        enemiesStateToSerialize.enemyCount = enemiesPositions.Count;
+        enemiesStateToSerialize.enemiesIDs = enemiesIDs;
+        enemiesStateToSerialize.enemiesPositions = enemiesPositions;
+
+        SerializeJson(enemiesStateToSerialize);
+        EnemiesState enemiesStateDeserialized = DeserializeJson();
 
         enemiesIDs.Clear();
         enemiesPositions.Clear();
 
         for (int i = 0; i < enemies.Length; ++i)
         {
-            enemies[i].transform.position = enemiesState.enemiesPositions[i];
+            enemies[i].transform.position = enemiesStateDeserialized.enemiesPositions[i];
         }
     }
 
-    void SerializeJson(List<int> enemiesIDs, List<Vector3> enemiesPositions)
+    void SerializeJson(EnemiesState enemiesState)
     {
-        var t = new EnemiesState();
-        t.enemyCount = enemiesPositions.Count;
-        t.enemiesIDs = enemiesIDs;
-        t.enemiesPositions = enemiesPositions;
-        string json = JsonUtility.ToJson(t);
+        string json = JsonUtility.ToJson(enemiesState);
         stream = new MemoryStream();
         BinaryWriter writer = new BinaryWriter(stream);
         writer.Write(json);
