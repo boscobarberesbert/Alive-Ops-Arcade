@@ -39,7 +39,7 @@ public class NetworkClient : INetworking
 
     public void OnUpdate()
     {
-        throw new System.NotImplementedException();
+        //throw new System.NotImplementedException();
     }
 
     public void reportError()
