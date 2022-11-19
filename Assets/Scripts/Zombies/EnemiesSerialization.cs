@@ -49,7 +49,6 @@ public class EnemiesSerialization : MonoBehaviour
         for (int i = 0; i < enemies.Length; ++i)
         {
             enemies[i].transform.position = enemiesState.enemiesPositions[i];
-            //enemies[i].transform.position = new Vector3(0,0,0);
         }
     }
 

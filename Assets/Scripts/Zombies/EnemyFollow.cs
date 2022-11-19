@@ -29,6 +29,7 @@ public class EnemyFollow : MonoBehaviour
         // Traverse the array in order to see which one is closer to the enemy.
         for (int i = 0; i < players.Length; ++i)
         {
+            // In case the current distance is lower than the previously saved one, we update it.
             currentPlayerDistance = Vector3.Distance(players[i].transform.position, this.transform.position);
             if (currentPlayerDistance < closestPlayerDistance)
             {
