@@ -62,9 +62,9 @@ public class NetworkClient : INetworking
         Debug.Log("[CLIENT] Socket created...");
 
 
-        ipep = new IPEndPoint(IPAddress.Parse(PlayerData.connectToIP), channel2Port);
+        ipep = new IPEndPoint(IPAddress.Parse(PlayerData.connectToIP), channel1Port);
 
-        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, channel1Port);
+        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, channel2Port);
         endPoint = (EndPoint)sendIpep;
 
         clientThread = new Thread(ClientListener);
