@@ -22,7 +22,6 @@ public class NetworkingServer : INetworking
     public delegate void OnClientAdded();
     public event OnClientAdded onClientAdded;
     bool triggerOnClientAdded = false;
-
     public void Start()
     {
         receiverLock = new object();

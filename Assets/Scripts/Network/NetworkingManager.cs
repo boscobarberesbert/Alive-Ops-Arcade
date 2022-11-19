@@ -1,11 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static NetworkingServer;
 
 public class NetworkingManager : MonoBehaviour
 {
     public static NetworkingManager Instance;
     INetworking networking;
+
+    public event OnClientAdded onClientAdded;
+    bool triggerOnClientAdded = false;
 
 
     private void Awake()
@@ -19,19 +23,34 @@ public class NetworkingManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-    }
 
-    private void Start()
-    {
         if (PlayerData.isClient)
         {
             networking = new NetworkClient();
         }
         else
         {
-            networking = new NetworkingServer();
+            NetworkingServer server = new NetworkingServer();
+            server.onClientAdded += this.onClientAdded;
+            networking = server;
         }
+    }
+
+    private void Start()
+    {
+
+     
+        
+
+        
 
         networking.Start();
+
+        
+    }
+
+    private void Update()
+    {
+        networking.OnUpdate();
     }
 }

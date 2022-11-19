@@ -20,13 +20,16 @@ public class Lobby : MonoBehaviour
     void Start()
     {
 
-
+        //OnServerConnected create a player for the server
+        //OnClientConnected create a player for the client and ask the server how many others there are
+        NetworkingManager.Instance.onClientAdded += SpawnClient;
      
     }
 
 
     void SpawnClient()
     {
-        players.Add(Instantiate(clientPrefab, spawnPoints[players.Count].position, spawnPoints[players.Count].rotation));
+        //players.Add(Instantiate(clientPrefab, spawnPoints[players.Count].position, spawnPoints[players.Count].rotation));
+        Debug.Log("Client Added");
     }
 }
