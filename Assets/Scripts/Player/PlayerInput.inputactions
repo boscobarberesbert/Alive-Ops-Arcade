@@ -114,6 +114,34 @@
                     "isPartOfComposite": false
                 }
             ]
+        },
+        {
+            "name": "ShootingControls",
+            "id": "e723b260-96c0-41a4-9ca4-1cdb0eb45258",
+            "actions": [
+                {
+                    "name": "Shoot",
+                    "type": "Button",
+                    "id": "c9f8d6ae-bc92-44b0-817a-749220f60313",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "f236991e-8f74-4bc9-8978-0cea3d5eb593",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Shoot",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": []

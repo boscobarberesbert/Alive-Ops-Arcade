@@ -123,11 +123,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 23800000, guid: ee8f568e3d461414aa50352069da61b5, type: 2}
---- !u!4 &228589924 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 814990484125564514, guid: 376f68c5327f9c44387d5206c3cdea80, type: 3}
-  m_PrefabInstance: {fileID: 733187343}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &445207814
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -213,8 +208,9 @@ GameObject:
   - component: {fileID: 607516883}
   - component: {fileID: 607516882}
   - component: {fileID: 607516881}
-  m_Layer: 0
-  m_Name: Floor
+  - component: {fileID: 607516885}
+  m_Layer: 6
+  m_Name: Ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -299,6 +295,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &607516885
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 607516880}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 10, y: 2.220446e-16, z: 10}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &679404027
 GameObject:
   m_ObjectHideFlags: 0
@@ -444,6 +453,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 814990484125564517, guid: 376f68c5327f9c44387d5206c3cdea80, type: 3}
+      propertyPath: m_StepOffset
+      value: 0.2
+      objectReference: {fileID: 0}
     - target: {fileID: 814990484125564527, guid: 376f68c5327f9c44387d5206c3cdea80, type: 3}
       propertyPath: m_Name
       value: Player
@@ -454,7 +467,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 376f68c5327f9c44387d5206c3cdea80, type: 3}
---- !u!1001 &1484068009
+--- !u!1001 &1535470231
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -464,14 +477,6 @@ PrefabInstance:
     - target: {fileID: 9058455093552723876, guid: 3a149de1b883c764ebf1b49b34b6e058, type: 3}
       propertyPath: m_Name
       value: Main Camera
-      objectReference: {fileID: 0}
-    - target: {fileID: 9058455093552723880, guid: 3a149de1b883c764ebf1b49b34b6e058, type: 3}
-      propertyPath: target
-      value: 
-      objectReference: {fileID: 228589924}
-    - target: {fileID: 9058455093552723880, guid: 3a149de1b883c764ebf1b49b34b6e058, type: 3}
-      propertyPath: smoothSpeed
-      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 9058455093552723883, guid: 3a149de1b883c764ebf1b49b34b6e058, type: 3}
       propertyPath: m_RootOrder
