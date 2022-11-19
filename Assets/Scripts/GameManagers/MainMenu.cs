@@ -8,7 +8,7 @@ public static class PlayerData
 {
     public static string myIP = "";
     public static string connectToIP = "";
-    public static bool client = true;
+    public static bool isClient = true;
     public static string username = "";
 }
 
@@ -20,6 +20,7 @@ public class MainMenu : MonoBehaviour
     [SerializeField] TMP_Text inputFieldTextConnectToIP;
     [SerializeField] TMP_Text inputFieldTextClientUsername;
     [SerializeField] TMP_Text inputFieldTextServerUsername;
+
 
     public void CreateRoomBtn()
     {
@@ -53,7 +54,7 @@ public class MainMenu : MonoBehaviour
     {
         string name = inputFieldTextServerUsername.text.Trim();
         PlayerData.username = name.Substring(0, name.Length - 1);
-        PlayerData.client = false;
+        PlayerData.isClient = false;
 
         SceneManager.LoadScene("Lobby");
     }
