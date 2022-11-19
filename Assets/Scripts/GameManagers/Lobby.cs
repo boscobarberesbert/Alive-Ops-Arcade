@@ -17,15 +17,13 @@ public class Lobby : MonoBehaviour
 
     GameObject serverManager;
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
-
         //OnServerConnected create a player for the server
         //OnClientConnected create a player for the client and ask the server how many others there are
         NetworkingManager.Instance.onClientAdded += SpawnClient;
      
     }
-
 
     void SpawnClient()
     {

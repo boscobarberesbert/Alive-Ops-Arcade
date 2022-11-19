@@ -11,7 +11,6 @@ public class NetworkingManager : MonoBehaviour
     public event OnClientAdded onClientAdded;
     bool triggerOnClientAdded = false;
 
-
     private void Awake()
     {
         if(Instance != null)
@@ -20,10 +19,12 @@ public class NetworkingManager : MonoBehaviour
             return;
         }
 
-
         Instance = this;
         DontDestroyOnLoad(gameObject);
+    }
 
+    private void Start()
+    {
         if (PlayerData.isClient)
         {
             networking = new NetworkClient();
@@ -34,19 +35,8 @@ public class NetworkingManager : MonoBehaviour
             server.onClientAdded += this.onClientAdded;
             networking = server;
         }
-    }
 
-    private void Start()
-    {
-
-     
-        
-
-        
-
-        networking.Start();
-
-        
+        networking.Start();        
     }
 
     private void Update()
