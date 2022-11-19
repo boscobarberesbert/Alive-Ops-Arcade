@@ -6,8 +6,8 @@ using UnityEngine.AI;
 public class EnemyFollow : MonoBehaviour
 {
     public NavMeshAgent enemy;
-    public GameObject closestPlayer;
-    public GameObject[] players;
+    GameObject closestPlayer;
+    GameObject[] players;
 
     // Start is called before the first frame update
     void Start()

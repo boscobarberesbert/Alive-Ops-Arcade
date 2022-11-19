@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 9018501966492335942}
   m_Layer: 0
   m_Name: Enemy
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -134,4 +134,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemy: {fileID: 9018501966492335939}
-  player: {fileID: 0}
+  closestPlayer: {fileID: 0}
+  players: []
