@@ -120,8 +120,8 @@ public class NetworkingServer : INetworking
             //Listen for data
             byte[] data = new byte[1024];
             int recv = serverSocket.ReceiveFrom(data, ref endPoint);
-           
 
+            Debug.Log("[SERVER] package received");
             //Call OnPackageReceived
             OnPackageReceived(data,recv, endPoint);
 
