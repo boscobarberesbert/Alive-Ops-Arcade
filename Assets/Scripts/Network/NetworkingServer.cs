@@ -115,6 +115,7 @@ public class NetworkingServer : INetworking
     private void ServerListener()
     {
         Debug.Log("[SERVER] Server started listening");
+
         while (true)
         {
             //Listen for data

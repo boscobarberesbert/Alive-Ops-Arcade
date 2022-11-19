@@ -21,19 +21,7 @@ public class Lobby : MonoBehaviour
     {
 
 
-        if (!PlayerData.isClient)
-        {
-            //If there is not a host create one
-            players.Add(Instantiate(serverPrefab));
-            //serverManager.GetComponent<UDPServer>().onClientAdded += SpawnClient;
-
-        }
-        else
-        {
-            //If there is a host create a client for each client connected to the host
-            players.Add(Instantiate(clientPrefab));
-
-        }
+     
     }
 
 
