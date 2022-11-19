@@ -56,6 +56,7 @@ public class NetworkingServer : INetworking
         {
             triggerOnClientAdded = true;
         }
+        Debug.Log("[SERVER] Message received: "+receivedMessage);
         //Broadcast the message to the other clients
         foreach (KeyValuePair<EndPoint, string> entry in clients)
         {
@@ -102,7 +103,7 @@ public class NetworkingServer : INetworking
 
         IPEndPoint ipep = new IPEndPoint(IPAddress.Any, channel1Port);
         serverSocket.Bind(ipep);
-        Debug.Log("[SERVER] Socket Binded to " + ipep.ToString()+"...");
+        Debug.Log("[SERVER] Socket Binded...");
 
         endPoint = new IPEndPoint(IPAddress.Any, channel2Port);
 

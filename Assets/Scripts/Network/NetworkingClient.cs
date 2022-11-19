@@ -78,7 +78,7 @@ public class NetworkClient : INetworking
         data = Encoding.ASCII.GetBytes(PlayerData.username);
         clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
 
-        Debug.Log("[SERVER] Server started listening");
+        Debug.Log("[CLIENT] Server started listening");
         while (true)
         {
             data = new byte[1024];
