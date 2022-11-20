@@ -4,7 +4,9 @@ using System.Net.Sockets;
 using UnityEngine;
 using System.Threading;
 using System.Text;
-
+using System.IO;
+using Newtonsoft.Json;
+using AliveOpsArcade.OdinSerializer;
 
 public class NetworkingServer : INetworking
 {
@@ -17,15 +19,17 @@ public class NetworkingServer : INetworking
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
-    public Dictionary<EndPoint, string> clients;
+    public Dictionary<EndPoint, string> clients; //Map to link an endpoint with a client (server not included)
+    public Dictionary<string, int> players; //Map to link a user with a game object (including server)
 
-    public delegate void OnClientAdded();
-    public event OnClientAdded onClientAdded;
-    bool triggerOnClientAdded = false;
+
+    public bool triggerClientAdded { get; set; }
+
     public void Start()
     {
         receiverLock = new object();
         clients = new Dictionary<EndPoint,string>();
+        players = new Dictionary<string,int>();
         InitializeSocket();
     }
 
@@ -36,7 +40,9 @@ public class NetworkingServer : INetworking
 
     public void OnDisconnect()
     {
-        throw new System.NotImplementedException();
+        serverSocket.Close();
+        serverThread.Abort();
+        
     }
 
     public void OnPackageReceived(byte[] inputPacket,int recv, EndPoint fromAddress)
@@ -48,35 +54,38 @@ public class NetworkingServer : INetworking
         if (!clients.ContainsKey(endPoint))
         {
             clients.Add(endPoint, receivedMessage);
-            receivedMessage += " joined the room.";
+            SpawnPlayer(receivedMessage);
+            receivedMessage += "joined the room.";
+            //Trigger the onClientAddedEvent
+            lock (receiverLock)
+            {
+                triggerClientAdded = true;
+            }
+            BroadcastPacket(Encoding.ASCII.GetBytes(receivedMessage));
         }
-        //Trigger the onClientAddedEvent
-        lock(receiverLock)
+        else
         {
-            triggerOnClientAdded = true;
+            Debug.Log("[SERVER] Message received: " + receivedMessage);
+            BroadcastPacket(inputPacket);
         }
-        Debug.Log("[SERVER] Message received: "+receivedMessage);
+        
+       
+    }
+    private void BroadcastPacket(byte[] packet)
+    {
         //Broadcast the message to the other clients
         foreach (KeyValuePair<EndPoint, string> entry in clients)
         {
             if (!entry.Key.Equals(endPoint))
             {
-               byte[] data = Encoding.ASCII.GetBytes(clients[endPoint] + ": " + receivedMessage);
-                serverSocket.SendTo(data, data.Length, SocketFlags.None, entry.Key);
+         
+                serverSocket.SendTo(packet, packet.Length, SocketFlags.None, entry.Key);
             }
         }
     }
-
     public void OnUpdate()
     {
-        if(triggerOnClientAdded)
-        {
-            if(onClientAdded !=null)
-            {
-                onClientAdded();
-            }
-            triggerOnClientAdded = false;
-        }
+        
     }
 
     public void reportError()
@@ -105,7 +114,7 @@ public class NetworkingServer : INetworking
         Debug.Log("[SERVER] Socket Binded...");
 
         endPoint = new IPEndPoint(IPAddress.Any, channel2Port);
-
+        SpawnPlayer(MainMenuInfo.username);
         serverThread = new Thread(ServerListener);
         serverThread.IsBackground = true;
         serverThread.Start();
@@ -125,6 +134,21 @@ public class NetworkingServer : INetworking
             //Call OnPackageReceived
             OnPackageReceived(data,recv, endPoint);
 
+        }
+    }
+
+    public void SpawnPlayer(string username)
+    {
+        players.Add(username,players.Count);
+        byte[] bytes = SerializationUtility.SerializeValue(players, DataFormat.Binary);
+        
+       
+        //Broadcast the message to ALL the clients (including the one that was created)
+        foreach (KeyValuePair<EndPoint, string> entry in clients)
+        {
+          
+                serverSocket.SendTo(bytes, bytes.Length, SocketFlags.None, entry.Key);
+         
         }
     }
 

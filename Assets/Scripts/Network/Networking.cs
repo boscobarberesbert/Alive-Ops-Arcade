@@ -1,6 +1,6 @@
 using System.Net;
 
-interface INetworking
+public interface INetworking
 {
     // Start is called before the first frame update
     void Start();
@@ -17,5 +17,6 @@ interface INetworking
     void OnDisconnect();
 
     void reportError();
+    bool triggerClientAdded { get; set; }
 
 }

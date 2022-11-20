@@ -4,12 +4,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-public static class PlayerData
+public static class MainMenuInfo
 {
-    public static string myIP = "";
-    public static string connectToIP = "";
-    public static bool isClient = true;
     public static string username = "";
+    public static bool isClient = true;
+    public static string connectToIp = "";
 }
 
 public class MainMenu : MonoBehaviour
@@ -53,8 +52,8 @@ public class MainMenu : MonoBehaviour
     private void CreateRoom()
     {
         string name = inputFieldTextServerUsername.text.Trim();
-        PlayerData.username = name.Substring(0, name.Length - 1);
-        PlayerData.isClient = false;
+        MainMenuInfo.username = name.Substring(0, name.Length - 1);
+        MainMenuInfo.isClient = false;
 
         SceneManager.LoadScene("Lobby");
     }
@@ -62,10 +61,10 @@ public class MainMenu : MonoBehaviour
     private void JoinRoom()
     {
         string inputText = inputFieldTextConnectToIP.text.Trim();
-        PlayerData.connectToIP = inputText.Substring(0, inputText.Length - 1);
+        MainMenuInfo.connectToIp = inputText.Substring(0, inputText.Length - 1);
 
         inputText = inputFieldTextClientUsername.text.Trim();
-        PlayerData.username = inputText.Substring(0, inputText.Length - 1);
+        MainMenuInfo.username = inputText.Substring(0, inputText.Length - 1);
 
         SceneManager.LoadScene("Lobby");
     }

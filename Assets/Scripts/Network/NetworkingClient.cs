@@ -1,10 +1,11 @@
+using AliveOpsArcade.OdinSerializer;
+using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using UnityEditor.PackageManager;
 using UnityEngine;
-
 public class NetworkClient : INetworking
 {
     Thread clientThread;
@@ -17,6 +18,11 @@ public class NetworkClient : INetworking
 
     private int channel1Port = 9050;
     private int channel2Port = 9051;
+
+    public bool triggerClientAdded { get; set; }
+
+    public UserData myUserData = new UserData();
+
     public void Start()
     {
         InitializeSocket();
@@ -28,13 +34,15 @@ public class NetworkClient : INetworking
 
     public void OnDisconnect()
     {
-        throw new System.NotImplementedException();
+        clientSocket.Close();
+        clientThread.Abort();
     }
 
     public void OnPackageReceived(byte[] inputPacket,int recv, EndPoint fromAddress)
     {
-        string receivedMessage = Encoding.ASCII.GetString(inputPacket, 0, recv);
-        Debug.Log(receivedMessage);
+        Dictionary<string,int> players = SerializationUtility.DeserializeValue<Dictionary<string,int>>(inputPacket, DataFormat.Binary);
+        foreach (KeyValuePair<string, int> kvp in players)
+            Debug.Log("Key = "+ kvp.Key+ " Value = " + kvp.Value);
     }
 
     public void OnUpdate()
@@ -62,7 +70,7 @@ public class NetworkClient : INetworking
         Debug.Log("[CLIENT] Socket created...");
 
 
-        ipep = new IPEndPoint(IPAddress.Parse(PlayerData.connectToIP), channel1Port);
+        ipep = new IPEndPoint(IPAddress.Parse(myUserData.connectToIP), channel1Port);
 
         IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, channel2Port);
         endPoint = (EndPoint)sendIpep;
@@ -75,13 +83,13 @@ public class NetworkClient : INetworking
     {
         //Sending hello packet with username
         byte[] data = new byte[1024];
-        data = Encoding.ASCII.GetBytes(PlayerData.username);
+        data = Encoding.ASCII.GetBytes(myUserData.username);
         clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
 
         Debug.Log("[CLIENT] Server started listening");
         while (true)
         {
-            data = new byte[1024];
+            data = new byte[5024];
             int recv = clientSocket.ReceiveFrom(data, ref endPoint);
 
             //Call OnPackageReceived
