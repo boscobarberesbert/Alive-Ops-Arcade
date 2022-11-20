@@ -20,7 +20,7 @@ public class NetworkClient : INetworking
 
     public bool triggerClientAdded { get; set; }
 
-    public UserData myUserData = new UserData();
+    public UserData myUserData { get; set; } = new UserData();
 
     public void Start()
     {
@@ -39,9 +39,10 @@ public class NetworkClient : INetworking
 
     public void OnPackageReceived(byte[] inputPacket,int recv, EndPoint fromAddress)
     {
-        Dictionary<string,int> players = SerializationUtility.DeserializeValue<Dictionary<string,int>>(inputPacket, DataFormat.JSON);
-        foreach (KeyValuePair<string, int> kvp in players)
-            Debug.Log("Key = "+ kvp.Key+ " Value = " + kvp.Value);
+        
+        Dictionary<UserData,int> players = SerializationUtility.DeserializeValue<Dictionary<UserData,int>>(inputPacket, DataFormat.JSON);
+        foreach (KeyValuePair<UserData, int> kvp in players)
+            Debug.Log("Key = "+ kvp.Key.username + " Value = " + kvp.Value);
     }
 
     public void OnUpdate()
@@ -78,14 +79,16 @@ public class NetworkClient : INetworking
         clientThread.IsBackground = true;
         clientThread.Start();
     }
+    
     private void ClientListener()
     {
-        //Sending hello packet with username
-        byte[] data = new byte[1024];
-        data = Encoding.ASCII.GetBytes(myUserData.username);
+        // Sending hello packet with user data
+        byte[] data = myUserData.SerializeJson();
+
         clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
 
         Debug.Log("[CLIENT] Server started listening");
+
         while (true)
         {
             data = new byte[5024];

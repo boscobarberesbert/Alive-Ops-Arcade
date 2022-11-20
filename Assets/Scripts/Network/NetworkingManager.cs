@@ -1,36 +1,8 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using UnityEngine.Playables;
 
-public class UserData
-{
-    public string connectToIP = "";
-    public bool isClient = true;
-    public string username = "";
 
-    void SerializeJson()
-    {
-        string json = JsonUtility.ToJson(this);
-        MemoryStream stream = new MemoryStream();
-        BinaryWriter writer = new BinaryWriter(stream);
-        writer.Write(json);
-    }
-
-    void DeserializeJson()
-    {
-        MemoryStream stream = new MemoryStream();
-        BinaryReader reader = new BinaryReader(stream);
-        stream.Seek(0, SeekOrigin.Begin);
-
-        string json = reader.ReadString();
-        Debug.Log(json);
-        UserData newData = JsonUtility.FromJson<UserData>(json);
-        this.connectToIP = newData.connectToIP;
-        this.isClient = newData.isClient;
-        this.username = newData.username;
-    }
-}
 
 public class NetworkingManager : MonoBehaviour
 {
@@ -44,11 +16,10 @@ public class NetworkingManager : MonoBehaviour
     [SerializeField] Vector3 startSpawnPosition;
     List<GameObject> players = new List<GameObject>();
 
-    UserData myUserData = new UserData();
 
     private void Awake()
     {
-        if(Instance != null)
+        if (Instance != null)
         {
             Destroy(gameObject);
             return;
@@ -60,25 +31,14 @@ public class NetworkingManager : MonoBehaviour
 
     private void Start()
     {
-        myUserData.username = MainMenuInfo.username;
-        myUserData.isClient = MainMenuInfo.isClient;
-        myUserData.connectToIP = MainMenuInfo.connectToIp;
-
-        if (myUserData.isClient)
-        {
-
-            NetworkClient client = new NetworkClient();
-            client.myUserData = myUserData;
-            networking = client;
-            
-        }
-        else
-        {
-            NetworkingServer server = new NetworkingServer();
-            networking = server;
-        }
-
-        networking.Start();        
+        //Creating network client | server
+        networking = MainMenuInfo.isClient ? new NetworkClient() : new NetworkingServer();
+        //Initializing user data
+        networking.myUserData.username = MainMenuInfo.username;
+        networking.myUserData.isClient = MainMenuInfo.isClient;
+        networking.myUserData.connectToIP = MainMenuInfo.connectToIp;
+        //starting networking
+        networking.Start();
     }
 
     private void Update()

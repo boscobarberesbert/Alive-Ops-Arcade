@@ -6,6 +6,7 @@ using System.Threading;
 using System.Text;
 
 using AliveOpsArcade.OdinSerializer;
+using System.IO;
 
 public class NetworkingServer : INetworking
 {
@@ -18,17 +19,17 @@ public class NetworkingServer : INetworking
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
-    public Dictionary<EndPoint, string> clients; //Map to link an endpoint with a client (server not included)
-    public Dictionary<string, int> players; //Map to link a user with a game object (including server)
+    public Dictionary<EndPoint, UserData> clients; //Map to link an endpoint with a client (server not included)
+    public Dictionary<UserData, int> players; //Map to link a user with a game object (including server)
 
 
     public bool triggerClientAdded { get; set; }
-
+    public UserData myUserData { get; set; } = new UserData();
     public void Start()
     {
         receiverLock = new object();
-        clients = new Dictionary<EndPoint,string>();
-        players = new Dictionary<string,int>();
+        clients = new Dictionary<EndPoint, UserData>();
+        players = new Dictionary<UserData, int>();
         InitializeSocket();
     }
 
@@ -41,50 +42,63 @@ public class NetworkingServer : INetworking
     {
         serverSocket.Close();
         serverThread.Abort();
-        
+
     }
 
-    public void OnPackageReceived(byte[] inputPacket,int recv, EndPoint fromAddress)
+    public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
-        //Whenever a package is received, we want to parse the message
-        string receivedMessage = Encoding.ASCII.GetString(inputPacket, 0, recv);
-        Debug.Log(receivedMessage);
-        //If the client that sent a message to this server is new, add it to the list of clients.
-        if (!clients.ContainsKey(endPoint))
+        // Whenever a package is received, we want to parse the message
+
+        MemoryStream stream = new MemoryStream(inputPacket);
+        BinaryReader reader = new BinaryReader(stream);
+        stream.Seek(0, SeekOrigin.Begin);
+
+        string json = reader.ReadString();
+
+        Debug.Log(json);
+
+        Packet packetTypeData = JsonUtility.FromJson<Packet>(json);
+
+        Debug.Log(packetTypeData.type);
+
+        if (packetTypeData.type == Packet.PacketType.CLIENT_NEW)
         {
-            clients.Add(endPoint, receivedMessage);
-            SpawnPlayer(receivedMessage);
-            receivedMessage += "joined the room.";
-            //Trigger the onClientAddedEvent
-            lock (receiverLock)
+            UserData userData = JsonUtility.FromJson<UserData>(json);
+            Debug.Log("[Client Data] Type: " + userData.type +
+            " IP: " + userData.connectToIP +
+            " Client: " + userData.isClient +
+            " Username: " + userData.username);
+
+            // If the client that sent a message to this server is new, add it to the list of clients.
+            if (!clients.ContainsKey(endPoint))
             {
-                triggerClientAdded = true;
+                clients.Add(endPoint, userData);
+
+                SpawnPlayer(userData);
+
+                // Trigger the onClientAddedEvent
+                lock (receiverLock)
+                {
+                    triggerClientAdded = true;
+                }
             }
-            BroadcastPacket(Encoding.ASCII.GetBytes(receivedMessage));
         }
-        else
-        {
-            Debug.Log("[SERVER] Message received: " + receivedMessage);
-            BroadcastPacket(inputPacket);
-        }
-        
-       
     }
     private void BroadcastPacket(byte[] packet)
     {
         //Broadcast the message to the other clients
-        foreach (KeyValuePair<EndPoint, string> entry in clients)
+        foreach (KeyValuePair<EndPoint, UserData> entry in clients)
         {
             if (!entry.Key.Equals(endPoint))
             {
-         
+
                 serverSocket.SendTo(packet, packet.Length, SocketFlags.None, entry.Key);
             }
         }
     }
     public void OnUpdate()
     {
-        
+
     }
 
     public void reportError()
@@ -92,9 +106,9 @@ public class NetworkingServer : INetworking
         throw new System.NotImplementedException();
     }
 
-    public void SendPacket(byte[] outputPacket,EndPoint toAddress)
+    public void SendPacket(byte[] outputPacket, EndPoint toAddress)
     {
-        if(clients.Count!= 0)
+        if (clients.Count != 0)
         {
             serverSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, toAddress);
         }
@@ -113,7 +127,7 @@ public class NetworkingServer : INetworking
         Debug.Log("[SERVER] Socket Binded...");
 
         endPoint = new IPEndPoint(IPAddress.Any, channel2Port);
-        SpawnPlayer(MainMenuInfo.username);
+        SpawnPlayer(myUserData);
         serverThread = new Thread(ServerListener);
         serverThread.IsBackground = true;
         serverThread.Start();
@@ -131,23 +145,23 @@ public class NetworkingServer : INetworking
 
             Debug.Log("[SERVER] package received");
             //Call OnPackageReceived
-            OnPackageReceived(data,recv, endPoint);
+            OnPackageReceived(data, recv, endPoint);
 
         }
     }
 
-    public void SpawnPlayer(string username)
+    public void SpawnPlayer(UserData userData)
     {
-        players.Add(username,players.Count);
+        players.Add(userData, players.Count);
         byte[] bytes = SerializationUtility.SerializeValue(players, DataFormat.JSON);
-        
-       
-        //Broadcast the message to ALL the clients (including the one that was created)
-        foreach (KeyValuePair<EndPoint, string> entry in clients)
+
+
+        // Broadcast the message to ALL the clients (including the one that was created)
+        foreach (KeyValuePair<EndPoint, UserData> entry in clients)
         {
-          
-                serverSocket.SendTo(bytes, bytes.Length, SocketFlags.None, entry.Key);
-         
+
+            serverSocket.SendTo(bytes, bytes.Length, SocketFlags.None, entry.Key);
+
         }
     }
 
