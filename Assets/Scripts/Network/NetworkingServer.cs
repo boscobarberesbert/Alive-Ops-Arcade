@@ -20,7 +20,7 @@ public class NetworkingServer : INetworking
     private int channel2Port = 9051;
 
     public Dictionary<EndPoint, UserData> clients; //Map to link an endpoint with a client (server not included)
-    public LobbyState lobbyState = new LobbyState();
+    public LobbyState lobbyState { get; set; } = new LobbyState();
 
     public bool triggerClientAdded { get; set; }
     public UserData myUserData { get; set; } = new UserData();

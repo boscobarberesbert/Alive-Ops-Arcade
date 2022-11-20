@@ -19,5 +19,7 @@ public interface INetworking
     void reportError();
     bool triggerClientAdded { get; set; }
     UserData myUserData { get; set; }
+    LobbyState lobbyState { get; set; }
+
 
 }

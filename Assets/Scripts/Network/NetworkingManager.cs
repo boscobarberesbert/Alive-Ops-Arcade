@@ -19,6 +19,7 @@ public class NetworkingManager : MonoBehaviour
 
     private void Awake()
     {
+        onClientAdded += Spawn;
         if (Instance != null)
         {
             Destroy(gameObject);
@@ -61,11 +62,19 @@ public class NetworkingManager : MonoBehaviour
 
     public void Spawn()
     {
-        //Vector3 spawnPosition = new Vector3(startSpawnPosition.x + players.Count * 3, 0, 0);
-        //GameObject myPlayer = Instantiate(playerPrefab, spawnPosition, new Quaternion(0,0,0,0));
-        //myPlayer.name = myUserData.username;
-        //players.Add(myPlayer);
-        //SpawnPlayer(myPlayer.GetComponent<PlayerSerialization>().GetPlayerState().playerID);
+        foreach (KeyValuePair<UserData, int> player in networking.lobbyState.players)
+        {
+            if (!GameObject.Find(player.Key.username))
+            {
+                Vector3 spawnPosition = new Vector3(startSpawnPosition.x + players.Count * 3, 0, 0);
+                GameObject playerGO = Instantiate(playerPrefab, spawnPosition, new Quaternion(0, 0, 0, 0));
+                playerGO.name = player.Key.username;
+                playerGO.GetComponent<PlayerID>().playerId = player.Value;
+                players.Add(playerGO);
+            }
+
+        }
+
     }
 
 

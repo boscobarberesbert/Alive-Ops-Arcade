@@ -12,6 +12,7 @@ public class NetworkClient : INetworking
 
     // Network
     private Socket clientSocket;
+    private object receiverLock;
 
     IPEndPoint ipep;
     EndPoint endPoint;
@@ -22,9 +23,11 @@ public class NetworkClient : INetworking
     public bool triggerClientAdded { get; set; }
 
     public UserData myUserData { get; set; } = new UserData();
+    public LobbyState lobbyState { get; set; } = new LobbyState();
 
     public void Start()
     {
+        receiverLock = new object();
         InitializeSocket();
     }
     public void OnConnectionReset(EndPoint fromAddress)
@@ -47,6 +50,7 @@ public class NetworkClient : INetworking
         if (packet.type == Packet.PacketType.LOBBY_STATE)
         {
             LobbyState lobbyState = SerializationUtility.DeserializeValue<LobbyState>(inputPacket, DataFormat.JSON);
+            this.lobbyState = lobbyState;
             foreach (KeyValuePair<UserData, int> player in lobbyState.players)
             {
                 Debug.Log("[Client Data] Type: " + player.Key.type +
@@ -55,6 +59,10 @@ public class NetworkClient : INetworking
                             " Username: " + player.Key.username);
             }
 
+            lock (receiverLock)
+            {
+                triggerClientAdded = true;
+            }
         }
     }
 
