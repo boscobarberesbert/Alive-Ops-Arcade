@@ -8,6 +8,7 @@ public class Packet
     public enum PacketType
     {
         DEFAULT,
+        LOBBY_STATE,
         CLIENT_NEW,
         CLIENT_UPDATE
     }
@@ -46,10 +47,16 @@ public class UserData : Packet
 
         return stream.ToArray();
     }
-
 }
 
-public class PlayerData : Packet
+public class LobbyState : Packet
 {
+    // Dictionary to link a user with a game object (including server)
+    public Dictionary<UserData, int> players;
 
+    public LobbyState()
+    {
+        this.type = PacketType.LOBBY_STATE;
+        players = new Dictionary<UserData, int>();
+    }
 }

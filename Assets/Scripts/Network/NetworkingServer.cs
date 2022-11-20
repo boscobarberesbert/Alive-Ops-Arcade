@@ -20,8 +20,7 @@ public class NetworkingServer : INetworking
     private int channel2Port = 9051;
 
     public Dictionary<EndPoint, UserData> clients; //Map to link an endpoint with a client (server not included)
-    public Dictionary<UserData, int> players; //Map to link a user with a game object (including server)
-
+    public LobbyState lobbyState = new LobbyState();
 
     public bool triggerClientAdded { get; set; }
     public UserData myUserData { get; set; } = new UserData();
@@ -29,7 +28,6 @@ public class NetworkingServer : INetworking
     {
         receiverLock = new object();
         clients = new Dictionary<EndPoint, UserData>();
-        players = new Dictionary<UserData, int>();
         InitializeSocket();
     }
 
@@ -48,22 +46,11 @@ public class NetworkingServer : INetworking
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
         // Whenever a package is received, we want to parse the message
+        Packet packet = SerializationUtility.DeserializeValue<Packet>(inputPacket, DataFormat.JSON);
 
-        MemoryStream stream = new MemoryStream(inputPacket);
-        BinaryReader reader = new BinaryReader(stream);
-        stream.Seek(0, SeekOrigin.Begin);
-
-        string json = reader.ReadString();
-
-        Debug.Log(json);
-
-        Packet packetTypeData = JsonUtility.FromJson<Packet>(json);
-
-        Debug.Log(packetTypeData.type);
-
-        if (packetTypeData.type == Packet.PacketType.CLIENT_NEW)
+        if (packet.type == Packet.PacketType.CLIENT_NEW)
         {
-            UserData userData = JsonUtility.FromJson<UserData>(json);
+            UserData userData = SerializationUtility.DeserializeValue<UserData>(inputPacket, DataFormat.JSON);
             Debug.Log("[Client Data] Type: " + userData.type +
             " IP: " + userData.connectToIP +
             " Client: " + userData.isClient +
@@ -152,17 +139,14 @@ public class NetworkingServer : INetworking
 
     public void SpawnPlayer(UserData userData)
     {
-        players.Add(userData, players.Count);
-        byte[] bytes = SerializationUtility.SerializeValue(players, DataFormat.JSON);
+        lobbyState.players.Add(userData, lobbyState.players.Count);
+        byte[] bytes = SerializationUtility.SerializeValue(lobbyState, DataFormat.JSON);
 
 
         // Broadcast the message to ALL the clients (including the one that was created)
         foreach (KeyValuePair<EndPoint, UserData> entry in clients)
         {
-
             serverSocket.SendTo(bytes, bytes.Length, SocketFlags.None, entry.Key);
-
         }
     }
-
 }

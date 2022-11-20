@@ -1,5 +1,6 @@
 using AliveOpsArcade.OdinSerializer;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -37,12 +38,24 @@ public class NetworkClient : INetworking
         clientThread.Abort();
     }
 
-    public void OnPackageReceived(byte[] inputPacket,int recv, EndPoint fromAddress)
+    public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
-        
-        Dictionary<UserData,int> players = SerializationUtility.DeserializeValue<Dictionary<UserData,int>>(inputPacket, DataFormat.JSON);
-        foreach (KeyValuePair<UserData, int> kvp in players)
-            Debug.Log("Key = "+ kvp.Key.username + " Value = " + kvp.Value);
+        Packet packet = SerializationUtility.DeserializeValue<Packet>(inputPacket, DataFormat.JSON);
+
+        // Whenever a package is received, we want to parse the message
+
+        if (packet.type == Packet.PacketType.LOBBY_STATE)
+        {
+            LobbyState lobbyState = SerializationUtility.DeserializeValue<LobbyState>(inputPacket, DataFormat.JSON);
+            foreach (KeyValuePair<UserData, int> player in lobbyState.players)
+            {
+                Debug.Log("[Client Data] Type: " + player.Key.type +
+                            " IP: " + player.Key.connectToIP +
+                            " Client: " + player.Key.isClient +
+                            " Username: " + player.Key.username);
+            }
+
+        }
     }
 
     public void OnUpdate()
@@ -57,9 +70,9 @@ public class NetworkClient : INetworking
 
     public void SendPacket(byte[] outputPacket, EndPoint toAddress)
     {
-        
-            clientSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, toAddress);
-        
+
+        clientSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, toAddress);
+
     }
 
     private void InitializeSocket()
@@ -79,7 +92,7 @@ public class NetworkClient : INetworking
         clientThread.IsBackground = true;
         clientThread.Start();
     }
-    
+
     private void ClientListener()
     {
         // Sending hello packet with user data
