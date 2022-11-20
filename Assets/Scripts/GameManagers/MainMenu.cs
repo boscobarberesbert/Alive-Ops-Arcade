@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
+using AliveOpsArcade.OdinSerializer.Utilities;
 
 public static class MainMenuInfo
 {
@@ -35,7 +36,7 @@ public class MainMenu : MonoBehaviour
 
     public void JoinBtn()
     {
-        if (inputFieldTextConnectToIP.text.Length > 0 && inputFieldTextClientUsername.text.Length > 0)
+        if (!inputFieldTextConnectToIP.text.Substring(0, inputFieldTextConnectToIP.text.Length - 1).IsNullOrWhitespace() && !inputFieldTextClientUsername.text.Substring(0, inputFieldTextClientUsername.text.Length - 1).IsNullOrWhitespace())
         {
             JoinRoom();
         }
@@ -43,7 +44,7 @@ public class MainMenu : MonoBehaviour
 
     public void CreateBtn()
     {
-        if (inputFieldTextServerUsername.text.Length > 0)
+        if (!inputFieldTextServerUsername.text.Substring(0,inputFieldTextServerUsername.text.Length-1).IsNullOrWhitespace())
         {
             CreateRoom();
         }
