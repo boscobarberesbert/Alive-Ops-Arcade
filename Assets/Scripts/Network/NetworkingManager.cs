@@ -1,8 +1,5 @@
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
-
-
 
 public class NetworkingManager : MonoBehaviour
 {
@@ -15,7 +12,6 @@ public class NetworkingManager : MonoBehaviour
     [SerializeField] GameObject playerPrefab;
     [SerializeField] Vector3 startSpawnPosition;
     List<GameObject> players = new List<GameObject>();
-
 
     private void Awake()
     {
@@ -32,13 +28,15 @@ public class NetworkingManager : MonoBehaviour
 
     private void Start()
     {
-        //Creating network client | server
+        // Creating network client | server
         networking = MainMenuInfo.isClient ? new NetworkClient() : new NetworkingServer();
-        //Initializing user data
+
+        // Initializing user data
         networking.myUserData.username = MainMenuInfo.username;
         networking.myUserData.isClient = MainMenuInfo.isClient;
         networking.myUserData.connectToIP = MainMenuInfo.connectToIp;
-        //starting networking
+
+        // Starting networking
         networking.Start();
     }
 
@@ -54,11 +52,11 @@ public class NetworkingManager : MonoBehaviour
             networking.triggerClientAdded = false;
         }
     }
+
     private void OnDisable()
     {
         networking.OnDisconnect();
     }
-
 
     public void Spawn()
     {
@@ -67,10 +65,13 @@ public class NetworkingManager : MonoBehaviour
             if (!GameObject.Find(player.Key.username))
             {
                 Vector3 spawnPosition = new Vector3(startSpawnPosition.x + players.Count * 3, 1, 0);
+
                 GameObject playerGO = Instantiate(playerPrefab, spawnPosition, new Quaternion(0, 0, 0, 0));
                 playerGO.name = player.Key.username;
                 playerGO.GetComponent<PlayerID>().playerId = player.Value;
-                if(player.Key.username != networking.myUserData.username)
+
+                // Disable scripts as we are not going to be controlling the rest of players
+                if (player.Key.username != networking.myUserData.username)
                 {
                     playerGO.GetComponent<PlayerController>().enabled = false;
                     playerGO.GetComponent<CharacterController>().enabled = false;
@@ -78,10 +79,6 @@ public class NetworkingManager : MonoBehaviour
                 }
                 players.Add(playerGO);
             }
-
         }
-
     }
-
-
 }

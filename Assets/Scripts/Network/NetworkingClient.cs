@@ -1,11 +1,10 @@
 using AliveOpsArcade.OdinSerializer;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using UnityEngine;
+
 public class NetworkClient : INetworking
 {
     Thread clientThread;
@@ -30,6 +29,7 @@ public class NetworkClient : INetworking
         receiverLock = new object();
         InitializeSocket();
     }
+
     public void OnConnectionReset(EndPoint fromAddress)
     {
         throw new System.NotImplementedException();
@@ -46,7 +46,6 @@ public class NetworkClient : INetworking
         Packet packet = SerializationUtility.DeserializeValue<Packet>(inputPacket, DataFormat.JSON);
 
         // Whenever a package is received, we want to parse the message
-
         if (packet.type == Packet.PacketType.LOBBY_STATE)
         {
             LobbyState lobbyState = SerializationUtility.DeserializeValue<LobbyState>(inputPacket, DataFormat.JSON);
@@ -66,10 +65,7 @@ public class NetworkClient : INetworking
         }
     }
 
-    public void OnUpdate()
-    {
-        //throw new System.NotImplementedException();
-    }
+    public void OnUpdate() {}
 
     public void reportError()
     {
@@ -78,9 +74,7 @@ public class NetworkClient : INetworking
 
     public void SendPacket(byte[] outputPacket, EndPoint toAddress)
     {
-
         clientSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, toAddress);
-
     }
 
     private void InitializeSocket()
@@ -89,7 +83,6 @@ public class NetworkClient : INetworking
         Debug.Log("[CLIENT] Creating Socket...");
         clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         Debug.Log("[CLIENT] Socket created...");
-
 
         ipep = new IPEndPoint(IPAddress.Parse(myUserData.connectToIP), channel1Port);
 
@@ -115,9 +108,16 @@ public class NetworkClient : INetworking
             data = new byte[5024];
             int recv = clientSocket.ReceiveFrom(data, ref endPoint);
 
-            //Call OnPackageReceived
+            // Call OnPackageReceived
             OnPackageReceived(data, recv, endPoint);
         }
     }
 
+    private void OnDisable()
+    {
+        Debug.Log("Destroying Scene");
+
+        clientSocket.Close();
+        clientThread.Abort();
+    }
 }

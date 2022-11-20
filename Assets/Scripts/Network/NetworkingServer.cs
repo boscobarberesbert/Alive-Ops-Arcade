@@ -3,10 +3,8 @@ using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
 using System.Threading;
-using System.Text;
 
 using AliveOpsArcade.OdinSerializer;
-using System.IO;
 
 public class NetworkingServer : INetworking
 {
@@ -24,10 +22,12 @@ public class NetworkingServer : INetworking
 
     public bool triggerClientAdded { get; set; }
     public UserData myUserData { get; set; } = new UserData();
+
     public void Start()
     {
         receiverLock = new object();
         clients = new Dictionary<EndPoint, UserData>();
+
         InitializeSocket();
     }
 
@@ -40,7 +40,6 @@ public class NetworkingServer : INetworking
     {
         serverSocket.Close();
         serverThread.Abort();
-
     }
 
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
@@ -51,7 +50,8 @@ public class NetworkingServer : INetworking
         if (packet.type == Packet.PacketType.CLIENT_NEW)
         {
             UserData userData = SerializationUtility.DeserializeValue<UserData>(inputPacket, DataFormat.JSON);
-            Debug.Log("[Client Data] Type: " + userData.type +
+            Debug.Log("[Client Data]" +
+            " Type: " + userData.type +
             " IP: " + userData.connectToIP +
             " Client: " + userData.isClient +
             " Username: " + userData.username);
@@ -71,22 +71,20 @@ public class NetworkingServer : INetworking
             }
         }
     }
+
     private void BroadcastPacket(byte[] packet)
     {
-        //Broadcast the message to the other clients
+        // Broadcast the message to the other clients
         foreach (KeyValuePair<EndPoint, UserData> entry in clients)
         {
             if (!entry.Key.Equals(endPoint))
             {
-
                 serverSocket.SendTo(packet, packet.Length, SocketFlags.None, entry.Key);
             }
         }
     }
-    public void OnUpdate()
-    {
 
-    }
+    public void OnUpdate() {}
 
     public void reportError()
     {
@@ -126,14 +124,14 @@ public class NetworkingServer : INetworking
 
         while (true)
         {
-            //Listen for data
+            // Listen for data
             byte[] data = new byte[1024];
             int recv = serverSocket.ReceiveFrom(data, ref endPoint);
 
             Debug.Log("[SERVER] package received");
-            //Call OnPackageReceived
-            OnPackageReceived(data, recv, endPoint);
 
+            // Call OnPackageReceived
+            OnPackageReceived(data, recv, endPoint);
         }
     }
 
@@ -142,11 +140,19 @@ public class NetworkingServer : INetworking
         lobbyState.players.Add(userData, lobbyState.players.Count);
         byte[] bytes = SerializationUtility.SerializeValue(lobbyState, DataFormat.JSON);
 
-
         // Broadcast the message to ALL the clients (including the one that was created)
         foreach (KeyValuePair<EndPoint, UserData> entry in clients)
         {
-            serverSocket.SendTo(bytes, bytes.Length, SocketFlags.None, entry.Key);
+            SendPacket(bytes, entry.Key);
+            //serverSocket.SendTo(bytes, bytes.Length, SocketFlags.None, entry.Key);
         }
+    }
+
+    private void OnDisable()
+    {
+        Debug.Log("Destroying Scene");
+
+        serverSocket.Close();
+        serverThread.Abort();
     }
 }
