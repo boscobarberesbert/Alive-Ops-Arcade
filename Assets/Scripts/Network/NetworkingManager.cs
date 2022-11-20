@@ -66,10 +66,16 @@ public class NetworkingManager : MonoBehaviour
         {
             if (!GameObject.Find(player.Key.username))
             {
-                Vector3 spawnPosition = new Vector3(startSpawnPosition.x + players.Count * 3, 0, 0);
+                Vector3 spawnPosition = new Vector3(startSpawnPosition.x + players.Count * 3, 1, 0);
                 GameObject playerGO = Instantiate(playerPrefab, spawnPosition, new Quaternion(0, 0, 0, 0));
                 playerGO.name = player.Key.username;
                 playerGO.GetComponent<PlayerID>().playerId = player.Value;
+                if(player.Key.username != networking.myUserData.username)
+                {
+                    playerGO.GetComponent<PlayerController>().enabled = false;
+                    playerGO.GetComponent<CharacterController>().enabled = false;
+                    playerGO.GetComponent<MouseAim>().enabled = false;
+                }
                 players.Add(playerGO);
             }
 
