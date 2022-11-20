@@ -17,9 +17,11 @@ public class NetworkingServer : INetworking
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
-    public Dictionary<EndPoint, UserData> clients; //Map to link an endpoint with a client (server not included)
-    public LobbyState lobbyState { get; set; } = new LobbyState();
+    // Map to link an endpoint with a client (server not included)
+    public Dictionary<EndPoint, UserData> clients;
 
+    // Dictionary to link a user with its PlayerID
+    public LobbyState lobbyState { get; set; } = new LobbyState();
     public bool triggerClientAdded { get; set; }
     public UserData myUserData { get; set; } = new UserData();
 
@@ -29,17 +31,6 @@ public class NetworkingServer : INetworking
         clients = new Dictionary<EndPoint, UserData>();
 
         InitializeSocket();
-    }
-
-    public void OnConnectionReset(EndPoint fromAddress)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public void OnDisconnect()
-    {
-        serverSocket.Close();
-        serverThread.Abort();
     }
 
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
@@ -82,13 +73,6 @@ public class NetworkingServer : INetworking
                 serverSocket.SendTo(packet, packet.Length, SocketFlags.None, entry.Key);
             }
         }
-    }
-
-    public void OnUpdate() {}
-
-    public void reportError()
-    {
-        throw new System.NotImplementedException();
     }
 
     public void SendPacket(byte[] outputPacket, EndPoint toAddress)
@@ -146,6 +130,24 @@ public class NetworkingServer : INetworking
             SendPacket(bytes, entry.Key);
             //serverSocket.SendTo(bytes, bytes.Length, SocketFlags.None, entry.Key);
         }
+    }
+
+    public void OnUpdate() { }
+
+    public void reportError()
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void OnConnectionReset(EndPoint fromAddress)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void OnDisconnect()
+    {
+        serverSocket.Close();
+        serverThread.Abort();
     }
 
     private void OnDisable()

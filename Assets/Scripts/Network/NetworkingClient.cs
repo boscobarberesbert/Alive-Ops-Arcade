@@ -27,6 +27,7 @@ public class NetworkClient : INetworking
     public void Start()
     {
         receiverLock = new object();
+
         InitializeSocket();
     }
 

@@ -7,7 +7,6 @@ public interface INetworking
 
     void OnPackageReceived(byte[] inputPacket,int recv,EndPoint fromAddress);
 
-
     void OnUpdate();
 
     void OnConnectionReset(EndPoint fromAddress);
@@ -17,9 +16,10 @@ public interface INetworking
     void OnDisconnect();
 
     void reportError();
+
     bool triggerClientAdded { get; set; }
+
     UserData myUserData { get; set; }
+
     LobbyState lobbyState { get; set; }
-
-
 }
