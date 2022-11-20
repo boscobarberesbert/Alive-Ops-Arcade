@@ -60,3 +60,15 @@ public class LobbyState : Packet
         players = new Dictionary<UserData, int>();
     }
 }
+
+public class PlayerState : Packet
+{
+    public int playerID;
+    public Vector3 position;
+
+    public PlayerState()
+    {
+        this.type = PacketType.CLIENT_UPDATE;
+        position = new Vector3(0f, 0f, 0f);
+    }
+}
