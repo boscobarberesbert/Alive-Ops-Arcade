@@ -1,6 +1,5 @@
 using AliveOpsArcade.OdinSerializer;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -40,7 +39,7 @@ public class NetworkClient : INetworking
 
     public void OnPackageReceived(byte[] inputPacket,int recv, EndPoint fromAddress)
     {
-        Dictionary<string,int> players = SerializationUtility.DeserializeValue<Dictionary<string,int>>(inputPacket, DataFormat.Binary);
+        Dictionary<string,int> players = SerializationUtility.DeserializeValue<Dictionary<string,int>>(inputPacket, DataFormat.JSON);
         foreach (KeyValuePair<string, int> kvp in players)
             Debug.Log("Key = "+ kvp.Key+ " Value = " + kvp.Value);
     }

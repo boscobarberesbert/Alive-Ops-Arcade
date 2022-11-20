@@ -4,8 +4,7 @@ using System.Net.Sockets;
 using UnityEngine;
 using System.Threading;
 using System.Text;
-using System.IO;
-using Newtonsoft.Json;
+
 using AliveOpsArcade.OdinSerializer;
 
 public class NetworkingServer : INetworking
@@ -140,7 +139,7 @@ public class NetworkingServer : INetworking
     public void SpawnPlayer(string username)
     {
         players.Add(username,players.Count);
-        byte[] bytes = SerializationUtility.SerializeValue(players, DataFormat.Binary);
+        byte[] bytes = SerializationUtility.SerializeValue(players, DataFormat.JSON);
         
        
         //Broadcast the message to ALL the clients (including the one that was created)
