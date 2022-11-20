@@ -167,7 +167,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   bullet: {fileID: 3664657836030253579, guid: 2c30adb40cf64fb4fb803e3368af1ced, type: 3}
-  shootForce: 150
+  shootForce: 65
   muzzlePoint: {fileID: 1445034780}
 --- !u!1 &814990484161622136
 GameObject:
