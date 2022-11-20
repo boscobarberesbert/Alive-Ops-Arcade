@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class NetworkClient : INetworking
 {
@@ -19,7 +20,8 @@ public class NetworkClient : INetworking
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
-    public bool triggerClientAdded { get; set; }
+    public bool triggerClientAdded { get; set; } = false;
+    public bool triggerLoadScene { get; set; } = false;
 
     public UserData myUserData { get; set; } = new UserData();
     public LobbyState lobbyState { get; set; } = new LobbyState();
@@ -64,9 +66,16 @@ public class NetworkClient : INetworking
                 triggerClientAdded = true;
             }
         }
+        else if (packet.type == Packet.PacketType.GAME_START)
+        {
+            lock (receiverLock)
+            {
+                triggerLoadScene = true;
+            }
+        }
     }
 
-    public void OnUpdate() {}
+    public void OnUpdate() { }
 
     public void reportError()
     {

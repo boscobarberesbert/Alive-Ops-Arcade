@@ -18,6 +18,7 @@ public interface INetworking
     void reportError();
 
     bool triggerClientAdded { get; set; }
+    bool triggerLoadScene { get; set; }
 
     UserData myUserData { get; set; }
 

@@ -5,13 +5,13 @@ using UnityEngine.UI;
 
 public class Lobby : MonoBehaviour
 {
-    [SerializeField] Button startGameButton;
+    [SerializeField] GameObject startGameButton;
     // Start is called before the first frame update
     void Start()
     {
         if (MainMenuInfo.isClient)
         {
-            startGameButton.enabled = false;
+             startGameButton.SetActive(false);
         }
     }
 

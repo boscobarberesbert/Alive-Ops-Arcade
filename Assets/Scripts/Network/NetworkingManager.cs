@@ -1,3 +1,4 @@
+using AliveOpsArcade.OdinSerializer;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -54,6 +55,12 @@ public class NetworkingManager : MonoBehaviour
             }
             networking.triggerClientAdded = false;
         }
+        if (networking.triggerLoadScene)
+        {
+            SceneManager.LoadScene("Game");
+            networking.triggerLoadScene = false;
+
+        }
     }
 
     private void OnDisable()
@@ -87,7 +94,8 @@ public class NetworkingManager : MonoBehaviour
 
     public void LoadScene(string sceneName)
     {
-        SceneManager.LoadScene("Game");
+
+        (networking as NetworkingServer).LoadScene();
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)

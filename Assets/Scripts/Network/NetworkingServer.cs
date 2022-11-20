@@ -5,6 +5,7 @@ using UnityEngine;
 using System.Threading;
 
 using AliveOpsArcade.OdinSerializer;
+using UnityEngine.Networking.Types;
 
 public class NetworkingServer : INetworking
 {
@@ -22,7 +23,9 @@ public class NetworkingServer : INetworking
 
     // Dictionary to link a user with its PlayerID
     public LobbyState lobbyState { get; set; } = new LobbyState();
-    public bool triggerClientAdded { get; set; }
+    public bool triggerClientAdded { get; set; } = false;
+    public bool triggerLoadScene { get; set; } = false;
+
     public UserData myUserData { get; set; } = new UserData();
 
     public void Start()
@@ -58,15 +61,26 @@ public class NetworkingServer : INetworking
         }
     }
 
-    private void BroadcastPacket(byte[] packet)
+    private void BroadcastPacketFromClient(byte[] packet) //Doesn't include the client that sent the packet
     {
         // Broadcast the message to the other clients
         foreach (KeyValuePair<EndPoint, UserData> entry in clients)
         {
             if (!entry.Key.Equals(endPoint))
             {
-                serverSocket.SendTo(packet, packet.Length, SocketFlags.None, entry.Key);
+                SendPacket(packet, entry.Key);
             }
+        }
+    }
+
+    private void BroadcastPacketFromServer(byte[] packet) //Broadcast to every client
+    {
+        // Broadcast the message to the other clients
+        foreach (KeyValuePair<EndPoint, UserData> entry in clients)
+        {
+
+            SendPacket(packet, entry.Key);
+
         }
     }
 
@@ -119,17 +133,25 @@ public class NetworkingServer : INetworking
         lobbyState.players.Add(userData, lobbyState.players.Count);
         byte[] bytes = SerializationUtility.SerializeValue(lobbyState, DataFormat.JSON);
 
-        // Broadcast the message to ALL the clients (including the one that was created)
-        foreach (KeyValuePair<EndPoint, UserData> entry in clients)
-        {
-            SendPacket(bytes, entry.Key);
-            //serverSocket.SendTo(bytes, bytes.Length, SocketFlags.None, entry.Key);
-        }
+        BroadcastPacketFromServer(bytes);
+
 
         // Trigger the onClientAddedEvent
         lock (receiverLock)
         {
             triggerClientAdded = true;
+        }
+    }
+
+    public void LoadScene()
+    {
+        Packet packet = new Packet();
+        packet.type = Packet.PacketType.GAME_START;
+        byte[] gameStart = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
+        BroadcastPacketFromServer(gameStart);
+        lock (receiverLock)
+        {
+            triggerLoadScene = true;
         }
     }
 
