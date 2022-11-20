@@ -30,7 +30,7 @@ public class PlayerController : MonoBehaviour
         playerInput.CharacterControls.Move.performed += OnMovementInput;
     }
 
-    void OnMovementInput(InputAction.CallbackContext context)
+    private void OnMovementInput(InputAction.CallbackContext context)
     {
         currentMovementInput = context.ReadValue<Vector2>();
         currentMovement.x = currentMovementInput.x * speed;
@@ -38,7 +38,7 @@ public class PlayerController : MonoBehaviour
         isMovementPressed = currentMovementInput.x != 0 || currentMovementInput.y != 0;
     }
 
-    void HandleGravity()
+    private void HandleGravity()
     {
         if(characterController.isGrounded)
         {

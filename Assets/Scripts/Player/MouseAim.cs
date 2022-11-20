@@ -12,7 +12,7 @@ public class MouseAim : MonoBehaviour
     private Vector3 screenPosition;
     private Vector3 worldPosition;
 
-    private Vector3 direction;
+    [HideInInspector] public Vector3 direction;
     private Quaternion lookRotation;
 
     // Update is called once per frame
