@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class NetworkingManager : MonoBehaviour
 {
@@ -38,6 +39,8 @@ public class NetworkingManager : MonoBehaviour
 
         // Starting networking
         networking.Start();
+
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void Update()
@@ -80,5 +83,15 @@ public class NetworkingManager : MonoBehaviour
                 players.Add(playerGO);
             }
         }
+    }
+
+    public void LoadScene(string sceneName)
+    {
+        SceneManager.LoadScene("Game");
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Spawn();
     }
 }
