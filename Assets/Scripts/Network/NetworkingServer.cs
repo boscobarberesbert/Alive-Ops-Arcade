@@ -23,6 +23,7 @@ public class NetworkingServer : INetworking
 
     // Dictionary to link a user with its PlayerID
     public LobbyState lobbyState { get; set; } = new LobbyState();
+    public PlayerState playerState { get; set; } = new PlayerState();
     public bool triggerClientAdded { get; set; } = false;
     public bool triggerLoadScene { get; set; } = false;
 
@@ -58,10 +59,15 @@ public class NetworkingServer : INetworking
                 SpawnPlayer(userData);
 
             }
+        }else if(packet.type == Packet.PacketType.CLIENT_UPDATE)
+        {
+            BroadcastPacketFromClient(inputPacket);
+            playerState = SerializationUtility.DeserializeValue<PlayerState>(inputPacket, DataFormat.JSON);
+
         }
     }
 
-    private void BroadcastPacketFromClient(byte[] packet) //Doesn't include the client that sent the packet
+    public void BroadcastPacketFromClient(byte[] packet) //Doesn't include the client that sent the packet
     {
         // Broadcast the message to the other clients
         foreach (KeyValuePair<EndPoint, UserData> entry in clients)
@@ -73,7 +79,7 @@ public class NetworkingServer : INetworking
         }
     }
 
-    private void BroadcastPacketFromServer(byte[] packet) //Broadcast to every client
+    public void BroadcastPacketFromServer(byte[] packet) //Broadcast to every client
     {
         // Broadcast the message to the other clients
         foreach (KeyValuePair<EndPoint, UserData> entry in clients)

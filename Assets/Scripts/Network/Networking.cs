@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Net;
 
 public interface INetworking
@@ -21,6 +22,6 @@ public interface INetworking
     bool triggerLoadScene { get; set; }
 
     UserData myUserData { get; set; }
-
+    PlayerState playerState { get; set; }
     LobbyState lobbyState { get; set; }
 }

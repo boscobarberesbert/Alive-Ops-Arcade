@@ -26,6 +26,8 @@ public class NetworkClient : INetworking
     public UserData myUserData { get; set; } = new UserData();
     public LobbyState lobbyState { get; set; } = new LobbyState();
 
+    public PlayerState playerState { get; set; } = new PlayerState();
+
     public void Start()
     {
         receiverLock = new object();
@@ -72,6 +74,9 @@ public class NetworkClient : INetworking
             {
                 triggerLoadScene = true;
             }
+        }else if(packet.type == Packet.PacketType.CLIENT_UPDATE)
+        {
+            playerState = SerializationUtility.DeserializeValue<PlayerState>(inputPacket, DataFormat.JSON);
         }
     }
 
@@ -85,6 +90,11 @@ public class NetworkClient : INetworking
     public void SendPacket(byte[] outputPacket, EndPoint toAddress)
     {
         clientSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, toAddress);
+    }
+
+    public void SendPacketToServer(byte[] outputPacket)
+    {
+        clientSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, ipep);
     }
 
     private void InitializeSocket()

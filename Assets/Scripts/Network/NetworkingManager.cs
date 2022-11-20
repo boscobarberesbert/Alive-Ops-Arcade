@@ -57,8 +57,19 @@ public class NetworkingManager : MonoBehaviour
         }
         if (networking.triggerLoadScene)
         {
+            players.Clear();
             SceneManager.LoadScene("Game");
             networking.triggerLoadScene = false;
+
+        }
+
+        foreach (GameObject player in players)
+        {
+
+            if (networking.playerState.playerID == player.GetComponent<PlayerID>().playerId)
+            {
+                player.transform.position = networking.playerState.position;
+            }
 
         }
     }
