@@ -54,11 +54,6 @@ public class NetworkingServer : INetworking
 
                 SpawnPlayer(userData);
 
-                // Trigger the onClientAddedEvent
-                lock (receiverLock)
-                {
-                    triggerClientAdded = true;
-                }
             }
         }
     }
@@ -129,6 +124,12 @@ public class NetworkingServer : INetworking
         {
             SendPacket(bytes, entry.Key);
             //serverSocket.SendTo(bytes, bytes.Length, SocketFlags.None, entry.Key);
+        }
+
+        // Trigger the onClientAddedEvent
+        lock (receiverLock)
+        {
+            triggerClientAdded = true;
         }
     }
 
