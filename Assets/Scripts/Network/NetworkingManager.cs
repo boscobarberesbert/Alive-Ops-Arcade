@@ -69,6 +69,7 @@ public class NetworkingManager : MonoBehaviour
             if (networking.playerState.playerID == player.GetComponent<PlayerID>().playerId)
             {
                 player.transform.position = networking.playerState.position;
+                player.transform.rotation = networking.playerState.rotation;
             }
 
         }

@@ -66,10 +66,12 @@ public class PlayerState : Packet
 {
     public int playerID;
     public Vector3 position;
+    public Quaternion rotation;
 
     public PlayerState()
     {
         this.type = PacketType.CLIENT_UPDATE;
         position = new Vector3(0f, 0f, 0f);
+        rotation = new Quaternion(0f, 0f, 0f,0f);
     }
 }

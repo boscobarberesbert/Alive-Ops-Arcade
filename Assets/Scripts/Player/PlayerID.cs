@@ -18,6 +18,7 @@ public class PlayerID : MonoBehaviour
     public void Update()
     {
         currentState.position = transform.position;
+        currentState.rotation = transform.rotation;
         byte[] bytes = SerializationUtility.SerializeValue(currentState, DataFormat.JSON);
         if(NetworkingManager.Instance.networking is NetworkClient)
         {
