@@ -9,6 +9,7 @@ public class Packet
     {
         DEFAULT,
         LOBBY_STATE,
+        GAME_START,
         CLIENT_NEW,
         CLIENT_UPDATE
     }
