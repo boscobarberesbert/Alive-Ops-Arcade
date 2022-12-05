@@ -13,7 +13,8 @@ public class CameraFollow : MonoBehaviour
 
     private void Start()
     {
-        target = GameObject.Find(NetworkingManager.Instance.networking.myUserData.username).transform;
+        //target = GameObject.Find(NetworkingManager.Instance.networking.myUserData.username).transform;
+        target = GameObject.FindGameObjectWithTag("Player").transform;
     }
 
     void LateUpdate()

@@ -420,7 +420,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh24414
+  m_Name: pb_Mesh41888
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -633,6 +633,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Enemies
       objectReference: {fileID: 0}
+    - target: {fileID: 6948409082811668897, guid: a40950e0e9c06864a8decc921e34b944, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a40950e0e9c06864a8decc921e34b944, type: 3}
 --- !u!1 &581160722
@@ -745,7 +749,7 @@ GameObject:
   - component: {fileID: 607516882}
   - component: {fileID: 607516881}
   - component: {fileID: 607516885}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1089,6 +1093,10 @@ PrefabInstance:
     - target: {fileID: 814990484125564527, guid: 376f68c5327f9c44387d5206c3cdea80, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 5392011712828243627, guid: 376f68c5327f9c44387d5206c3cdea80, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 376f68c5327f9c44387d5206c3cdea80, type: 3}
@@ -3398,6 +3406,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 5725512842829449646, guid: 3a149de1b883c764ebf1b49b34b6e058, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 9058455093552723876, guid: 3a149de1b883c764ebf1b49b34b6e058, type: 3}
       propertyPath: m_Name
       value: Main Camera
@@ -3412,11 +3424,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9058455093552723883, guid: 3a149de1b883c764ebf1b49b34b6e058, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 8.95
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 9058455093552723883, guid: 3a149de1b883c764ebf1b49b34b6e058, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -4
+      value: -4.7
       objectReference: {fileID: 0}
     - target: {fileID: 9058455093552723883, guid: 3a149de1b883c764ebf1b49b34b6e058, type: 3}
       propertyPath: m_LocalRotation.w
@@ -5406,7 +5418,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh24384
+  m_Name: pb_Mesh41858
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -5661,3 +5673,60 @@ Transform:
   m_Father: {fileID: 1576519243}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &6419451323375888379
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 6419451323316899738, guid: 418db2fd3d263154fadd6bb11955613e, type: 3}
+      propertyPath: m_RootOrder
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419451323316899738, guid: 418db2fd3d263154fadd6bb11955613e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419451323316899738, guid: 418db2fd3d263154fadd6bb11955613e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419451323316899738, guid: 418db2fd3d263154fadd6bb11955613e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419451323316899738, guid: 418db2fd3d263154fadd6bb11955613e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419451323316899738, guid: 418db2fd3d263154fadd6bb11955613e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419451323316899738, guid: 418db2fd3d263154fadd6bb11955613e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419451323316899738, guid: 418db2fd3d263154fadd6bb11955613e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419451323316899738, guid: 418db2fd3d263154fadd6bb11955613e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419451323316899738, guid: 418db2fd3d263154fadd6bb11955613e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419451323316899738, guid: 418db2fd3d263154fadd6bb11955613e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6419451323316899751, guid: 418db2fd3d263154fadd6bb11955613e, type: 3}
+      propertyPath: m_Name
+      value: Aim Plane
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 418db2fd3d263154fadd6bb11955613e, type: 3}
