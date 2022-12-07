@@ -26,7 +26,7 @@ public class PlayerID : MonoBehaviour
         }
         else
         {
-            (NetworkingManager.Instance.networking as NetworkingServer).BroadcastPacketFromServer(bytes);
+            (NetworkingManager.Instance.networking as NetworkingServer).BroadcastPacket(bytes,false);
         }
     }
 }

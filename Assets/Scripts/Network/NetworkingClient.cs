@@ -21,12 +21,15 @@ public class NetworkingClient : INetworking
     private int channel2Port = 9051;
 
     public bool triggerClientAdded { get; set; } = false;
+    public bool triggerClientDisconected { get; set; } = false;
     public bool triggerLoadScene { get; set; } = false;
 
     public UserData myUserData { get; set; } = new UserData();
     public LobbyState lobbyState { get; set; } = new LobbyState();
 
     public PlayerState playerState { get; set; } = new PlayerState();
+    float elapsedTime = 0f;
+    float pingTime = 30f;
 
     public void Start()
     {
@@ -59,7 +62,7 @@ public class NetworkingClient : INetworking
         clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
 
         Debug.Log("[CLIENT] Server started listening");
-
+        
         while (true)
         {
             data = new byte[5024];
@@ -103,9 +106,18 @@ public class NetworkingClient : INetworking
             playerState = SerializationUtility.DeserializeValue<PlayerState>(inputPacket, DataFormat.JSON);
         }
     }
-
-    public void OnUpdate() { }
-
+    public void OnUpdate() {
+        elapsedTime += Time.deltaTime;
+        if(elapsedTime >= pingTime)
+        {
+            elapsedTime = elapsedTime % 1f;
+            PingServer();
+        }
+    }
+    public void PingServer()
+    {
+        Debug.Log(Time.time);
+    }
     public void reportError()
     {
         throw new System.NotImplementedException();

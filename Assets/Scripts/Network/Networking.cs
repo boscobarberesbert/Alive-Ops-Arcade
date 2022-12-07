@@ -19,6 +19,7 @@ public interface INetworking
     void reportError();
 
     bool triggerClientAdded { get; set; }
+    bool triggerClientDisconected { get; set; }
     bool triggerLoadScene { get; set; }
 
     //to be merged

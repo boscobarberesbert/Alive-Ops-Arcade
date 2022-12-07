@@ -26,6 +26,7 @@ public class NetworkingServer : INetworking
     public UserData myUserData { get; set; } = new UserData();
 
     public bool triggerClientAdded { get; set; } = false;
+    public bool triggerClientDisconected { get; set; } = false;
     public bool triggerLoadScene { get; set; } = false;
 
 
