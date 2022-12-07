@@ -20,9 +20,9 @@ public class PlayerID : MonoBehaviour
         currentState.position = transform.position;
         currentState.rotation = transform.rotation;
         byte[] bytes = SerializationUtility.SerializeValue(currentState, DataFormat.JSON);
-        if(NetworkingManager.Instance.networking is NetworkClient)
+        if(NetworkingManager.Instance.networking is NetworkingClient)
         {
-           (NetworkingManager.Instance.networking as NetworkClient).SendPacketToServer(bytes);
+           (NetworkingManager.Instance.networking as NetworkingClient).SendPacketToServer(bytes);
         }
         else
         {

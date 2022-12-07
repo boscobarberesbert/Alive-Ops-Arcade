@@ -21,6 +21,7 @@ public interface INetworking
     bool triggerClientAdded { get; set; }
     bool triggerLoadScene { get; set; }
 
+    //to be merged
     UserData myUserData { get; set; }
     PlayerState playerState { get; set; }
     LobbyState lobbyState { get; set; }

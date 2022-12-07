@@ -18,16 +18,16 @@ public class NetworkingServer : INetworking
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
-    // Map to link an endpoint with a client (server not included)
+    // Dictionary to link an endpoint with a client (server not included)
     public Dictionary<EndPoint, UserData> clients;
 
-    // Dictionary to link a user with its PlayerID
     public LobbyState lobbyState { get; set; } = new LobbyState();
     public PlayerState playerState { get; set; } = new PlayerState();
+    public UserData myUserData { get; set; } = new UserData();
+
     public bool triggerClientAdded { get; set; } = false;
     public bool triggerLoadScene { get; set; } = false;
 
-    public UserData myUserData { get; set; } = new UserData();
 
     public void Start()
     {
@@ -35,6 +35,44 @@ public class NetworkingServer : INetworking
         clients = new Dictionary<EndPoint, UserData>();
 
         InitializeSocket();
+    }
+    private void InitializeSocket()
+    {
+        Debug.Log("[SERVER] Server Initializing...");
+        Debug.Log("[SERVER] Creating Socket...");
+
+        serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        Debug.Log("[SERVER] Socket Created...");
+
+        IPEndPoint ipep = new IPEndPoint(IPAddress.Any, channel1Port);
+        serverSocket.Bind(ipep);
+        Debug.Log("[SERVER] Socket Binded...");
+
+        endPoint = new IPEndPoint(IPAddress.Any, channel2Port);
+        SpawnPlayer(myUserData);
+        serverThread = new Thread(ServerListener);
+        serverThread.IsBackground = true;
+        serverThread.Start();
+    }
+
+
+
+
+    private void ServerListener()
+    {
+        Debug.Log("[SERVER] Server started listening");
+
+        while (true)
+        {
+            // Listen for data
+            byte[] data = new byte[1024];
+            int recv = serverSocket.ReceiveFrom(data, ref endPoint);
+
+            Debug.Log("[SERVER] package received");
+
+            // Call OnPackageReceived
+            OnPackageReceived(data, recv, endPoint);
+        }
     }
 
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
@@ -59,34 +97,40 @@ public class NetworkingServer : INetworking
                 SpawnPlayer(userData);
 
             }
-        }else if(packet.type == Packet.PacketType.CLIENT_UPDATE)
+        }
+        else if (packet.type == Packet.PacketType.CLIENT_UPDATE)
         {
-            BroadcastPacketFromClient(inputPacket);
+            BroadcastPacket(inputPacket);
             playerState = SerializationUtility.DeserializeValue<PlayerState>(inputPacket, DataFormat.JSON);
 
         }
     }
 
-    public void BroadcastPacketFromClient(byte[] packet) //Doesn't include the client that sent the packet
+    public void SpawnPlayer(UserData userData)
     {
-        // Broadcast the message to the other clients
-        foreach (KeyValuePair<EndPoint, UserData> entry in clients)
+        lobbyState.players.Add(userData, lobbyState.players.Count);
+        byte[] bytes = SerializationUtility.SerializeValue(lobbyState, DataFormat.JSON);
+
+        BroadcastPacket(bytes,false);
+
+
+        // Trigger the onClientAddedEvent
+        lock (receiverLock)
         {
-            if (!entry.Key.Equals(endPoint))
-            {
-                SendPacket(packet, entry.Key);
-            }
+            triggerClientAdded = true;
         }
     }
 
-    public void BroadcastPacketFromServer(byte[] packet) //Broadcast to every client
+    public void BroadcastPacket(byte[] packet,bool fromClient = true) //Doesn't include the client that sent the packet
     {
         // Broadcast the message to the other clients
         foreach (KeyValuePair<EndPoint, UserData> entry in clients)
         {
-
+            if (fromClient && entry.Key.Equals(endPoint))
+            {
+                continue;
+            }
             SendPacket(packet, entry.Key);
-
         }
     }
 
@@ -98,63 +142,13 @@ public class NetworkingServer : INetworking
         }
     }
 
-    private void InitializeSocket()
-    {
-        Debug.Log("[SERVER] Server Initializing...");
-        Debug.Log("[SERVER] Creating Socket...");
-
-        serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        Debug.Log("[SERVER] Socket Created...");
-
-        IPEndPoint ipep = new IPEndPoint(IPAddress.Any, channel1Port);
-        serverSocket.Bind(ipep);
-        Debug.Log("[SERVER] Socket Binded...");
-
-        endPoint = new IPEndPoint(IPAddress.Any, channel2Port);
-        SpawnPlayer(myUserData);
-        serverThread = new Thread(ServerListener);
-        serverThread.IsBackground = true;
-        serverThread.Start();
-    }
-
-    private void ServerListener()
-    {
-        Debug.Log("[SERVER] Server started listening");
-
-        while (true)
-        {
-            // Listen for data
-            byte[] data = new byte[1024];
-            int recv = serverSocket.ReceiveFrom(data, ref endPoint);
-
-            Debug.Log("[SERVER] package received");
-
-            // Call OnPackageReceived
-            OnPackageReceived(data, recv, endPoint);
-        }
-    }
-
-    public void SpawnPlayer(UserData userData)
-    {
-        lobbyState.players.Add(userData, lobbyState.players.Count);
-        byte[] bytes = SerializationUtility.SerializeValue(lobbyState, DataFormat.JSON);
-
-        BroadcastPacketFromServer(bytes);
-
-
-        // Trigger the onClientAddedEvent
-        lock (receiverLock)
-        {
-            triggerClientAdded = true;
-        }
-    }
 
     public void LoadScene()
     {
         Packet packet = new Packet();
         packet.type = Packet.PacketType.GAME_START;
         byte[] gameStart = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
-        BroadcastPacketFromServer(gameStart);
+        BroadcastPacket(gameStart,false);
         lock (receiverLock)
         {
             triggerLoadScene = true;

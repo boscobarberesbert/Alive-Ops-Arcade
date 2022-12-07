@@ -31,7 +31,7 @@ public class NetworkingManager : MonoBehaviour
     private void Start()
     {
         // Creating network client | server
-        networking = MainMenuInfo.isClient ? new NetworkClient() : new NetworkingServer();
+        networking = MainMenuInfo.isClient ? new NetworkingClient() : new NetworkingServer();
 
         // Initializing user data
         networking.myUserData.username = MainMenuInfo.username;

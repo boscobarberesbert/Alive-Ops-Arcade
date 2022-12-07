@@ -6,7 +6,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class NetworkClient : INetworking
+public class NetworkingClient : INetworking
 {
     Thread clientThread;
 
@@ -34,16 +34,40 @@ public class NetworkClient : INetworking
 
         InitializeSocket();
     }
-
-    public void OnConnectionReset(EndPoint fromAddress)
+    private void InitializeSocket()
     {
-        throw new System.NotImplementedException();
+        Debug.Log("[CLIENT] Client Initializing...");
+        Debug.Log("[CLIENT] Creating Socket...");
+        clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        Debug.Log("[CLIENT] Socket created...");
+
+        ipep = new IPEndPoint(IPAddress.Parse(myUserData.connectToIP), channel1Port);
+
+        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, channel2Port);
+        endPoint = (EndPoint)sendIpep;
+
+        clientThread = new Thread(ClientListener);
+        clientThread.IsBackground = true;
+        clientThread.Start();
     }
 
-    public void OnDisconnect()
+    private void ClientListener()
     {
-        clientSocket.Close();
-        clientThread.Abort();
+        // Sending hello packet with user data
+        byte[] data = myUserData.SerializeJson();
+
+        clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
+
+        Debug.Log("[CLIENT] Server started listening");
+
+        while (true)
+        {
+            data = new byte[5024];
+            int recv = clientSocket.ReceiveFrom(data, ref endPoint);
+
+            // Call OnPackageReceived
+            OnPackageReceived(data, recv, endPoint);
+        }
     }
 
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
@@ -97,42 +121,17 @@ public class NetworkClient : INetworking
         clientSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, ipep);
     }
 
-    private void InitializeSocket()
+
+    public void OnConnectionReset(EndPoint fromAddress)
     {
-        Debug.Log("[CLIENT] Client Initializing...");
-        Debug.Log("[CLIENT] Creating Socket...");
-        clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        Debug.Log("[CLIENT] Socket created...");
-
-        ipep = new IPEndPoint(IPAddress.Parse(myUserData.connectToIP), channel1Port);
-
-        IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, channel2Port);
-        endPoint = (EndPoint)sendIpep;
-
-        clientThread = new Thread(ClientListener);
-        clientThread.IsBackground = true;
-        clientThread.Start();
+        throw new System.NotImplementedException();
     }
 
-    private void ClientListener()
+    public void OnDisconnect()
     {
-        // Sending hello packet with user data
-        byte[] data = myUserData.SerializeJson();
-
-        clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
-
-        Debug.Log("[CLIENT] Server started listening");
-
-        while (true)
-        {
-            data = new byte[5024];
-            int recv = clientSocket.ReceiveFrom(data, ref endPoint);
-
-            // Call OnPackageReceived
-            OnPackageReceived(data, recv, endPoint);
-        }
+        clientSocket.Close();
+        clientThread.Abort();
     }
-
     private void OnDisable()
     {
         Debug.Log("Destroying Scene");
