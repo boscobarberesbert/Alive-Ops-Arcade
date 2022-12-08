@@ -20,14 +20,13 @@ public class NetworkingClient : INetworking
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
+    public NetworkUser myNetworkUser { get; set; }
+    public List<NetworkUser> networkUserList { get; set; }
+
     public bool triggerClientAdded { get; set; } = false;
     public bool triggerClientDisconected { get; set; } = false;
     public bool triggerLoadScene { get; set; } = false;
 
-    public UserData myUserData { get; set; } = new UserData();
-    public LobbyState lobbyState { get; set; } = new LobbyState();
-
-    public PlayerState playerState { get; set; } = new PlayerState();
     float elapsedTime = 0f;
     float pingTime = 30f;
 
@@ -37,6 +36,7 @@ public class NetworkingClient : INetworking
 
         InitializeSocket();
     }
+
     private void InitializeSocket()
     {
         Debug.Log("[CLIENT] Client Initializing...");
@@ -44,7 +44,7 @@ public class NetworkingClient : INetworking
         clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         Debug.Log("[CLIENT] Socket created...");
 
-        ipep = new IPEndPoint(IPAddress.Parse(myUserData.connectToIP), channel1Port);
+        ipep = new IPEndPoint(IPAddress.Parse(myNetworkUser.connectToIP), channel1Port);
 
         IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, channel2Port);
         endPoint = (EndPoint)sendIpep;
@@ -57,9 +57,11 @@ public class NetworkingClient : INetworking
     private void ClientListener()
     {
         // Sending hello packet with user data
-        byte[] data = myUserData.SerializeJson();
+        ClientPacket packet = new ClientPacket(myNetworkUser, PacketType.CLIENT_JOIN);
 
-        clientSocket.SendTo(data, data.Length, SocketFlags.None, ipep);
+        byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
+
+        SendPacketToServer(data);
 
         Debug.Log("[CLIENT] Server started listening");
         
@@ -75,19 +77,18 @@ public class NetworkingClient : INetworking
 
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
-        Packet packet = SerializationUtility.DeserializeValue<Packet>(inputPacket, DataFormat.JSON);
+        ServerPacket packet = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
 
         // Whenever a package is received, we want to parse the message
-        if (packet.type == Packet.PacketType.LOBBY_STATE)
+        if (packet.type == PacketType.CLIENT_JOIN)
         {
-            LobbyState lobbyState = SerializationUtility.DeserializeValue<LobbyState>(inputPacket, DataFormat.JSON);
-            this.lobbyState = lobbyState;
-            foreach (KeyValuePair<UserData, int> player in lobbyState.players)
+            networkUserList = packet.networkUserList;
+            foreach (var player in packet.networkUserList)
             {
-                Debug.Log("[Client Data] Type: " + player.Key.type +
-                            " IP: " + player.Key.connectToIP +
-                            " Client: " + player.Key.isClient +
-                            " Username: " + player.Key.username);
+                Debug.Log("[Client Data] ID: " + player.networkID +
+                            " IP: " + player.connectToIP +
+                            " Client: " + player.isClient +
+                            " Username: " + player.username);
             }
 
             lock (receiverLock)
@@ -95,18 +96,22 @@ public class NetworkingClient : INetworking
                 triggerClientAdded = true;
             }
         }
-        else if (packet.type == Packet.PacketType.GAME_START)
+        else if (packet.type == PacketType.GAME_START)
         {
             lock (receiverLock)
             {
                 triggerLoadScene = true;
             }
-        }else if(packet.type == Packet.PacketType.CLIENT_UPDATE)
-        {
-            playerState = SerializationUtility.DeserializeValue<PlayerState>(inputPacket, DataFormat.JSON);
         }
+        // TODO
+        //else if (packet.type == PacketType.WORLD_STATE)
+        //{
+        //    myPlayerData = SerializationUtility.DeserializeValue<PlayerData>(inputPacket, DataFormat.JSON);
+        //}
     }
-    public void OnUpdate() {
+
+    public void OnUpdate()
+    {
         elapsedTime += Time.deltaTime;
         if(elapsedTime >= pingTime)
         {
@@ -114,15 +119,13 @@ public class NetworkingClient : INetworking
             PingServer();
         }
     }
+
     public void PingServer()
     {
         Debug.Log(Time.time);
     }
-    public void reportError()
-    {
-        throw new System.NotImplementedException();
-    }
 
+    // TODO: IS IT NECESSARY?
     public void SendPacket(byte[] outputPacket, EndPoint toAddress)
     {
         clientSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, toAddress);
@@ -133,6 +136,10 @@ public class NetworkingClient : INetworking
         clientSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, ipep);
     }
 
+    public void reportError()
+    {
+        throw new System.NotImplementedException();
+    }
 
     public void OnConnectionReset(EndPoint fromAddress)
     {

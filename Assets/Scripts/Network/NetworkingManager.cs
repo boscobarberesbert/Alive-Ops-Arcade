@@ -13,6 +13,7 @@ public class NetworkingManager : MonoBehaviour
 
     [SerializeField] GameObject playerPrefab;
     [SerializeField] Vector3 startSpawnPosition;
+
     List<GameObject> players = new List<GameObject>();
 
     private void Awake()
@@ -26,18 +27,22 @@ public class NetworkingManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-    }
 
-    private void Start()
-    {
         // Creating network client | server
         networking = MainMenuInfo.isClient ? new NetworkingClient() : new NetworkingServer();
 
         // Initializing user data
-        networking.myUserData.username = MainMenuInfo.username;
-        networking.myUserData.isClient = MainMenuInfo.isClient;
-        networking.myUserData.connectToIP = MainMenuInfo.connectToIp;
+        networking.myNetworkUser = new NetworkUser(
+            MainMenuInfo.connectToIp,
+            MainMenuInfo.isClient,
+            MainMenuInfo.username,
+            System.Guid.NewGuid().ToString());
 
+        Debug.Log("PLAYER DATA IS CREATED");
+    }
+
+    private void Start()
+    {
         // Starting networking
         networking.Start();
 
@@ -47,6 +52,7 @@ public class NetworkingManager : MonoBehaviour
     private void Update()
     {
         networking.OnUpdate();
+
         if (networking.triggerClientAdded)
         {
             if (onClientAdded != null)
@@ -55,45 +61,39 @@ public class NetworkingManager : MonoBehaviour
             }
             networking.triggerClientAdded = false;
         }
+
         if (networking.triggerLoadScene)
         {
             players.Clear();
             SceneManager.LoadScene("Game");
             networking.triggerLoadScene = false;
-
         }
 
-        foreach (GameObject player in players)
-        {
-
-            if (networking.playerState.playerID == player.GetComponent<PlayerID>().playerId)
-            {
-                player.transform.position = networking.playerState.position;
-                player.transform.rotation = networking.playerState.rotation;
-            }
-
-        }
-    }
-
-    private void OnDisable()
-    {
-        networking.OnDisconnect();
+        // TODO: Refactor
+        //foreach (GameObject player in players)
+        //{
+        //    if (networking.myPlayerData.playerID == player.GetComponent<PlayerID>().playerId)
+        //    {
+        //        player.transform.position = networking.myPlayerData.position;
+        //        player.transform.rotation = networking.myPlayerData.rotation;
+        //    }
+        //}
     }
 
     public void Spawn()
     {
-        foreach (KeyValuePair<UserData, int> player in networking.lobbyState.players)
+        foreach (var networkUser in networking.networkUserList)
         {
-            if (!GameObject.Find(player.Key.username))
+            if (networkUser.playerData.action == PlayerData.Action.CREATE)
             {
                 Vector3 spawnPosition = new Vector3(startSpawnPosition.x + players.Count * 3, 1, 0);
 
                 GameObject playerGO = Instantiate(playerPrefab, spawnPosition, new Quaternion(0, 0, 0, 0));
-                playerGO.name = player.Key.username;
-                playerGO.GetComponent<PlayerID>().playerId = player.Value;
+                playerGO.name = networkUser.username;
+                playerGO.GetComponent<PlayerID>().playerId = networkUser.playerData.playerID;
 
                 // Disable scripts as we are not going to be controlling the rest of players
-                if (player.Key.username != networking.myUserData.username)
+                if (networkUser.username != networking.myNetworkUser.username)
                 {
                     playerGO.GetComponent<PlayerController>().enabled = false;
                     playerGO.GetComponent<CharacterController>().enabled = false;
@@ -106,12 +106,16 @@ public class NetworkingManager : MonoBehaviour
 
     public void LoadScene(string sceneName)
     {
-
         (networking as NetworkingServer).LoadScene();
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Spawn();
+    }
+
+    private void OnDisable()
+    {
+        networking.OnDisconnect();
     }
 }

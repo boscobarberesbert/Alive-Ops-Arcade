@@ -7,26 +7,26 @@ public class PlayerID : MonoBehaviour
 {
     public int playerId = -1;
     
-    private PlayerState currentState;
+    private PlayerData currentState;
 
     public void Start()
     {
-        currentState = new PlayerState();
-        currentState.playerID = playerId;
+        //currentState = new PlayerData();
+        //currentState.playerID = playerId;
     }
 
     public void Update()
     {
-        currentState.position = transform.position;
-        currentState.rotation = transform.rotation;
-        byte[] bytes = SerializationUtility.SerializeValue(currentState, DataFormat.JSON);
-        if(NetworkingManager.Instance.networking is NetworkingClient)
-        {
-           (NetworkingManager.Instance.networking as NetworkingClient).SendPacketToServer(bytes);
-        }
-        else
-        {
-            (NetworkingManager.Instance.networking as NetworkingServer).BroadcastPacket(bytes,false);
-        }
+        //currentState.position = transform.position;
+        //currentState.rotation = transform.rotation;
+        //byte[] bytes = SerializationUtility.SerializeValue(currentState, DataFormat.JSON);
+        //if(NetworkingManager.Instance.networking is NetworkingClient)
+        //{
+        //   (NetworkingManager.Instance.networking as NetworkingClient).SendPacketToServer(bytes);
+        //}
+        //else
+        //{
+        //    (NetworkingManager.Instance.networking as NetworkingServer).BroadcastPacket(bytes,false);
+        //}
     }
 }

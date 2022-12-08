@@ -3,75 +3,90 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-public class Packet
+public enum PacketType
 {
-    public enum PacketType
-    {
-        DEFAULT,
-        LOBBY_STATE,
-        GAME_START,
-        CLIENT_NEW,
-        CLIENT_UPDATE
-    }
-    public PacketType type = PacketType.DEFAULT;
+    DEFAULT,
+    GAME_START,
+    CLIENT_JOIN,
+    WORLD_STATE
 }
 
-public class UserData : Packet
+public class NetworkUser
 {
+    // Network information
     public string connectToIP = "";
     public bool isClient = true;
     public string username = "";
+    public string networkID = "";
 
-    public UserData()
+    public NetworkUser()
     {
-        this.type = PacketType.CLIENT_NEW;
         connectToIP = "";
         isClient = true;
         username = "";
+        networkID = "";
     }
 
-    public UserData(string connectIP, bool isClient, string username)
+    public NetworkUser(string connectIP, bool isClient, string username, string networkID)
     {
-        this.type = PacketType.CLIENT_NEW;
         this.connectToIP = connectIP;
         this.isClient = isClient;
         this.username = username;
+        this.networkID = networkID;
     }
 
-    public byte[] SerializeJson()
-    {
-        string json = JsonUtility.ToJson(this);
-
-        MemoryStream stream = new MemoryStream();
-        BinaryWriter writer = new BinaryWriter(stream);
-        writer.Write(json);
-
-        return stream.ToArray();
-    }
+    // Player that corresponds to the user
+    public PlayerData playerData;
 }
 
-public class LobbyState : Packet
+public class PlayerData
 {
-    // Dictionary to link a user with a game object (including server)
-    public Dictionary<UserData, int> players;
-
-    public LobbyState()
+    public enum Action
     {
-        this.type = PacketType.LOBBY_STATE;
-        players = new Dictionary<UserData, int>();
+        NONE,
+        CREATE,
+        UPDATE,
+        DESTROY
     }
-}
 
-public class PlayerState : Packet
-{
-    public int playerID;
+    public PlayerData()
+    {
+        playerID = -1;
+        action = Action.NONE;
+        position = new Vector3(0f, 0f, 0f);
+        rotation = new Quaternion(0f, 0f, 0f, 0f);
+    }
+
+    // World State
+    public int playerID = -1;
+    public Action action = Action.NONE;
     public Vector3 position;
     public Quaternion rotation;
+}
 
-    public PlayerState()
+public class ServerPacket
+{
+    public PacketType type = PacketType.DEFAULT;
+
+    // List of players (including server)
+    public List<NetworkUser> networkUserList;
+
+    public ServerPacket(List<NetworkUser> networkUserList, PacketType type)
     {
-        this.type = PacketType.CLIENT_UPDATE;
-        position = new Vector3(0f, 0f, 0f);
-        rotation = new Quaternion(0f, 0f, 0f,0f);
+        this.type = type;
+        this.networkUserList = networkUserList;
+    }
+}
+
+public class ClientPacket
+{
+    public PacketType type = PacketType.DEFAULT;
+
+    public NetworkUser networkUser;
+
+    public ClientPacket(NetworkUser networkUser, PacketType type)
+    {
+        this.type = type;
+        this.networkUser = networkUser;
     }
 }

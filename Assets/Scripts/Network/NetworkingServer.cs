@@ -18,25 +18,27 @@ public class NetworkingServer : INetworking
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
-    // Dictionary to link an endpoint with a client (server not included)
-    public Dictionary<EndPoint, UserData> clients;
+    public NetworkUser myNetworkUser { get; set; }
 
-    public LobbyState lobbyState { get; set; } = new LobbyState();
-    public PlayerState playerState { get; set; } = new PlayerState();
-    public UserData myUserData { get; set; } = new UserData();
+    // List that stores information about player states
+    public List<NetworkUser> networkUserList { get; set; }
+
+    // Dictionary to link an endpoint with a client (server not included)
+    public Dictionary<EndPoint, int> clients;
 
     public bool triggerClientAdded { get; set; } = false;
     public bool triggerClientDisconected { get; set; } = false;
     public bool triggerLoadScene { get; set; } = false;
 
-
     public void Start()
     {
         receiverLock = new object();
-        clients = new Dictionary<EndPoint, UserData>();
+
+        clients = new Dictionary<EndPoint, int>();
 
         InitializeSocket();
     }
+
     private void InitializeSocket()
     {
         Debug.Log("[SERVER] Server Initializing...");
@@ -50,14 +52,15 @@ public class NetworkingServer : INetworking
         Debug.Log("[SERVER] Socket Binded...");
 
         endPoint = new IPEndPoint(IPAddress.Any, channel2Port);
-        SpawnPlayer(myUserData);
+
+        Debug.Log("PLAYER IS SPAWNING");
+        myNetworkUser.playerData.action = PlayerData.Action.CREATE;
+        SpawnPlayer(myNetworkUser);
+
         serverThread = new Thread(ServerListener);
         serverThread.IsBackground = true;
         serverThread.Start();
     }
-
-
-
 
     private void ServerListener()
     {
@@ -79,41 +82,44 @@ public class NetworkingServer : INetworking
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
         // Whenever a package is received, we want to parse the message
-        Packet packet = SerializationUtility.DeserializeValue<Packet>(inputPacket, DataFormat.JSON);
+        ClientPacket packet = SerializationUtility.DeserializeValue<ClientPacket>(inputPacket, DataFormat.JSON);
 
-        if (packet.type == Packet.PacketType.CLIENT_NEW)
+        if (packet.type == PacketType.CLIENT_JOIN)
         {
-            UserData userData = SerializationUtility.DeserializeValue<UserData>(inputPacket, DataFormat.JSON);
             Debug.Log("[Client Data]" +
-            " Type: " + userData.type +
-            " IP: " + userData.connectToIP +
-            " Client: " + userData.isClient +
-            " Username: " + userData.username);
+            " IP: " + packet.networkUser.connectToIP +
+            " Client: " + packet.networkUser.isClient +
+            " Username: " + packet.networkUser.username);
 
             // If the client that sent a message to this server is new, add it to the list of clients.
             if (!clients.ContainsKey(endPoint))
             {
-                clients.Add(endPoint, userData);
+                // Assign playerID and the action to perform respectively
+                NetworkUser newClient = packet.networkUser;
+                newClient.playerData.playerID = networkUserList.Count + 1;
+                newClient.playerData.action = PlayerData.Action.CREATE;
+                
+                // TODO: ASSIGN ID TO NEW CLIENT
+                clients.Add(endPoint, newClient.playerData.playerID);
 
-                SpawnPlayer(userData);
-
+                SpawnPlayer(newClient);
             }
         }
-        else if (packet.type == Packet.PacketType.CLIENT_UPDATE)
-        {
-            BroadcastPacket(inputPacket);
-            playerState = SerializationUtility.DeserializeValue<PlayerState>(inputPacket, DataFormat.JSON);
-
-        }
+        //else if (packet.type == PacketType.WORLD_STATE)
+        //{
+        //    BroadcastPacket(inputPacket);
+        //}
     }
 
-    public void SpawnPlayer(UserData userData)
+    public void SpawnPlayer(NetworkUser networkUser)
     {
-        lobbyState.players.Add(userData, lobbyState.players.Count);
-        byte[] bytes = SerializationUtility.SerializeValue(lobbyState, DataFormat.JSON);
+        networkUserList.Add(networkUser);
 
-        BroadcastPacket(bytes,false);
+        ServerPacket packet = new ServerPacket(networkUserList, PacketType.CLIENT_JOIN);
 
+        byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
+
+        BroadcastPacket(data, false);
 
         // Trigger the onClientAddedEvent
         lock (receiverLock)
@@ -122,15 +128,14 @@ public class NetworkingServer : INetworking
         }
     }
 
-    public void BroadcastPacket(byte[] packet,bool fromClient = true) //Doesn't include the client that sent the packet
+    public void BroadcastPacket(byte[] packet, bool fromClient = true) // Doesn't include the client that sent the packet
     {
         // Broadcast the message to the other clients
-        foreach (KeyValuePair<EndPoint, UserData> entry in clients)
+        foreach (KeyValuePair<EndPoint, int> entry in clients)
         {
             if (fromClient && entry.Key.Equals(endPoint))
-            {
                 continue;
-            }
+
             SendPacket(packet, entry.Key);
         }
     }
@@ -143,13 +148,14 @@ public class NetworkingServer : INetworking
         }
     }
 
-
     public void LoadScene()
     {
-        Packet packet = new Packet();
-        packet.type = Packet.PacketType.GAME_START;
-        byte[] gameStart = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
-        BroadcastPacket(gameStart,false);
+        ServerPacket packet = new ServerPacket(networkUserList, PacketType.GAME_START);
+
+        byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
+
+        BroadcastPacket(data, false);
+
         lock (receiverLock)
         {
             triggerLoadScene = true;
