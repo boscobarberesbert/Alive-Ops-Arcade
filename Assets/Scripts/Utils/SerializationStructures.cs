@@ -25,6 +25,7 @@ public class NetworkUser
         isClient = true;
         username = "";
         networkID = "";
+        playerData = new PlayerData();
     }
 
     public NetworkUser(string connectIP, bool isClient, string username, string networkID)
@@ -33,6 +34,7 @@ public class NetworkUser
         this.isClient = isClient;
         this.username = username;
         this.networkID = networkID;
+        playerData = new PlayerData();
     }
 
     // Player that corresponds to the user

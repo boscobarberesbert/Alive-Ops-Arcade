@@ -2,6 +2,7 @@ using AliveOpsArcade.OdinSerializer;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -122,7 +123,8 @@ public class NetworkingClient : INetworking
 
     public void PingServer()
     {
-        Debug.Log(Time.time);
+        byte[] packet = Encoding.ASCII.GetBytes("Hello");
+        SendPacketToServer(packet);
     }
 
     // TODO: IS IT NECESSARY?

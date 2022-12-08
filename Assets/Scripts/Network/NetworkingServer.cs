@@ -18,7 +18,7 @@ public class NetworkingServer : INetworking
     private int channel1Port = 9050;
     private int channel2Port = 9051;
 
-    public NetworkUser myNetworkUser { get; set; }
+    public NetworkUser myNetworkUser { get; set; } = new NetworkUser();
 
     // List that stores information about player states
     public List<NetworkUser> networkUserList { get; set; }
@@ -35,6 +35,7 @@ public class NetworkingServer : INetworking
         receiverLock = new object();
 
         clients = new Dictionary<EndPoint, int>();
+        networkUserList = new List<NetworkUser>();
 
         InitializeSocket();
     }
