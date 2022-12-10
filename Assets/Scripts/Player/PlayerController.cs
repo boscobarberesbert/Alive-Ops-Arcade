@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -40,7 +38,7 @@ public class PlayerController : MonoBehaviour
 
     private void HandleGravity()
     {
-        if(characterController.isGrounded)
+        if (characterController.isGrounded)
         {
             // Constant small force to keep the character controller grounded
             // as it considers itself floating if there is 0 downward movement

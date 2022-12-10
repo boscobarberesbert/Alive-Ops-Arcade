@@ -5,7 +5,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class NetworkingClient : INetworking
 {
@@ -65,7 +64,7 @@ public class NetworkingClient : INetworking
         SendPacketToServer(data);
 
         Debug.Log("[CLIENT] Server started listening");
-        
+
         while (true)
         {
             data = new byte[5024];
@@ -100,7 +99,7 @@ public class NetworkingClient : INetworking
                 else if (player.playerData.action == PlayerData.Action.UPDATE)
                 {
                     // TODO: update players from our world
-                    
+
                     // This is not viable
                     //else if (packet.type == PacketType.WORLD_STATE)
                     //{
@@ -134,7 +133,7 @@ public class NetworkingClient : INetworking
     public void OnUpdate()
     {
         elapsedTime += Time.deltaTime;
-        if(elapsedTime >= pingTime)
+        if (elapsedTime >= pingTime)
         {
             elapsedTime = elapsedTime % 1f;
             PingServer();

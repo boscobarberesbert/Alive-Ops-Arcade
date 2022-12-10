@@ -1,12 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using AliveOpsArcade.OdinSerializer;
 
 public class PlayerID : MonoBehaviour
 {
     public string networkID = "";
-    
+
     private PlayerData currentState;
 
     public void Start()

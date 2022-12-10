@@ -1,11 +1,9 @@
+using AliveOpsArcade.OdinSerializer;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using UnityEngine;
 using System.Threading;
-
-using AliveOpsArcade.OdinSerializer;
-using UnityEngine.Networking.Types;
+using UnityEngine;
 
 public class NetworkingServer : INetworking
 {
@@ -125,9 +123,11 @@ public class NetworkingServer : INetworking
 
     public void SpawnPlayer(NetworkUser networkUser)
     {
+        // Add the user to our list, setting its action to be created
         networkUser.playerData.action = PlayerData.Action.CREATE;
         networkUserList.Add(networkUser);
 
+        // Prepare the packet to be sent notifying to spawn the necessary objects
         ServerPacket packet = new ServerPacket(networkUserList, PacketType.WORLD_STATE);
 
         byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
@@ -163,6 +163,7 @@ public class NetworkingServer : INetworking
 
     public void LoadScene()
     {
+        // Notify that the game is going to start
         ServerPacket packet = new ServerPacket(networkUserList, PacketType.GAME_START);
 
         byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);

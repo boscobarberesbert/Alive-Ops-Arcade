@@ -1,4 +1,3 @@
-using AliveOpsArcade.OdinSerializer;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -28,7 +27,7 @@ public class NetworkingManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Creating network client | server
+        // Creating network (client or server) Interface Networking
         networking = MainMenuInfo.isClient ? new NetworkingClient() : new NetworkingServer();
 
         // Initializing user data
