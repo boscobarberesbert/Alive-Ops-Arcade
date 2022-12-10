@@ -420,7 +420,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh55234
+  m_Name: pb_Mesh33590
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -3284,6 +3284,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3075483737303777834, guid: 3a149de1b883c764ebf1b49b34b6e058, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -6.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3075483737303777834, guid: 3a149de1b883c764ebf1b49b34b6e058, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 16.7
+      objectReference: {fileID: 0}
     - target: {fileID: 9058455093552723876, guid: 3a149de1b883c764ebf1b49b34b6e058, type: 3}
       propertyPath: m_Name
       value: Main Camera
@@ -5306,7 +5314,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh53804
+  m_Name: pb_Mesh33558
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2

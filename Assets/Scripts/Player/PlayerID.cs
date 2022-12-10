@@ -5,7 +5,7 @@ using AliveOpsArcade.OdinSerializer;
 
 public class PlayerID : MonoBehaviour
 {
-    public int playerId = -1;
+    public string networkID = "";
     
     private PlayerData currentState;
 

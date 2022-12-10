@@ -90,10 +90,10 @@ public class NetworkingManager : MonoBehaviour
 
                 GameObject playerGO = Instantiate(playerPrefab, spawnPosition, new Quaternion(0, 0, 0, 0));
                 playerGO.name = networkUser.username;
-                playerGO.GetComponent<PlayerID>().playerId = networkUser.playerData.playerID;
+                playerGO.GetComponent<PlayerID>().networkID = networkUser.networkID;
 
                 // Disable scripts as we are not going to be controlling the rest of players
-                if (networkUser.username != networking.myNetworkUser.username)
+                if (networkUser.networkID != networking.myNetworkUser.networkID)
                 {
                     playerGO.GetComponent<PlayerController>().enabled = false;
                     playerGO.GetComponent<CharacterController>().enabled = false;

@@ -8,7 +8,8 @@ public enum PacketType
     DEFAULT,
     GAME_START,
     CLIENT_JOIN,
-    WORLD_STATE
+    WORLD_STATE,
+    PING
 }
 
 public class NetworkUser
@@ -53,14 +54,12 @@ public class PlayerData
 
     public PlayerData()
     {
-        playerID = -1;
         action = Action.NONE;
         position = new Vector3(0f, 0f, 0f);
         rotation = new Quaternion(0f, 0f, 0f, 0f);
     }
 
     // World State
-    public int playerID = -1;
     public Action action = Action.NONE;
     public Vector3 position;
     public Quaternion rotation;

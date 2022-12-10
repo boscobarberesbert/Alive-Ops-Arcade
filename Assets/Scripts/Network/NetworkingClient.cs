@@ -72,6 +72,7 @@ public class NetworkingClient : INetworking
             int recv = clientSocket.ReceiveFrom(data, ref endPoint);
 
             // Call OnPackageReceived
+            // Whenever a package is received, we want to parse the message
             OnPackageReceived(data, recv, endPoint);
         }
     }
@@ -80,22 +81,42 @@ public class NetworkingClient : INetworking
     {
         ServerPacket packet = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
 
-        // Whenever a package is received, we want to parse the message
-        if (packet.type == PacketType.CLIENT_JOIN)
+        if (packet.type == PacketType.WORLD_STATE)
         {
-            networkUserList = packet.networkUserList;
             foreach (var player in packet.networkUserList)
             {
                 Debug.Log("[Client Data] ID: " + player.networkID +
-                            " IP: " + player.connectToIP +
-                            " Client: " + player.isClient +
-                            " Username: " + player.username);
-            }
+                            " | IP: " + player.connectToIP +
+                            " | Client: " + player.isClient +
+                            " | Username: " + player.username);
 
-            lock (receiverLock)
-            {
-                triggerClientAdded = true;
+                if (player.playerData.action == PlayerData.Action.CREATE)
+                {
+                    lock (receiverLock)
+                    {
+                        triggerClientAdded = true;
+                    }
+                }
+                else if (player.playerData.action == PlayerData.Action.UPDATE)
+                {
+                    // TODO: update players from our world
+                    
+                    // This is not viable
+                    //else if (packet.type == PacketType.WORLD_STATE)
+                    //{
+                    //    myPlayerData = SerializationUtility.DeserializeValue<PlayerData>(inputPacket, DataFormat.JSON);
+                    //}
+                }
+                else if (player.playerData.action == PlayerData.Action.DESTROY)
+                {
+                    // TODO: destroy players from our world
+                }
+                else
+                {
+                    Debug.Log("[WARNING] Player Action is NONE.");
+                }
             }
+            networkUserList = packet.networkUserList;
         }
         else if (packet.type == PacketType.GAME_START)
         {
@@ -104,11 +125,10 @@ public class NetworkingClient : INetworking
                 triggerLoadScene = true;
             }
         }
-        // TODO
-        //else if (packet.type == PacketType.WORLD_STATE)
-        //{
-        //    myPlayerData = SerializationUtility.DeserializeValue<PlayerData>(inputPacket, DataFormat.JSON);
-        //}
+        else if (packet.type == PacketType.PING)
+        {
+            // TODO: What to do when we are pinged
+        }
     }
 
     public void OnUpdate()
