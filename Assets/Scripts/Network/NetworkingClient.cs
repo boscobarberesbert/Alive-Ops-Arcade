@@ -57,7 +57,7 @@ public class NetworkingClient : INetworking
     private void ClientListener()
     {
         // Sending hello packet with user data
-        ClientPacket packet = new ClientPacket(myNetworkUser, PacketType.CLIENT_JOIN);
+        ClientPacket packet = new ClientPacket(myNetworkUser, PacketType.PLAYER_JOIN);
 
         byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
 
@@ -80,7 +80,15 @@ public class NetworkingClient : INetworking
     {
         ServerPacket packet = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
 
-        if (packet.type == PacketType.WORLD_STATE)
+        if (packet.type == PacketType.PLAYER_JOIN)
+        {
+            lock (receiverLock)
+            {
+                triggerClientAdded = true;
+            }
+            networkUserList = packet.networkUserList;
+        }
+        else if (packet.type == PacketType.WORLD_STATE)
         {
             foreach (var player in packet.networkUserList)
             {
@@ -89,14 +97,7 @@ public class NetworkingClient : INetworking
                             " | Client: " + player.isClient +
                             " | Username: " + player.username);
 
-                if (player.playerData.action == PlayerData.Action.CREATE)
-                {
-                    lock (receiverLock)
-                    {
-                        triggerClientAdded = true;
-                    }
-                }
-                else if (player.playerData.action == PlayerData.Action.UPDATE)
+                if (player.playerData.action == PlayerData.Action.UPDATE)
                 {
                     // TODO: update players from our world
 

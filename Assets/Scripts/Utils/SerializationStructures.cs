@@ -5,7 +5,7 @@ public enum PacketType
 {
     DEFAULT,
     GAME_START,
-    CLIENT_JOIN,
+    PLAYER_JOIN,
     WORLD_STATE,
     PING
 }
@@ -45,7 +45,7 @@ public class PlayerData
     public enum Action
     {
         NONE,
-        CREATE,
+        CREATE, // TODO: Maybe we don't need it?
         UPDATE,
         DESTROY
     }

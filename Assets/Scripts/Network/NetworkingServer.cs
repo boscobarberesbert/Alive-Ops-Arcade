@@ -53,7 +53,6 @@ public class NetworkingServer : INetworking
         endPoint = new IPEndPoint(IPAddress.Any, channel2Port);
 
         Debug.Log("SERVER PLAYER IS SPAWNING");
-        myNetworkUser.playerData.action = PlayerData.Action.CREATE;
         SpawnPlayer(myNetworkUser);
 
         serverThread = new Thread(ServerListener);
@@ -84,7 +83,7 @@ public class NetworkingServer : INetworking
         ClientPacket packet = SerializationUtility.DeserializeValue<ClientPacket>(inputPacket, DataFormat.JSON);
 
         // If the client that sent a message to this server is new, add it to the list of clients.
-        if (packet.type == PacketType.CLIENT_JOIN && !clients.ContainsKey(endPoint))
+        if (packet.type == PacketType.PLAYER_JOIN && !clients.ContainsKey(endPoint))
         {
             clients.Add(endPoint, packet.networkUser.networkID);
 
@@ -97,11 +96,7 @@ public class NetworkingServer : INetworking
             " Client: " + packet.networkUser.isClient +
             " Username: " + packet.networkUser.username);
 
-            if (packet.networkUser.playerData.action == PlayerData.Action.CREATE)
-            {
-                // TODO: create players if required
-            }
-            else if (packet.networkUser.playerData.action == PlayerData.Action.UPDATE)
+            if (packet.networkUser.playerData.action == PlayerData.Action.UPDATE)
             {
                 // TODO: update players from our world
                 //BroadcastPacket(inputPacket);
@@ -123,12 +118,11 @@ public class NetworkingServer : INetworking
 
     public void SpawnPlayer(NetworkUser networkUser)
     {
-        // Add the user to our list, setting its action to be created
-        networkUser.playerData.action = PlayerData.Action.CREATE;
+        // Add the user to our list of users (includes server)
         networkUserList.Add(networkUser);
 
         // Prepare the packet to be sent notifying to spawn the necessary objects
-        ServerPacket packet = new ServerPacket(networkUserList, PacketType.WORLD_STATE);
+        ServerPacket packet = new ServerPacket(networkUserList, PacketType.PLAYER_JOIN);
 
         byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
 

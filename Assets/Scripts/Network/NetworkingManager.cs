@@ -81,22 +81,23 @@ public class NetworkingManager : MonoBehaviour
 
     public void Spawn()
     {
-        foreach (var networkUser in networking.networkUserList)
+        foreach (var player in networking.networkUserList)
         {
-            if (networkUser.playerData.action == PlayerData.Action.CREATE)
+            if (!GameObject.Find(player.username))
             {
                 Vector3 spawnPosition = new Vector3(startSpawnPosition.x + players.Count * 3, 1, 0);
 
                 GameObject playerGO = Instantiate(playerPrefab, spawnPosition, new Quaternion(0, 0, 0, 0));
-                playerGO.name = networkUser.username;
-                playerGO.GetComponent<PlayerID>().networkID = networkUser.networkID;
+                playerGO.name = player.username;
+                playerGO.GetComponent<PlayerID>().networkID = player.networkID;
 
                 // Disable scripts as we are not going to be controlling the rest of players
-                if (networkUser.networkID != networking.myNetworkUser.networkID)
+                if (player.networkID != networking.myNetworkUser.networkID)
                 {
                     playerGO.GetComponent<PlayerController>().enabled = false;
                     playerGO.GetComponent<CharacterController>().enabled = false;
                     playerGO.GetComponent<MouseAim>().enabled = false;
+                    playerGO.tag = "Untagged";
                 }
                 players.Add(playerGO);
             }
