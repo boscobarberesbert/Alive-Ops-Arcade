@@ -4,7 +4,7 @@ public class PlayerID : MonoBehaviour
 {
     public string networkID = "";
 
-    private PlayerData currentState;
+    private DynamicObject currentState;
 
     public void Start()
     {

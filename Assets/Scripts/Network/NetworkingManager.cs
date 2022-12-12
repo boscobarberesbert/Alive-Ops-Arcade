@@ -13,7 +13,7 @@ public class NetworkingManager : MonoBehaviour
     [SerializeField] GameObject playerPrefab;
     [SerializeField] Vector3 startSpawnPosition;
 
-    List<GameObject> players = new List<GameObject>();
+    Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
 
     private void Awake()
     {
@@ -81,25 +81,27 @@ public class NetworkingManager : MonoBehaviour
 
     public void Spawn()
     {
-        foreach (var player in networking.networkUserList)
+        foreach (var user in networking.networkUserList)
         {
-            if (!GameObject.Find(player.username))
+            if (!players.ContainsKey(user.networkID) && user.player.action == DynamicObject.Action.CREATE)
             {
                 Vector3 spawnPosition = new Vector3(startSpawnPosition.x + players.Count * 3, 1, 0);
 
                 GameObject playerGO = Instantiate(playerPrefab, spawnPosition, new Quaternion(0, 0, 0, 0));
-                playerGO.name = player.username;
-                playerGO.GetComponent<PlayerID>().networkID = player.networkID;
+                playerGO.name = user.username;
+                playerGO.GetComponent<PlayerID>().networkID = user.networkID;
 
                 // Disable scripts as we are not going to be controlling the rest of players
-                if (player.networkID != networking.myNetworkUser.networkID)
+                if (user.networkID != networking.myNetworkUser.networkID)
                 {
                     playerGO.GetComponent<PlayerController>().enabled = false;
                     playerGO.GetComponent<CharacterController>().enabled = false;
                     playerGO.GetComponent<MouseAim>().enabled = false;
-                    playerGO.tag = "Untagged";
+
+                    // TODO Instance Players without Player Tag
+                    //playerGO.tag = "Untagged";
                 }
-                players.Add(playerGO);
+                players.Add(user.networkID, playerGO);
             }
         }
     }

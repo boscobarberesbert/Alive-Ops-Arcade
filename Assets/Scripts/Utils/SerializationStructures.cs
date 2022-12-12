@@ -5,7 +5,8 @@ public enum PacketType
 {
     DEFAULT,
     GAME_START,
-    PLAYER_JOIN,
+    HELLO,
+    WELCOME,
     WORLD_STATE,
     PING
 }
@@ -24,7 +25,7 @@ public class NetworkUser
         isClient = true;
         username = "";
         networkID = "";
-        playerData = new PlayerData();
+        player = new DynamicObject();
     }
 
     public NetworkUser(string connectIP, bool isClient, string username, string networkID)
@@ -33,14 +34,14 @@ public class NetworkUser
         this.isClient = isClient;
         this.username = username;
         this.networkID = networkID;
-        playerData = new PlayerData();
+        player = new DynamicObject();
     }
 
     // Player that corresponds to the user
-    public PlayerData playerData;
+    public DynamicObject player;
 }
 
-public class PlayerData
+public class DynamicObject
 {
     public enum Action
     {
@@ -50,7 +51,7 @@ public class PlayerData
         DESTROY
     }
 
-    public PlayerData()
+    public DynamicObject()
     {
         action = Action.NONE;
         position = new Vector3(0f, 0f, 0f);
@@ -70,7 +71,7 @@ public class ServerPacket
     // List of players (including server)
     public List<NetworkUser> networkUserList;
 
-    public ServerPacket(List<NetworkUser> networkUserList, PacketType type)
+    public ServerPacket(PacketType type, List<NetworkUser> networkUserList)
     {
         this.type = type;
         this.networkUserList = networkUserList;
@@ -83,7 +84,7 @@ public class ClientPacket
 
     public NetworkUser networkUser;
 
-    public ClientPacket(NetworkUser networkUser, PacketType type)
+    public ClientPacket(PacketType type, NetworkUser networkUser)
     {
         this.type = type;
         this.networkUser = networkUser;

@@ -57,7 +57,7 @@ public class NetworkingClient : INetworking
     private void ClientListener()
     {
         // Sending hello packet with user data
-        ClientPacket packet = new ClientPacket(myNetworkUser, PacketType.PLAYER_JOIN);
+        ClientPacket packet = new ClientPacket(PacketType.HELLO, myNetworkUser);
 
         byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
 
@@ -80,7 +80,7 @@ public class NetworkingClient : INetworking
     {
         ServerPacket packet = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
 
-        if (packet.type == PacketType.PLAYER_JOIN)
+        if (packet.type == PacketType.WELCOME)
         {
             lock (receiverLock)
             {
@@ -90,14 +90,14 @@ public class NetworkingClient : INetworking
         }
         else if (packet.type == PacketType.WORLD_STATE)
         {
-            foreach (var player in packet.networkUserList)
+            foreach (var user in packet.networkUserList)
             {
-                Debug.Log("[Client Data] ID: " + player.networkID +
-                            " | IP: " + player.connectToIP +
-                            " | Client: " + player.isClient +
-                            " | Username: " + player.username);
+                Debug.Log("[Client Data] ID: " + user.networkID +
+                            " | IP: " + user.connectToIP +
+                            " | Client: " + user.isClient +
+                            " | Username: " + user.username);
 
-                if (player.playerData.action == PlayerData.Action.UPDATE)
+                if (user.player.action == DynamicObject.Action.UPDATE)
                 {
                     // TODO: update players from our world
 
@@ -107,7 +107,7 @@ public class NetworkingClient : INetworking
                     //    myPlayerData = SerializationUtility.DeserializeValue<PlayerData>(inputPacket, DataFormat.JSON);
                     //}
                 }
-                else if (player.playerData.action == PlayerData.Action.DESTROY)
+                else if (user.player.action == DynamicObject.Action.DESTROY)
                 {
                     // TODO: destroy players from our world
                 }

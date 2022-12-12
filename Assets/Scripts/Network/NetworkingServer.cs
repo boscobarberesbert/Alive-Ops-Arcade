@@ -22,7 +22,7 @@ public class NetworkingServer : INetworking
     public List<NetworkUser> networkUserList { get; set; }
 
     // Dictionary to link an endpoint with a client networkID (server not included)
-    public Dictionary<EndPoint, string> clients;
+    public Dictionary<string, EndPoint> clients;
 
     public bool triggerClientAdded { get; set; } = false;
     public bool triggerClientDisconected { get; set; } = false;
@@ -32,7 +32,7 @@ public class NetworkingServer : INetworking
     {
         receiverLock = new object();
 
-        clients = new Dictionary<EndPoint, string>();
+        clients = new Dictionary<string, EndPoint>();
         networkUserList = new List<NetworkUser>();
 
         InitializeSocket();
@@ -83,9 +83,10 @@ public class NetworkingServer : INetworking
         ClientPacket packet = SerializationUtility.DeserializeValue<ClientPacket>(inputPacket, DataFormat.JSON);
 
         // If the client that sent a message to this server is new, add it to the list of clients.
-        if (packet.type == PacketType.PLAYER_JOIN && !clients.ContainsKey(endPoint))
+        if (packet.type == PacketType.HELLO)
         {
-            clients.Add(endPoint, packet.networkUser.networkID);
+            if (!clients.ContainsKey(packet.networkUser.networkID))
+                clients.Add(packet.networkUser.networkID, fromAddress);
 
             SpawnPlayer(packet.networkUser);
         }
@@ -96,12 +97,12 @@ public class NetworkingServer : INetworking
             " Client: " + packet.networkUser.isClient +
             " Username: " + packet.networkUser.username);
 
-            if (packet.networkUser.playerData.action == PlayerData.Action.UPDATE)
+            if (packet.networkUser.player.action == DynamicObject.Action.UPDATE)
             {
                 // TODO: update players from our world
                 //BroadcastPacket(inputPacket);
             }
-            else if (packet.networkUser.playerData.action == PlayerData.Action.DESTROY)
+            else if (packet.networkUser.player.action == DynamicObject.Action.DESTROY)
             {
                 // TODO: destroy players from our world
             }
@@ -121,12 +122,19 @@ public class NetworkingServer : INetworking
         // Add the user to our list of users (includes server)
         networkUserList.Add(networkUser);
 
-        // Prepare the packet to be sent notifying to spawn the necessary objects
-        ServerPacket packet = new ServerPacket(networkUserList, PacketType.PLAYER_JOIN);
+        if (networkUser.isClient)
+        {
+            List<NetworkUser> welcomeUserList = new List<NetworkUser>(networkUserList);
 
-        byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
+            CreateWelcomePacket(welcomeUserList);
 
-        BroadcastPacket(data, false);
+            // Prepare the packet to be sent notifying to spawn the necessary objects
+            ServerPacket packet = new ServerPacket(PacketType.WELCOME, welcomeUserList);
+
+            byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
+
+            SendPacket(data, clients[networkUser.networkID]);
+        }
 
         // Trigger the onClientAddedEvent
         lock (receiverLock)
@@ -135,15 +143,15 @@ public class NetworkingServer : INetworking
         }
     }
 
-    public void BroadcastPacket(byte[] packet, bool fromClient = true) // True: doesn't include the client that sent the packet in the broadcast
+    public void BroadcastPacket(byte[] data, bool fromClient = true) // True: doesn't include the client that sent the packet in the broadcast
     {
         // Broadcast the message to the other clients
-        foreach (KeyValuePair<EndPoint, string> entry in clients)
+        foreach (KeyValuePair<string, EndPoint> entry in clients)
         {
-            if (fromClient && entry.Key.Equals(endPoint))
+            if (fromClient && entry.Value.Equals(endPoint))
                 continue;
 
-            SendPacket(packet, entry.Key);
+            SendPacket(data, entry.Value);
         }
     }
 
@@ -155,10 +163,18 @@ public class NetworkingServer : INetworking
         }
     }
 
+    public void CreateWelcomePacket(List<NetworkUser> userList)
+    {
+        for (int i = 0; i < userList.Count; ++i)
+        {
+            userList[i].player.action = DynamicObject.Action.CREATE;
+        }
+    }
+
     public void LoadScene()
     {
         // Notify that the game is going to start
-        ServerPacket packet = new ServerPacket(networkUserList, PacketType.GAME_START);
+        ServerPacket packet = new ServerPacket(PacketType.GAME_START, networkUserList);
 
         byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
 
