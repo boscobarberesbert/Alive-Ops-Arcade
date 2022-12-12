@@ -97,6 +97,10 @@ public class NetworkingServer : INetworking
             " Client: " + packet.networkUser.isClient +
             " Username: " + packet.networkUser.username);
 
+            if (packet.networkUser.player.action == DynamicObject.Action.CREATE)
+            {
+                // TODO: Will we be spawning from information of a client
+            }
             if (packet.networkUser.player.action == DynamicObject.Action.UPDATE)
             {
                 // TODO: update players from our world

@@ -97,9 +97,13 @@ public class NetworkingClient : INetworking
                             " | Client: " + user.isClient +
                             " | Username: " + user.username);
 
+                if (user.player.action == DynamicObject.Action.CREATE)
+                {
+                    // TODO: create objects if needed
+                }
                 if (user.player.action == DynamicObject.Action.UPDATE)
                 {
-                    // TODO: update players from our world
+                    // TODO: update objects from our world
 
                     // This is not viable
                     //else if (packet.type == PacketType.WORLD_STATE)
@@ -109,7 +113,7 @@ public class NetworkingClient : INetworking
                 }
                 else if (user.player.action == DynamicObject.Action.DESTROY)
                 {
-                    // TODO: destroy players from our world
+                    // TODO: destroy objects from our world
                 }
                 else
                 {
