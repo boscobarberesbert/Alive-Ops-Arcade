@@ -9,18 +9,19 @@ using UnityEngine;
 public class NetworkingClient : INetworking
 {
     Thread clientThread;
+    object receiverLock;
 
     // Network
-    private Socket clientSocket;
-    private object receiverLock;
-
+    Socket clientSocket;
     IPEndPoint ipep;
     EndPoint endPoint;
 
-    private int channel1Port = 9050;
-    private int channel2Port = 9051;
+    int channel1Port = 9050;
+    int channel2Port = 9051;
 
     public NetworkUser myNetworkUser { get; set; }
+
+    // List that stores information about player states
     public List<NetworkUser> networkUserList { get; set; }
 
     public bool triggerClientAdded { get; set; } = false;
@@ -104,8 +105,6 @@ public class NetworkingClient : INetworking
                 if (user.player.action == DynamicObject.Action.UPDATE)
                 {
                     // TODO: update objects from our world
-
-                    // This is not viable
                     //else if (packet.type == PacketType.WORLD_STATE)
                     //{
                     //    myPlayerData = SerializationUtility.DeserializeValue<PlayerData>(inputPacket, DataFormat.JSON);

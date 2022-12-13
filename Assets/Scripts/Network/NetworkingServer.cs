@@ -8,21 +8,21 @@ using UnityEngine;
 public class NetworkingServer : INetworking
 {
     Thread serverThread;
-    private object receiverLock;
+    object receiverLock;
 
     // Network
-    private Socket serverSocket;
+    Socket serverSocket;
     EndPoint endPoint;
-    private int channel1Port = 9050;
-    private int channel2Port = 9051;
+    int channel1Port = 9050;
+    int channel2Port = 9051;
 
-    public NetworkUser myNetworkUser { get; set; } = new NetworkUser();
+    // Dictionary to link an endpoint with a client networkID (server not included)
+    Dictionary<string, EndPoint> clients;
+
+    public NetworkUser myNetworkUser { get; set; }
 
     // List that stores information about player states
     public List<NetworkUser> networkUserList { get; set; }
-
-    // Dictionary to link an endpoint with a client networkID (server not included)
-    public Dictionary<string, EndPoint> clients;
 
     public bool triggerClientAdded { get; set; } = false;
     public bool triggerClientDisconected { get; set; } = false;

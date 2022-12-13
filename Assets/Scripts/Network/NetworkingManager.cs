@@ -7,13 +7,13 @@ public class NetworkingManager : MonoBehaviour
     public static NetworkingManager Instance;
     public INetworking networking;
 
-    public delegate void OnClientAdded();
-    public event OnClientAdded onClientAdded;
+    delegate void OnClientAdded();
+    event OnClientAdded onClientAdded;
 
     [SerializeField] GameObject playerPrefab;
     [SerializeField] Vector3 startSpawnPosition;
 
-    Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
+    Dictionary<string, GameObject> playerMap = new Dictionary<string, GameObject>();
 
     private void Awake()
     {
@@ -63,7 +63,7 @@ public class NetworkingManager : MonoBehaviour
 
         if (networking.triggerLoadScene)
         {
-            players.Clear();
+            playerMap.Clear();
             SceneManager.LoadScene("Game");
             networking.triggerLoadScene = false;
         }
@@ -83,9 +83,9 @@ public class NetworkingManager : MonoBehaviour
     {
         foreach (var user in networking.networkUserList)
         {
-            if (!players.ContainsKey(user.networkID) && user.player.action == DynamicObject.Action.CREATE)
+            if (!playerMap.ContainsKey(user.networkID) && user.player.action == DynamicObject.Action.CREATE)
             {
-                Vector3 spawnPosition = new Vector3(startSpawnPosition.x + players.Count * 3, 1, 0);
+                Vector3 spawnPosition = new Vector3(startSpawnPosition.x + playerMap.Count * 3, 1, 0);
 
                 GameObject playerGO = Instantiate(playerPrefab, spawnPosition, new Quaternion(0, 0, 0, 0));
                 playerGO.name = user.username;
@@ -101,7 +101,7 @@ public class NetworkingManager : MonoBehaviour
                     // TODO Instance Players without Player Tag
                     //playerGO.tag = "Untagged";
                 }
-                players.Add(user.networkID, playerGO);
+                playerMap.Add(user.networkID, playerGO);
             }
         }
     }

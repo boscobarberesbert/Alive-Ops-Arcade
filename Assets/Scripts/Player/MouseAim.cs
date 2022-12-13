@@ -3,21 +3,23 @@ using UnityEngine.InputSystem;
 
 public class MouseAim : MonoBehaviour
 {
-    // Aim members //
+    // Aim members
     public float rotationSpeed = 5f;
-    private Vector3 worldPosition;
-    private Vector3 aimDirection;
-    private Quaternion lookRotation;
-    [SerializeField] private LayerMask mouseColliderLayerMask;
 
-    // Shoot Members //
+    Vector3 worldPosition;
+    Vector3 aimDirection;
+    Quaternion lookRotation;
+
+    [SerializeField] LayerMask mouseColliderLayerMask;
+
+    // Shoot Members
     public GameObject bullet;
     public float shootForce = 150f;     // Bullet force
     public Transform muzzlePoint;       // Point from where it shoots
 
     PlayerInput playerInput;
 
-    private void Awake()
+    void Awake()
     {
         playerInput = new PlayerInput();
 
@@ -25,19 +27,18 @@ public class MouseAim : MonoBehaviour
         playerInput.ShootingControls.Shoot.started += OnShoot;
     }
 
-    private void OnShoot(InputAction.CallbackContext context)
+    void OnShoot(InputAction.CallbackContext context)
     {
         if (context.ReadValueAsButton()) // If Shoot button has been pressed
             Shoot();
     }
 
-    // Update is called once per frame
     void Update()
     {
         HandleAim();
     }
 
-    private void HandleAim()
+    void HandleAim()
     {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         if (Physics.Raycast(ray, out RaycastHit raycastHit, Camera.main.farClipPlane, mouseColliderLayerMask))
@@ -58,7 +59,7 @@ public class MouseAim : MonoBehaviour
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, rotationSpeed * Time.deltaTime);
     }
 
-    private void Shoot()
+    void Shoot()
     {
         Vector3 targetPos;
 
@@ -82,12 +83,12 @@ public class MouseAim : MonoBehaviour
         currentBullet.GetComponent<Rigidbody>().AddForce(shootDirection.normalized * shootForce, ForceMode.Impulse);
     }
 
-    private void OnEnable()
+    void OnEnable()
     {
         playerInput.ShootingControls.Enable();
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         playerInput.ShootingControls.Disable();
     }
