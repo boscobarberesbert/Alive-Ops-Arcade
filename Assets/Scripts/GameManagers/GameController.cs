@@ -6,6 +6,7 @@ public class GameController : MonoBehaviour
 {
     NetworkingManager networkManager;
 
+    // Dynamic objects to be updated
     List<GameObject> playerList;
     List<GameObject> enemyList;
 

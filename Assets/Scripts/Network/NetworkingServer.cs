@@ -53,6 +53,7 @@ public class NetworkingServer : INetworking
         endPoint = new IPEndPoint(IPAddress.Any, channel2Port);
 
         Debug.Log("SERVER PLAYER IS SPAWNING");
+        myNetworkUser.player.action = DynamicObject.Action.CREATE;
         SpawnPlayer(myNetworkUser);
 
         serverThread = new Thread(ServerListener);
