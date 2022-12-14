@@ -7,13 +7,15 @@ public class NetworkingManager : MonoBehaviour
     public static NetworkingManager Instance;
     public INetworking networking;
 
+    // Dynamic objects to be updated
+    public List<NetworkUser> userList = new List<NetworkUser>();
+    public Dictionary<string, GameObject> playerMap = new Dictionary<string, GameObject>();
+
     delegate void OnClientAdded();
     event OnClientAdded onClientAdded;
 
     [SerializeField] GameObject playerPrefab;
     [SerializeField] Vector3 startSpawnPosition;
-
-    Dictionary<string, GameObject> playerMap = new Dictionary<string, GameObject>();
 
     private void Awake()
     {
@@ -50,30 +52,38 @@ public class NetworkingManager : MonoBehaviour
     {
         networking.OnUpdate();
 
-        if (networking.triggerClientAdded)
+        lock (networking._clientAddLock)
         {
-            if (onClientAdded != null)
+            if (networking.triggerClientAdded)
             {
-                onClientAdded();
+                if (onClientAdded != null)
+                {
+                    onClientAdded();
+                }
+                networking.triggerClientAdded = false;
             }
-            networking.triggerClientAdded = false;
         }
 
-        if (networking.triggerLoadScene)
+        lock (networking._loadSceneLock)
         {
-            playerMap.Clear();
-            SceneManager.LoadScene("Game");
-            networking.triggerLoadScene = false;
+            if (networking.triggerLoadScene)
+            {
+                playerMap.Clear();
+                SceneManager.LoadScene("Game");
+                networking.triggerLoadScene = false;
+            }
         }
     }
 
     public void Spawn()
     {
-        for (int i = 0; i < networking.networkUserList.Count; ++i)
+        lock(networking._userListLock)
         {
-            // User variable only used to read
-            NetworkUser user = networking.networkUserList[i];
+            userList = networking.networkUserList;
+        }
 
+        foreach (var user in userList)
+        {
             if (!playerMap.ContainsKey(user.networkID) && user.player.action == DynamicObject.Action.CREATE)
             {
                 Vector3 spawnPosition = new Vector3(startSpawnPosition.x + playerMap.Count * 3, 1, 0);
@@ -96,8 +106,8 @@ public class NetworkingManager : MonoBehaviour
                 // Add the recently created playerGO to our map
                 playerMap.Add(user.networkID, playerGO);
 
-                // Update the action to be performed to the user's player object
-                networking.networkUserList[i].player.action = DynamicObject.Action.UPDATE;
+                // TODO: Update the action to be performed to the user's player object
+                //networking.networkUserList[i].player.action = DynamicObject.Action.UPDATE;
             }
         }
     }

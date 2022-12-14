@@ -7,8 +7,12 @@ using UnityEngine;
 
 public class NetworkingServer : INetworking
 {
+    // Thread and safety
     Thread serverThread;
-    object receiverLock;
+    public object _userListLock { get; set; } = new object();
+    public object _clientAddLock { get; set; } = new object();
+    public object _loadSceneLock { get; set; } = new object();
+    public object _clientDisconnectLock { get; set; } = new object();
 
     // Network
     Socket serverSocket;
@@ -30,9 +34,8 @@ public class NetworkingServer : INetworking
 
     public void Start()
     {
-        receiverLock = new object();
-
         clients = new Dictionary<string, EndPoint>();
+
         networkUserList = new List<NetworkUser>();
 
         InitializeSocket();
@@ -117,7 +120,10 @@ public class NetworkingServer : INetworking
     public void SpawnPlayer(NetworkUser networkUser)
     {
         // Add the user to our list of users (includes server)
-        networkUserList.Add(networkUser);
+        lock (_userListLock)
+        {
+            networkUserList.Add(networkUser);
+        }
 
         if (networkUser.isClient)
         {
@@ -134,7 +140,7 @@ public class NetworkingServer : INetworking
         }
 
         // Trigger the onClientAddedEvent
-        lock (receiverLock)
+        lock (_clientAddLock)
         {
             triggerClientAdded = true;
         }
@@ -171,7 +177,10 @@ public class NetworkingServer : INetworking
     public void LoadScene()
     {
         // Set all player objects to be created
-        SetActionInList(networkUserList, DynamicObject.Action.CREATE);
+        lock (_userListLock)
+        {
+            SetActionInList(networkUserList, DynamicObject.Action.CREATE);
+        }
 
         // Notify that the game is going to start
         ServerPacket packet = new ServerPacket(PacketType.GAME_START, networkUserList);
@@ -180,7 +189,7 @@ public class NetworkingServer : INetworking
 
         BroadcastPacket(data, false);
 
-        lock (receiverLock)
+        lock (_loadSceneLock)
         {
             triggerLoadScene = true;
         }

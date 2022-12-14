@@ -8,8 +8,12 @@ using UnityEngine;
 
 public class NetworkingClient : INetworking
 {
+    // Thread and safety
     Thread clientThread;
-    object receiverLock;
+    public object _userListLock { get; set; } = new object();
+    public object _clientAddLock { get; set; } = new object();
+    public object _loadSceneLock { get; set; } = new object();
+    public object _clientDisconnectLock { get; set; } = new object();
 
     // Network
     Socket clientSocket;
@@ -33,7 +37,7 @@ public class NetworkingClient : INetworking
 
     public void Start()
     {
-        receiverLock = new object();
+        networkUserList = new List<NetworkUser>();
 
         InitializeSocket();
     }
@@ -83,32 +87,34 @@ public class NetworkingClient : INetworking
 
         if (packet.type == PacketType.WELCOME)
         {
-            lock (receiverLock)
+            lock (_clientAddLock)
             {
                 triggerClientAdded = true;
             }
-            networkUserList = packet.networkUserList;
         }
         else if (packet.type == PacketType.WORLD_STATE)
         {
             foreach (var user in packet.networkUserList)
             {
-                Debug.Log("[Client Data] ID: " + user.networkID + " | IP: " + user.connectToIP + 
+                Debug.Log("[Client Data] ID: " + user.networkID + " | IP: " + user.connectToIP +
                     " | Client: " + user.isClient + " | Username: " + user.username);
             }
-            networkUserList = packet.networkUserList;
         }
         else if (packet.type == PacketType.GAME_START)
         {
-            lock (receiverLock)
+            lock (_loadSceneLock)
             {
                 triggerLoadScene = true;
             }
-            networkUserList = packet.networkUserList;
         }
         else if (packet.type == PacketType.PING)
         {
             // TODO: What to do when we are pinged
+        }
+
+        lock (_userListLock)
+        {
+            networkUserList = packet.networkUserList;
         }
     }
 

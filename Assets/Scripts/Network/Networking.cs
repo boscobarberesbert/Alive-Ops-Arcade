@@ -18,6 +18,11 @@ public interface INetworking
 
     void reportError();
 
+    object _userListLock { get; set; }
+    object _clientAddLock { get; set; }
+    object _loadSceneLock { get; set; }
+    object _clientDisconnectLock { get; set; }
+
     bool triggerClientAdded { get; set; }
     bool triggerClientDisconected { get; set; }
     bool triggerLoadScene { get; set; }
