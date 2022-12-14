@@ -93,31 +93,8 @@ public class NetworkingClient : INetworking
         {
             foreach (var user in packet.networkUserList)
             {
-                Debug.Log("[Client Data] ID: " + user.networkID +
-                            " | IP: " + user.connectToIP +
-                            " | Client: " + user.isClient +
-                            " | Username: " + user.username);
-
-                if (user.player.action == DynamicObject.Action.CREATE)
-                {
-                    // TODO: create objects if needed
-                }
-                if (user.player.action == DynamicObject.Action.UPDATE)
-                {
-                    // TODO: update objects from our world
-                    //else if (packet.type == PacketType.WORLD_STATE)
-                    //{
-                    //    myPlayerData = SerializationUtility.DeserializeValue<PlayerData>(inputPacket, DataFormat.JSON);
-                    //}
-                }
-                else if (user.player.action == DynamicObject.Action.DESTROY)
-                {
-                    // TODO: destroy objects from our world
-                }
-                else
-                {
-                    Debug.Log("[WARNING] Player Action is NONE.");
-                }
+                Debug.Log("[Client Data] ID: " + user.networkID + " | IP: " + user.connectToIP + 
+                    " | Client: " + user.isClient + " | Username: " + user.username);
             }
             networkUserList = packet.networkUserList;
         }
@@ -127,6 +104,7 @@ public class NetworkingClient : INetworking
             {
                 triggerLoadScene = true;
             }
+            networkUserList = packet.networkUserList;
         }
         else if (packet.type == PacketType.PING)
         {

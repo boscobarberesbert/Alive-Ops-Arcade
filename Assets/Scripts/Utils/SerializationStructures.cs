@@ -71,6 +71,10 @@ public class ServerPacket
     // List of players (including server)
     public List<NetworkUser> networkUserList;
 
+    // List of enemies
+    // TODO: initialize enemy list
+    public List<DynamicObject> enemyList;
+
     public ServerPacket(PacketType type, List<NetworkUser> networkUserList)
     {
         this.type = type;

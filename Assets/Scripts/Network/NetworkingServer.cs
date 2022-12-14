@@ -98,18 +98,10 @@ public class NetworkingServer : INetworking
             " Client: " + packet.networkUser.isClient +
             " Username: " + packet.networkUser.username);
 
-            if (packet.networkUser.player.action == DynamicObject.Action.CREATE)
-            {
-                // TODO: Will we be spawning from information of a client
-            }
             if (packet.networkUser.player.action == DynamicObject.Action.UPDATE)
             {
                 // TODO: update players from our world
                 //BroadcastPacket(inputPacket);
-            }
-            else if (packet.networkUser.player.action == DynamicObject.Action.DESTROY)
-            {
-                // TODO: destroy players from our world
             }
             else
             {
@@ -131,7 +123,7 @@ public class NetworkingServer : INetworking
         {
             List<NetworkUser> welcomeUserList = new List<NetworkUser>(networkUserList);
 
-            CreateWelcomePacket(welcomeUserList);
+            SetActionInList(welcomeUserList, DynamicObject.Action.CREATE);
 
             // Prepare the packet to be sent notifying to spawn the necessary objects
             ServerPacket packet = new ServerPacket(PacketType.WELCOME, welcomeUserList);
@@ -168,16 +160,19 @@ public class NetworkingServer : INetworking
         }
     }
 
-    public void CreateWelcomePacket(List<NetworkUser> userList)
+    public void SetActionInList(List<NetworkUser> userList, DynamicObject.Action action)
     {
         for (int i = 0; i < userList.Count; ++i)
         {
-            userList[i].player.action = DynamicObject.Action.CREATE;
+            userList[i].player.action = action;
         }
     }
 
     public void LoadScene()
     {
+        // Set all player objects to be created
+        SetActionInList(networkUserList, DynamicObject.Action.CREATE);
+
         // Notify that the game is going to start
         ServerPacket packet = new ServerPacket(PacketType.GAME_START, networkUserList);
 
@@ -209,7 +204,7 @@ public class NetworkingServer : INetworking
         serverThread.Abort();
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         Debug.Log("Destroying Scene");
 

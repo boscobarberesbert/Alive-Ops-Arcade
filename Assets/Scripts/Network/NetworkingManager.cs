@@ -36,8 +36,6 @@ public class NetworkingManager : MonoBehaviour
             MainMenuInfo.isClient,
             MainMenuInfo.username,
             System.Guid.NewGuid().ToString());
-
-        Debug.Log("PLAYER DATA IS CREATED");
     }
 
     private void Start()
@@ -67,22 +65,15 @@ public class NetworkingManager : MonoBehaviour
             SceneManager.LoadScene("Game");
             networking.triggerLoadScene = false;
         }
-
-        // TODO: Refactor
-        //foreach (GameObject player in players)
-        //{
-        //    if (networking.myPlayerData.playerID == player.GetComponent<PlayerID>().playerId)
-        //    {
-        //        player.transform.position = networking.myPlayerData.position;
-        //        player.transform.rotation = networking.myPlayerData.rotation;
-        //    }
-        //}
     }
 
     public void Spawn()
     {
-        foreach (var user in networking.networkUserList)
+        for (int i = 0; i < networking.networkUserList.Count; ++i)
         {
+            // User variable only used to read
+            NetworkUser user = networking.networkUserList[i];
+
             if (!playerMap.ContainsKey(user.networkID) && user.player.action == DynamicObject.Action.CREATE)
             {
                 Vector3 spawnPosition = new Vector3(startSpawnPosition.x + playerMap.Count * 3, 1, 0);
@@ -101,7 +92,12 @@ public class NetworkingManager : MonoBehaviour
                     // TODO Instance Players without Player Tag
                     //playerGO.tag = "Untagged";
                 }
+
+                // Add the recently created playerGO to our map
                 playerMap.Add(user.networkID, playerGO);
+
+                // Update the action to be performed to the user's player object
+                networking.networkUserList[i].player.action = DynamicObject.Action.UPDATE;
             }
         }
     }
@@ -111,12 +107,12 @@ public class NetworkingManager : MonoBehaviour
         (networking as NetworkingServer).LoadScene();
     }
 
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Spawn();
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         networking.OnDisconnect();
     }
