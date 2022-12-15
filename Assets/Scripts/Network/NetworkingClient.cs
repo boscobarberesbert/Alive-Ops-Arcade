@@ -10,10 +10,10 @@ public class NetworkingClient : INetworking
 {
     // Thread and safety
     Thread clientThread;
-    public object _userListLock { get; set; } = new object();
-    public object _clientAddLock { get; set; } = new object();
-    public object _loadSceneLock { get; set; } = new object();
-    public object _clientDisconnectLock { get; set; } = new object();
+    public object userListLock { get; set; } = new object();
+    public object clientAddLock { get; set; } = new object();
+    public object loadSceneLock { get; set; } = new object();
+    public object clientDisconnectLock { get; set; } = new object();
 
     // Network
     Socket clientSocket;
@@ -23,10 +23,9 @@ public class NetworkingClient : INetworking
     int channel1Port = 9050;
     int channel2Port = 9051;
 
-    public NetworkUser myNetworkUser { get; set; }
-
-    // List that stores information about player states
-    public List<NetworkUser> networkUserList { get; set; }
+    public UserData myUserData { get; set; }
+    public DynamicObject myPlayer { get; set; }
+    public Dictionary<int, string> playerMap { get; set; }
 
     public bool triggerClientAdded { get; set; } = false;
     public bool triggerClientDisconected { get; set; } = false;
@@ -37,7 +36,7 @@ public class NetworkingClient : INetworking
 
     public void Start()
     {
-        networkUserList = new List<NetworkUser>();
+        playerMap = new Dictionary<int, string>();
 
         InitializeSocket();
     }
@@ -49,7 +48,7 @@ public class NetworkingClient : INetworking
         clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         Debug.Log("[CLIENT] Socket created...");
 
-        ipep = new IPEndPoint(IPAddress.Parse(myNetworkUser.connectToIP), channel1Port);
+        ipep = new IPEndPoint(IPAddress.Parse(myUserData.connectToIP), channel1Port);
 
         IPEndPoint sendIpep = new IPEndPoint(IPAddress.Any, channel2Port);
         endPoint = (EndPoint)sendIpep;
@@ -62,7 +61,7 @@ public class NetworkingClient : INetworking
     private void ClientListener()
     {
         // Sending hello packet with user data
-        ClientPacket packet = new ClientPacket(PacketType.HELLO, myNetworkUser);
+        ClientPacket packet = new ClientPacket(PacketType.HELLO, myPlayer);
 
         byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
 
@@ -87,22 +86,21 @@ public class NetworkingClient : INetworking
 
         if (packet.type == PacketType.WELCOME)
         {
-            lock (_clientAddLock)
+            lock (clientAddLock)
             {
                 triggerClientAdded = true;
             }
         }
         else if (packet.type == PacketType.WORLD_STATE)
         {
-            foreach (var user in packet.networkUserList)
+            foreach (var player in packet.playerList)
             {
-                Debug.Log("[Client Data] ID: " + user.networkID + " | IP: " + user.connectToIP +
-                    " | Client: " + user.isClient + " | Username: " + user.username);
+                Debug.Log("[Player Data] ID: " + player.networkID);
             }
         }
         else if (packet.type == PacketType.GAME_START)
         {
-            lock (_loadSceneLock)
+            lock (loadSceneLock)
             {
                 triggerLoadScene = true;
             }
@@ -112,9 +110,10 @@ public class NetworkingClient : INetworking
             // TODO: What to do when we are pinged
         }
 
-        lock (_userListLock)
+        lock (userListLock)
         {
-            networkUserList = packet.networkUserList;
+            // TODO
+            //playerMap = packet.playerList;
         }
     }
 

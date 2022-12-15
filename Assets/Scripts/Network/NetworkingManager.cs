@@ -7,8 +7,7 @@ public class NetworkingManager : MonoBehaviour
     public static NetworkingManager Instance;
     public INetworking networking;
 
-    // Dynamic objects to be updated
-    public List<NetworkUser> userList = new List<NetworkUser>();
+    // Map to relate networkID to its gameobject
     public Dictionary<string, GameObject> playerMap = new Dictionary<string, GameObject>();
 
     delegate void OnClientAdded();
@@ -33,11 +32,9 @@ public class NetworkingManager : MonoBehaviour
         networking = MainMenuInfo.isClient ? new NetworkingClient() : new NetworkingServer();
 
         // Initializing user data
-        networking.myNetworkUser = new NetworkUser(
-            MainMenuInfo.connectToIp,
-            MainMenuInfo.isClient,
-            MainMenuInfo.username,
-            System.Guid.NewGuid().ToString());
+        networking.myUserData = new UserData(MainMenuInfo.username, MainMenuInfo.connectToIp);
+
+        networking.myPlayer = new DynamicObject();
     }
 
     private void Start()
@@ -45,14 +42,14 @@ public class NetworkingManager : MonoBehaviour
         // Starting networking
         networking.Start();
 
-        SceneManager.sceneLoaded += OnSceneLoaded;
+        //SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void Update()
     {
         networking.OnUpdate();
 
-        lock (networking._clientAddLock)
+        lock (networking.clientAddLock)
         {
             if (networking.triggerClientAdded)
             {
@@ -64,7 +61,7 @@ public class NetworkingManager : MonoBehaviour
             }
         }
 
-        lock (networking._loadSceneLock)
+        lock (networking.loadSceneLock)
         {
             if (networking.triggerLoadScene)
             {
@@ -77,37 +74,67 @@ public class NetworkingManager : MonoBehaviour
 
     public void Spawn()
     {
-        lock(networking._userListLock)
-        {
-            userList = networking.networkUserList;
-        }
+    //    lock (networking.userListLock)
+    //    {
+    //        worldPlayerList = networking.playerList;
+    //    }
 
-        foreach (var user in userList)
+    //    foreach (var player in networking.playerList)
+    //    {
+    //        if (!playerMap.ContainsKey(player.networkID) && player.action == DynamicObject.Action.CREATE)
+    //        {
+    //            Vector3 spawnPosition = new Vector3(startSpawnPosition.x + playerMap.Count * 3, 1, 0);
+
+    //            GameObject playerGO = Instantiate(playerPrefab, spawnPosition, new Quaternion(0, 0, 0, 0));
+    //            playerGO.GetComponent<PlayerID>().networkID = player.networkID;
+    //            playerGO.name = player.networkID;
+
+    //            // Disable scripts as we are not going to be controlling the rest of players
+    //            if (player.networkID != networking.myPlayer.networkID)
+    //            {
+    //                playerGO.GetComponent<PlayerController>().enabled = false;
+    //                playerGO.GetComponent<CharacterController>().enabled = false;
+    //                playerGO.GetComponent<MouseAim>().enabled = false;
+
+    //                // TODO Instance Players without Player Tag
+    //                playerGO.tag = "Untagged";
+    //            }
+
+    //            // Add the recently created playerGO to our map
+    //            playerMap.Add(player.networkID, playerGO);
+
+    //            // TODO: Update the action to be performed to the user's player object
+    //            networking.networkUserList[i].player.action = DynamicObject.Action.UPDATE;
+    //        }
+    //    }
+    }
+
+    public void ProcessPacketQueue(ref Queue<ClientPacket> packetQueue)
+    {
+        foreach (var packet in packetQueue)
         {
-            if (!playerMap.ContainsKey(user.networkID) && user.player.action == DynamicObject.Action.CREATE)
+            switch (packet.player.action)
             {
-                Vector3 spawnPosition = new Vector3(startSpawnPosition.x + playerMap.Count * 3, 1, 0);
+                case DynamicObject.Action.CREATE:
+                    {
 
-                GameObject playerGO = Instantiate(playerPrefab, spawnPosition, new Quaternion(0, 0, 0, 0));
-                playerGO.name = user.username;
-                playerGO.GetComponent<PlayerID>().networkID = user.networkID;
+                        break;
+                    }
+                case DynamicObject.Action.UPDATE:
+                    {
 
-                // Disable scripts as we are not going to be controlling the rest of players
-                if (user.networkID != networking.myNetworkUser.networkID)
-                {
-                    playerGO.GetComponent<PlayerController>().enabled = false;
-                    playerGO.GetComponent<CharacterController>().enabled = false;
-                    playerGO.GetComponent<MouseAim>().enabled = false;
+                        break;
+                    }
+                case DynamicObject.Action.DESTROY:
+                    {
 
-                    // TODO Instance Players without Player Tag
-                    //playerGO.tag = "Untagged";
-                }
+                        break;
+                    }
+                case DynamicObject.Action.NONE:
+                    {
 
-                // Add the recently created playerGO to our map
-                playerMap.Add(user.networkID, playerGO);
-
-                // TODO: Update the action to be performed to the user's player object
-                //networking.networkUserList[i].player.action = DynamicObject.Action.UPDATE;
+                        break;
+                    }
             }
         }
     }

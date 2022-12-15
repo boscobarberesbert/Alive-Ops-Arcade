@@ -9,10 +9,10 @@ public class NetworkingServer : INetworking
 {
     // Thread and safety
     Thread serverThread;
-    public object _userListLock { get; set; } = new object();
-    public object _clientAddLock { get; set; } = new object();
-    public object _loadSceneLock { get; set; } = new object();
-    public object _clientDisconnectLock { get; set; } = new object();
+    public object userListLock { get; set; } = new object();
+    public object clientAddLock { get; set; } = new object();
+    public object loadSceneLock { get; set; } = new object();
+    public object clientDisconnectLock { get; set; } = new object();
 
     // Network
     Socket serverSocket;
@@ -20,23 +20,25 @@ public class NetworkingServer : INetworking
     int channel1Port = 9050;
     int channel2Port = 9051;
 
-    // Dictionary to link an endpoint with a client networkID (server not included)
-    Dictionary<string, EndPoint> clients;
+    // Dictionary to link a client ID with an endpoint (server not included)
+    Dictionary<int, EndPoint> clients;
 
-    public NetworkUser myNetworkUser { get; set; }
-
-    // List that stores information about player states
-    public List<NetworkUser> networkUserList { get; set; }
+    public UserData myUserData { get; set; }
+    public DynamicObject myPlayer { get; set; }
+    public Dictionary<int, string> playerMap { get; set; }
 
     public bool triggerClientAdded { get; set; } = false;
     public bool triggerClientDisconected { get; set; } = false;
     public bool triggerLoadScene { get; set; } = false;
 
+    // Queue of received packets
+    Queue<ClientPacket> packetQueue = new Queue<ClientPacket>();
+
     public void Start()
     {
-        clients = new Dictionary<string, EndPoint>();
+        clients = new Dictionary<int, EndPoint>();
 
-        networkUserList = new List<NetworkUser>();
+        playerMap = new Dictionary<int, string>();
 
         InitializeSocket();
     }
@@ -56,8 +58,8 @@ public class NetworkingServer : INetworking
         endPoint = new IPEndPoint(IPAddress.Any, channel2Port);
 
         Debug.Log("SERVER PLAYER IS SPAWNING");
-        myNetworkUser.player.action = DynamicObject.Action.CREATE;
-        SpawnPlayer(myNetworkUser);
+        myUserData.clientID = playerMap.Count;
+        SpawnPlayer(myUserData);
 
         serverThread = new Thread(ServerListener);
         serverThread.IsBackground = true;
@@ -84,32 +86,43 @@ public class NetworkingServer : INetworking
 
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
-        ClientPacket packet = SerializationUtility.DeserializeValue<ClientPacket>(inputPacket, DataFormat.JSON);
+        Packet packet = SerializationUtility.DeserializeValue<Packet>(inputPacket, DataFormat.JSON);
 
         // If the client that sent a message to this server is new, add it to the list of clients.
         if (packet.type == PacketType.HELLO)
         {
-            if (!clients.ContainsKey(packet.networkUser.networkID))
-                clients.Add(packet.networkUser.networkID, fromAddress);
+            HelloPacket helloPacket = SerializationUtility.DeserializeValue<HelloPacket>(inputPacket, DataFormat.JSON);
 
-            SpawnPlayer(packet.networkUser);
+            // Assign a new client ID to the user
+            helloPacket.clientData.clientID = playerMap.Count + 1;
+
+            if (!clients.ContainsKey(helloPacket.clientData.clientID) && helloPacket.clientData.clientID == -1)
+                clients.Add(helloPacket.clientData.clientID, fromAddress);
+
+            SpawnPlayer(helloPacket.clientData);
         }
         else if (packet.type == PacketType.WORLD_STATE)
         {
-            Debug.Log("[Client Data]" +
-            " IP: " + packet.networkUser.connectToIP +
-            " Client: " + packet.networkUser.isClient +
-            " Username: " + packet.networkUser.username);
+            ClientPacket clientPacket = SerializationUtility.DeserializeValue<ClientPacket>(inputPacket, DataFormat.JSON);
 
-            if (packet.networkUser.player.action == DynamicObject.Action.UPDATE)
-            {
-                // TODO: update players from our world
-                //BroadcastPacket(inputPacket);
-            }
-            else
-            {
-                Debug.Log("[WARNING] Player Action is NONE.");
-            }
+            packetQueue.Enqueue(clientPacket);
+
+            NetworkingManager.Instance.ProcessPacketQueue(ref packetQueue);
+
+            // TODO: update players from our world
+            //if (clientPacket.player.action == DynamicObject.Action.NONE)
+            //    Debug.Log("[WARNING] Player Action is NONE.");
+            //else
+            //{
+            //    int index = playerList.FindIndex(it => it.networkID == packet.player.networkID);
+
+            //    if (index != -1)
+            //    {
+            //        playerList[index] = packet.player;
+            //    }
+            //    else
+            //        Debug.Log("[ERROR] Player to be updated was not found in list.");
+            //}
         }
         else if (packet.type == PacketType.PING)
         {
@@ -117,30 +130,36 @@ public class NetworkingServer : INetworking
         }
     }
 
-    public void SpawnPlayer(NetworkUser networkUser)
+    public void SpawnPlayer(UserData user)
     {
+        // Generate a networkID for its player
+        string generatedNetID = System.Guid.NewGuid().ToString();
+
         // Add the user to our list of users (includes server)
-        lock (_userListLock)
+        lock (userListLock)
         {
-            networkUserList.Add(networkUser);
+            playerMap.Add(user.clientID, generatedNetID);
         }
 
-        if (networkUser.isClient)
+        // If it's a client
+        if (clients.ContainsKey(user.clientID))
         {
-            List<NetworkUser> welcomeUserList = new List<NetworkUser>(networkUserList);
-
-            SetActionInList(welcomeUserList, DynamicObject.Action.CREATE);
-
-            // Prepare the packet to be sent notifying to spawn the necessary objects
-            ServerPacket packet = new ServerPacket(PacketType.WELCOME, welcomeUserList);
+            // Prepare the packet to be sent notifying the assigned IDs
+            WelcomePacket packet = new WelcomePacket(user.clientID, generatedNetID);
 
             byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
 
-            SendPacket(data, clients[networkUser.networkID]);
+            SendPacket(data, clients[user.clientID]);
+        }
+        // If it's the server
+        else
+        {
+            myUserData.clientID = user.clientID;
+            myPlayer.networkID = generatedNetID;
         }
 
         // Trigger the onClientAddedEvent
-        lock (_clientAddLock)
+        lock (clientAddLock)
         {
             triggerClientAdded = true;
         }
@@ -149,7 +168,7 @@ public class NetworkingServer : INetworking
     public void BroadcastPacket(byte[] data, bool fromClient = true) // True: doesn't include the client that sent the packet in the broadcast
     {
         // Broadcast the message to the other clients
-        foreach (KeyValuePair<string, EndPoint> entry in clients)
+        foreach (KeyValuePair<int, EndPoint> entry in clients)
         {
             if (fromClient && entry.Value.Equals(endPoint))
                 continue;
@@ -166,30 +185,31 @@ public class NetworkingServer : INetworking
         }
     }
 
-    public void SetActionInList(List<NetworkUser> userList, DynamicObject.Action action)
+    public void SetActionInList(List<DynamicObject> players, DynamicObject.Action action)
     {
-        for (int i = 0; i < userList.Count; ++i)
+        for (int i = 0; i < players.Count; ++i)
         {
-            userList[i].player.action = action;
+            players[i].action = action;
         }
     }
 
     public void LoadScene()
     {
         // Set all player objects to be created
-        lock (_userListLock)
+        lock (userListLock)
         {
-            SetActionInList(networkUserList, DynamicObject.Action.CREATE);
+            // TODO
+            //SetActionInList(playerList, DynamicObject.Action.CREATE);
         }
 
-        // Notify that the game is going to start
-        ServerPacket packet = new ServerPacket(PacketType.GAME_START, networkUserList);
+        // TODO: Notify that the game is going to start
+        //ServerPacket packet = new ServerPacket(PacketType.GAME_START, playerList);
 
-        byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
+        //byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
 
-        BroadcastPacket(data, false);
+        //BroadcastPacket(data, false);
 
-        lock (_loadSceneLock)
+        lock (loadSceneLock)
         {
             triggerLoadScene = true;
         }

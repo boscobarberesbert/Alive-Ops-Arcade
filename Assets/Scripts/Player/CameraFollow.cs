@@ -12,7 +12,7 @@ public class CameraFollow : MonoBehaviour
     private void Start()
     {
         // TODO Instance Players without Player Tag
-        target = GameObject.Find(NetworkingManager.Instance.networking.myNetworkUser.username).transform;
+        target = GameObject.Find(NetworkingManager.Instance.networking.myPlayer.networkID).transform;
         //target = GameObject.FindGameObjectWithTag("Player").transform;
     }
 

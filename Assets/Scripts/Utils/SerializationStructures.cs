@@ -11,34 +11,18 @@ public enum PacketType
     PING
 }
 
-public class NetworkUser
+public class UserData
 {
-    // Network information
-    public string connectToIP = "";
-    public bool isClient = true;
+    public int clientID = -1;
     public string username = "";
-    public string networkID = "";
+    public string connectToIP = "";
 
-    public NetworkUser()
+    public UserData(string username, string connectToIP)
     {
-        connectToIP = "";
-        isClient = true;
-        username = "";
-        networkID = "";
-        player = new DynamicObject();
-    }
-
-    public NetworkUser(string connectIP, bool isClient, string username, string networkID)
-    {
-        this.connectToIP = connectIP;
-        this.isClient = isClient;
+        clientID = -1;
         this.username = username;
-        this.networkID = networkID;
-        player = new DynamicObject();
+        this.connectToIP = connectToIP;
     }
-
-    // Player that corresponds to the user
-    public DynamicObject player;
 }
 
 public class DynamicObject
@@ -46,51 +30,94 @@ public class DynamicObject
     public enum Action
     {
         NONE,
-        CREATE, // TODO: Maybe we don't need it?
+        CREATE,
         UPDATE,
         DESTROY
     }
 
-    public DynamicObject()
-    {
-        action = Action.NONE;
-        position = new Vector3(0f, 0f, 0f);
-        rotation = new Quaternion(0f, 0f, 0f, 0f);
-    }
+    public string networkID = "";
 
     // World State
     public Action action = Action.NONE;
     public Vector3 position;
     public Quaternion rotation;
+
+    public DynamicObject()
+    {
+        networkID = "";
+        action = Action.NONE;
+        position = new Vector3(0f, 0f, 0f);
+        rotation = new Quaternion(0f, 0f, 0f, 0f);
+    }
+
+    public DynamicObject(string networkID)
+    {
+        this.networkID = networkID;
+        action = Action.NONE;
+        position = new Vector3(0f, 0f, 0f);
+        rotation = new Quaternion(0f, 0f, 0f, 0f);
+    }
 }
 
-public class ServerPacket
+public class Packet
 {
     public PacketType type = PacketType.DEFAULT;
+}
+
+public class ServerPacket : Packet
+{
+    // List of players (including server)
+    public List<DynamicObject> playerList;
+    
+    // List of enemies
+    // TODO: initialize enemy list
+    public List<DynamicObject> enemyList;
+
+    public ServerPacket(PacketType type, List<DynamicObject> playerList)
+    {
+        this.type = type;
+        this.playerList = playerList;
+    }
+}
+
+public class ClientPacket : Packet
+{
+    public DynamicObject player;
+
+    public ClientPacket(PacketType type, DynamicObject player)
+    {
+        this.type = type;
+        this.player = player;
+    }
+}
+
+public class HelloPacket : Packet
+{
+    public UserData clientData;
+
+    public HelloPacket(UserData clientData)
+    {
+        type = PacketType.HELLO;
+        this.clientData = clientData;
+    }
+}
+
+public class WelcomePacket : Packet
+{
+    public int clientIDAssigned = -1;
+    public string networkIDAssigned = "";
 
     // List of players (including server)
-    public List<NetworkUser> networkUserList;
+    public List<DynamicObject> playerList;
 
     // List of enemies
     // TODO: initialize enemy list
     public List<DynamicObject> enemyList;
 
-    public ServerPacket(PacketType type, List<NetworkUser> networkUserList)
+    public WelcomePacket(int clientIDAssigned, string networkIDAssigned)
     {
-        this.type = type;
-        this.networkUserList = networkUserList;
-    }
-}
-
-public class ClientPacket
-{
-    public PacketType type = PacketType.DEFAULT;
-
-    public NetworkUser networkUser;
-
-    public ClientPacket(PacketType type, NetworkUser networkUser)
-    {
-        this.type = type;
-        this.networkUser = networkUser;
+        type = PacketType.WELCOME;
+        this.clientIDAssigned = clientIDAssigned;
+        this.networkIDAssigned = networkIDAssigned;
     }
 }

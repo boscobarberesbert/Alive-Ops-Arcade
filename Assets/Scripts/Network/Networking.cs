@@ -18,15 +18,21 @@ public interface INetworking
 
     void reportError();
 
-    object _userListLock { get; set; }
-    object _clientAddLock { get; set; }
-    object _loadSceneLock { get; set; }
-    object _clientDisconnectLock { get; set; }
+    object userListLock { get; set; }
+    object clientAddLock { get; set; }
+    object loadSceneLock { get; set; }
+    object clientDisconnectLock { get; set; }
 
     bool triggerClientAdded { get; set; }
     bool triggerClientDisconected { get; set; }
     bool triggerLoadScene { get; set; }
 
-    NetworkUser myNetworkUser { get; set; }
-    List<NetworkUser> networkUserList { get; set; }
+    // Information about the user
+    UserData myUserData { get; set; }
+    
+    // The user's player
+    DynamicObject myPlayer { get; set; }
+
+    // Relates client ID with its player object networkID
+    public Dictionary<int, string> playerMap { get; set; }
 }
