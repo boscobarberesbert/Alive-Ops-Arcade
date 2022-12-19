@@ -11,21 +11,21 @@ public enum PacketType
     PING
 }
 
-public class UserData
+public class User
 {
-    public int clientID = -1;
+    public string networkID = "";
     public string username = "";
     public string connectToIP = "";
 
-    public UserData(string username, string connectToIP)
+    public User(string networkID, string username, string connectToIP)
     {
-        clientID = -1;
+        this.networkID = networkID;
         this.username = username;
         this.connectToIP = connectToIP;
     }
 }
 
-public class DynamicObject
+public class PlayerObject
 {
     public enum Action
     {
@@ -35,27 +35,23 @@ public class DynamicObject
         DESTROY
     }
 
-    public string networkID = "";
-
     // World State
     public Action action = Action.NONE;
     public Vector3 position;
     public Quaternion rotation;
 
-    public DynamicObject()
+    public PlayerObject()
     {
-        networkID = "";
         action = Action.NONE;
         position = new Vector3(0f, 0f, 0f);
         rotation = new Quaternion(0f, 0f, 0f, 0f);
     }
 
-    public DynamicObject(string networkID)
+    public PlayerObject(Action action, Vector3 position, Quaternion rotation)
     {
-        this.networkID = networkID;
-        action = Action.NONE;
-        position = new Vector3(0f, 0f, 0f);
-        rotation = new Quaternion(0f, 0f, 0f, 0f);
+        this.action = action;
+        this.position = position;
+        this.rotation = rotation;
     }
 }
 
@@ -67,57 +63,35 @@ public class Packet
 public class ServerPacket : Packet
 {
     // List of players (including server)
-    public List<DynamicObject> playerList;
+    public Dictionary<string, PlayerObject> playerMap;
     
-    // List of enemies
-    // TODO: initialize enemy list
-    public List<DynamicObject> enemyList;
+    // TODO: List of enemies
 
-    public ServerPacket(PacketType type, List<DynamicObject> playerList)
+    public ServerPacket(PacketType type, Dictionary<string, PlayerObject> playerMap)
     {
         this.type = type;
-        this.playerList = playerList;
+        this.playerMap = playerMap;
     }
 }
 
 public class ClientPacket : Packet
 {
-    public DynamicObject player;
+    public PlayerObject playerObject;
 
-    public ClientPacket(PacketType type, DynamicObject player)
+    public ClientPacket(PacketType type, PlayerObject playerObject)
     {
         this.type = type;
-        this.player = player;
+        this.playerObject = playerObject;
     }
 }
 
 public class HelloPacket : Packet
 {
-    public UserData clientData;
+    public User clientData;
 
-    public HelloPacket(UserData clientData)
+    public HelloPacket(User clientData)
     {
         type = PacketType.HELLO;
         this.clientData = clientData;
-    }
-}
-
-public class WelcomePacket : Packet
-{
-    public int clientIDAssigned = -1;
-    public string networkIDAssigned = "";
-
-    // List of players (including server)
-    public List<DynamicObject> playerList;
-
-    // List of enemies
-    // TODO: initialize enemy list
-    public List<DynamicObject> enemyList;
-
-    public WelcomePacket(int clientIDAssigned, string networkIDAssigned)
-    {
-        type = PacketType.WELCOME;
-        this.clientIDAssigned = clientIDAssigned;
-        this.networkIDAssigned = networkIDAssigned;
     }
 }

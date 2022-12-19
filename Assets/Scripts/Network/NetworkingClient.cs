@@ -10,8 +10,7 @@ public class NetworkingClient : INetworking
 {
     // Thread and safety
     Thread clientThread;
-    public object userListLock { get; set; } = new object();
-    public object clientAddLock { get; set; } = new object();
+    public object playerMapLock { get; set; } = new object();
     public object loadSceneLock { get; set; } = new object();
     public object clientDisconnectLock { get; set; } = new object();
 
@@ -23,11 +22,10 @@ public class NetworkingClient : INetworking
     int channel1Port = 9050;
     int channel2Port = 9051;
 
-    public UserData myUserData { get; set; }
-    public DynamicObject myPlayer { get; set; }
-    public Dictionary<int, string> playerMap { get; set; }
+    public User myUserData { get; set; }
+    public PlayerObject myPlayerData { get; set; }
+    public Dictionary<string, PlayerObject> playerMap { get; set; }
 
-    public bool triggerClientAdded { get; set; } = false;
     public bool triggerClientDisconected { get; set; } = false;
     public bool triggerLoadScene { get; set; } = false;
 
@@ -36,7 +34,7 @@ public class NetworkingClient : INetworking
 
     public void Start()
     {
-        playerMap = new Dictionary<int, string>();
+        playerMap = new Dictionary<string, PlayerObject>();
 
         InitializeSocket();
     }
@@ -61,7 +59,7 @@ public class NetworkingClient : INetworking
     private void ClientListener()
     {
         // Sending hello packet with user data
-        ClientPacket packet = new ClientPacket(PacketType.HELLO, myPlayer);
+        HelloPacket packet = new HelloPacket(myUserData);
 
         byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
 
@@ -86,17 +84,14 @@ public class NetworkingClient : INetworking
 
         if (packet.type == PacketType.WELCOME)
         {
-            lock (clientAddLock)
-            {
-                triggerClientAdded = true;
-            }
+            // TODO: What to do when welcome packet
         }
         else if (packet.type == PacketType.WORLD_STATE)
         {
-            foreach (var player in packet.playerList)
-            {
-                Debug.Log("[Player Data] ID: " + player.networkID);
-            }
+            //foreach (var player in packet.playerList)
+            //{
+            //    Debug.Log("[Player Data] ID: " + player.networkID);
+            //}
         }
         else if (packet.type == PacketType.GAME_START)
         {
@@ -110,10 +105,9 @@ public class NetworkingClient : INetworking
             // TODO: What to do when we are pinged
         }
 
-        lock (userListLock)
+        lock (playerMapLock)
         {
-            // TODO
-            //playerMap = packet.playerList;
+            playerMap = packet.playerMap;
         }
     }
 
@@ -123,7 +117,7 @@ public class NetworkingClient : INetworking
         if (elapsedTime >= pingTime)
         {
             elapsedTime = elapsedTime % 1f;
-            PingServer();
+            //PingServer();
         }
     }
 
