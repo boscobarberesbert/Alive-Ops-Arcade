@@ -4,11 +4,11 @@ using UnityEngine;
 public enum PacketType
 {
     DEFAULT,
-    GAME_START,
     HELLO,
     WELCOME,
-    WORLD_STATE,
-    PING
+    PING,
+    GAME_START,
+    WORLD_STATE
 }
 
 public class User

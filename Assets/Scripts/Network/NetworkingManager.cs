@@ -11,7 +11,7 @@ public class NetworkingManager : MonoBehaviour
     public Dictionary<string, PlayerObject> playerMap = new Dictionary<string, PlayerObject>();
     public Dictionary<string, GameObject> playerGOMap = new Dictionary<string, GameObject>();
 
-    delegate void OnClientAdded();
+    delegate void OnClientAdded(string networkID, PlayerObject player);
     event OnClientAdded onClientAdded;
 
     public Vector3 startSpawnPosition;
@@ -48,50 +48,81 @@ public class NetworkingManager : MonoBehaviour
     {
         networking.OnUpdate();
 
+        lock (networking.loadSceneLock)
+        {
+            if (networking.triggerLoadScene)
+            {
+                SceneManager.LoadScene("Game");
+                networking.triggerLoadScene = false;
+            }
+        }
+
         lock (networking.playerMapLock)
         {
             playerMap = networking.playerMap;
 
             if (playerMap.Count != 0)
-                UpdatePlayers();
+                HandlePlayerMap();
         }
+    }
 
-        lock (networking.loadSceneLock)
+    void HandlePlayerMap()
+    {
+        // TODO
+        foreach (var player in playerMap)
         {
-            if (networking.triggerLoadScene)
+            switch (player.Value.action)
             {
-                playerMap.Clear();
-                SceneManager.LoadScene("Game");
-                networking.triggerLoadScene = false;
+                case PlayerObject.Action.CREATE:
+                    {
+                        if (onClientAdded != null)
+                        {
+                            onClientAdded(player.Key, player.Value);
+                        }
+                        break;
+                    }
+                case PlayerObject.Action.UPDATE:
+                    {
+
+                        break;
+                    }
+                case PlayerObject.Action.DESTROY:
+                    {
+
+                        break;
+                    }
+                case PlayerObject.Action.NONE:
+                    {
+
+                        break;
+                    }
             }
         }
     }
 
-    void UpdatePlayers()
+    public void Spawn(string networkID, PlayerObject player)
     {
+        GameObject playerGO = Instantiate(playerPrefab, player.position, player.rotation);
+        playerGO.GetComponent<PlayerID>().networkID = networkID;
+        playerGO.name = networkID;
 
-    }
-
-    public void Spawn()
-    {
-        foreach (var player in playerMap)
+        // Disable scripts as we are not going to be controlling the rest of players
+        if (networkID != networking.myUserData.networkID)
         {
-            if (player.Value.action == PlayerObject.Action.CREATE)
+            playerGO.GetComponent<PlayerController>().enabled = false;
+            playerGO.GetComponent<CharacterController>().enabled = false;
+            playerGO.GetComponent<MouseAim>().enabled = false;
+
+            // TODO Players without Player Tag
+            playerGO.tag = "Untagged";
+        }
+
+        // Set the spawned player to be action none
+        lock (networking.playerMapLock)
+        {
+            if (networking.playerMap.ContainsKey(networkID))
             {
-                GameObject playerGO = Instantiate(playerPrefab, player.Value.position, player.Value.rotation);
-                playerGO.GetComponent<PlayerID>().networkID = player.Key;
-                playerGO.name = player.Key;
-
-                // Disable scripts as we are not going to be controlling the rest of players
-                if (player.Key != networking.myUserData.networkID)
-                {
-                    playerGO.GetComponent<PlayerController>().enabled = false;
-                    playerGO.GetComponent<CharacterController>().enabled = false;
-                    playerGO.GetComponent<MouseAim>().enabled = false;
-
-                    // TODO Instance Players without Player Tag
-                    playerGO.tag = "Untagged";
-                }
+                networking.playerMap[networkID].action = PlayerObject.Action.NONE;
             }
         }
     }
@@ -103,7 +134,7 @@ public class NetworkingManager : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Spawn();
+        //Spawn();
     }
 
     void OnDisable()

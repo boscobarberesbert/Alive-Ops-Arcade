@@ -99,24 +99,8 @@ public class NetworkingServer : INetworking
         {
             ClientPacket clientPacket = SerializationUtility.DeserializeValue<ClientPacket>(inputPacket, DataFormat.JSON);
 
-            packetQueue.Enqueue(clientPacket);
-
-            //NetworkingManager.Instance.ProcessPacketQueue(ref packetQueue);
-
-            // TODO: update players from our world
-            //if (clientPacket.player.action == DynamicObject.Action.NONE)
-            //    Debug.Log("[WARNING] Player Action is NONE.");
-            //else
-            //{
-            //    int index = playerList.FindIndex(it => it.networkID == packet.player.networkID);
-
-            //    if (index != -1)
-            //    {
-            //        playerList[index] = packet.player;
-            //    }
-            //    else
-            //        Debug.Log("[ERROR] Player to be updated was not found in list.");
-            //}
+            // TODO: process update packets
+            //packetQueue.Enqueue(clientPacket);
         }
         else if (packet.type == PacketType.PING)
         {
@@ -126,32 +110,45 @@ public class NetworkingServer : INetworking
 
     public void SpawnPlayer(User userData)
     {
-        // Add the player to our map (includes server)
+        // Add the player to our object map (includes server player)
         lock (playerMapLock)
         {
             Vector3 spawnPosition = new Vector3(NetworkingManager.Instance.startSpawnPosition.x + playerMap.Count * 3, 1, 0);
             playerMap.Add(userData.networkID, new PlayerObject(PlayerObject.Action.CREATE, spawnPosition, new Quaternion(0, 0, 0, 0)));
         }
 
-
         // If it's a client
         if (clients.ContainsKey(userData.networkID))
         {
-            // TODO: Make sure all player are set to CREATE if the client is new
+            // Broadcast that a player has joined
+            if (clients.Count != 0)
+            {
+                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap);
 
-            // Prepare the packet to be sent back notify the connection
-            ServerPacket packet = new ServerPacket(PacketType.WELCOME, playerMap);
+                byte[] dataBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
 
-            byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
+                BroadcastPacket(dataBroadcast, true);
+            }
 
-            SendPacket(data, clients[userData.networkID]);
+            // A copy of the players' map to be sent to the new client
+            Dictionary<string, PlayerObject> welcomePlayerMap = new Dictionary<string, PlayerObject>(playerMap);
+
+            // Set all player objects to be created
+            SetActionToAll(welcomePlayerMap, PlayerObject.Action.CREATE);
+
+            // Prepare the packet to be sent back notifying the connection
+            ServerPacket welcomePacket = new ServerPacket(PacketType.WELCOME, welcomePlayerMap);
+
+            byte[] dataWelcome = SerializationUtility.SerializeValue(welcomePacket, DataFormat.JSON);
+
+            SendPacket(dataWelcome, clients[userData.networkID]);
         }
     }
 
-    public void BroadcastPacket(byte[] data, bool fromClient = true) // True: doesn't include the client that sent the packet in the broadcast
+    public void BroadcastPacket(byte[] data, bool fromClient) // True: doesn't include the client that sent the packet in the broadcast
     {
         // Broadcast the message to the other clients
-        foreach (KeyValuePair<string, EndPoint> entry in clients)
+        foreach (var entry in clients)
         {
             if (fromClient && entry.Value.Equals(endPoint))
                 continue;
@@ -168,29 +165,27 @@ public class NetworkingServer : INetworking
         }
     }
 
-    public void SetActionInList(Dictionary<string, PlayerObject> playerMap, PlayerObject.Action action)
+    public void SetActionToAll(Dictionary<string, PlayerObject> playerMap, PlayerObject.Action action)
     {
-        for (int i = 0; i < playerMap.Count; ++i)
+        foreach (var entry in playerMap)
         {
-            players[i].action = action;
+            playerMap[entry.Key].action = action;
         }
     }
 
     public void LoadScene()
     {
         // Set all player objects to be created
-        lock (userListLock)
+        lock (playerMapLock)
         {
-            // TODO
-            //SetActionInList(playerList, DynamicObject.Action.CREATE);
+            SetActionToAll(playerMap, PlayerObject.Action.CREATE);
         }
 
-        // TODO: Notify that the game is going to start
-        //ServerPacket packet = new ServerPacket(PacketType.GAME_START, playerList);
+        ServerPacket serverPacket = new ServerPacket(PacketType.GAME_START, playerMap);
 
-        //byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
+        byte[] data = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
 
-        //BroadcastPacket(data, false);
+        BroadcastPacket(data, false);
 
         lock (loadSceneLock)
         {

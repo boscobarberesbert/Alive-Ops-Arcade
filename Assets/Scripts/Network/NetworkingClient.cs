@@ -80,34 +80,35 @@ public class NetworkingClient : INetworking
 
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
-        ServerPacket packet = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
+        ServerPacket serverPacket = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
 
-        if (packet.type == PacketType.WELCOME)
+        if (serverPacket.type == PacketType.WELCOME || serverPacket.type == PacketType.WORLD_STATE)
         {
-            // TODO: What to do when welcome packet
+            lock (playerMapLock)
+            {
+                playerMap = serverPacket.playerMap;
+            }
+
+            foreach (var player in serverPacket.playerMap)
+            {
+                Debug.Log("[Player Data] Network ID: " + player.Key);
+            }
         }
-        else if (packet.type == PacketType.WORLD_STATE)
+        else if (serverPacket.type == PacketType.GAME_START)
         {
-            //foreach (var player in packet.playerList)
-            //{
-            //    Debug.Log("[Player Data] ID: " + player.networkID);
-            //}
-        }
-        else if (packet.type == PacketType.GAME_START)
-        {
+            lock (playerMapLock)
+            {
+                playerMap = serverPacket.playerMap;
+            }
+
             lock (loadSceneLock)
             {
                 triggerLoadScene = true;
             }
         }
-        else if (packet.type == PacketType.PING)
+        else if (serverPacket.type == PacketType.PING)
         {
             // TODO: What to do when we are pinged
-        }
-
-        lock (playerMapLock)
-        {
-            playerMap = packet.playerMap;
         }
     }
 
@@ -127,7 +128,6 @@ public class NetworkingClient : INetworking
         SendPacketToServer(packet);
     }
 
-    // TODO: IS IT NECESSARY?
     public void SendPacket(byte[] outputPacket, EndPoint toAddress)
     {
         clientSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, toAddress);
