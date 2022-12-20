@@ -8,14 +8,16 @@ public class NetworkingManager : MonoBehaviour
     public INetworking networking;
 
     // Map to relate networkID to its gameobject
-    public Dictionary<string, PlayerObject> playerMap = new Dictionary<string, PlayerObject>();
     public Dictionary<string, GameObject> playerGOMap = new Dictionary<string, GameObject>();
+    Dictionary<string, PlayerObject> playerMap = new Dictionary<string, PlayerObject>();
 
     delegate void OnClientAdded(string networkID, PlayerObject player);
     event OnClientAdded onClientAdded;
 
     public Vector3 startSpawnPosition;
     [SerializeField] GameObject playerPrefab;
+
+    bool isSceneLoading = false;
 
     private void Awake()
     {
@@ -52,17 +54,25 @@ public class NetworkingManager : MonoBehaviour
         {
             if (networking.triggerLoadScene)
             {
+                isSceneLoading = true;
+
+                playerGOMap.Clear();
+
                 SceneManager.LoadScene("Game");
+
                 networking.triggerLoadScene = false;
             }
         }
 
-        lock (networking.playerMapLock)
+        if (!isSceneLoading)
         {
-            playerMap = networking.playerMap;
+            lock (networking.playerMapLock)
+            {
+                playerMap = networking.playerMap;
 
-            if (playerMap.Count != 0)
-                HandlePlayerMap();
+                if (playerMap.Count != 0)
+                    HandlePlayerMap();
+            }
         }
     }
 
@@ -106,16 +116,18 @@ public class NetworkingManager : MonoBehaviour
         playerGO.GetComponent<PlayerID>().networkID = networkID;
         playerGO.name = networkID;
 
-        // Disable scripts as we are not going to be controlling the rest of players
+        // Disable scripts as we are don't want to be controlling the rest of players
         if (networkID != networking.myUserData.networkID)
         {
             playerGO.GetComponent<PlayerController>().enabled = false;
             playerGO.GetComponent<CharacterController>().enabled = false;
             playerGO.GetComponent<MouseAim>().enabled = false;
 
-            // TODO Players without Player Tag
-            playerGO.tag = "Untagged";
+            // TODO: Instance Players without Player Tag
+            //playerGO.tag = "Untagged";
         }
+
+        playerGOMap.Add(networkID, playerGO);
 
         // Set the spawned player to be action none
         lock (networking.playerMapLock)
@@ -134,7 +146,17 @@ public class NetworkingManager : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        //Spawn();
+        foreach (var player in playerMap)
+        {
+            if (player.Value.action == PlayerObject.Action.CREATE)
+            {
+                if (onClientAdded != null)
+                {
+                    onClientAdded(player.Key, player.Value);
+                }
+            }
+        }
+        isSceneLoading = false;
     }
 
     void OnDisable()
