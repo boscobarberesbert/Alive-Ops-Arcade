@@ -23,7 +23,7 @@ public class NetworkingServer : INetworking
     Dictionary<string, EndPoint> clients;
 
     // Queue of received packets
-    Queue<ClientPacket> packetQueue = new Queue<ClientPacket>();
+    //Queue<ClientPacket> packetQueue = new Queue<ClientPacket>();
 
     public User myUserData { get; set; }
     public PlayerObject myPlayerData { get; set; }
@@ -120,7 +120,7 @@ public class NetworkingServer : INetworking
         // If it's a client
         if (clients.ContainsKey(userData.networkID))
         {
-            // Broadcast that a player has joined
+            // Broadcast to all active clients that a player has joined
             if (clients.Count != 0)
             {
                 ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap);
@@ -137,7 +137,7 @@ public class NetworkingServer : INetworking
             SetActionToAll(welcomePlayerMap, PlayerObject.Action.CREATE);
 
             // Prepare the packet to be sent back notifying the connection
-            ServerPacket welcomePacket = new ServerPacket(PacketType.WELCOME, welcomePlayerMap);
+            ServerPacket welcomePacket = new ServerPacket(PacketType.WORLD_STATE, welcomePlayerMap);
 
             byte[] dataWelcome = SerializationUtility.SerializeValue(welcomePacket, DataFormat.JSON);
 

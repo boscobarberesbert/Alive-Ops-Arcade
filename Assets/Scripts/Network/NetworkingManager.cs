@@ -9,6 +9,7 @@ public class NetworkingManager : MonoBehaviour
 
     // Map to relate networkID to its gameobject
     public Dictionary<string, GameObject> playerGOMap = new Dictionary<string, GameObject>();
+    // Map to relate networkID to its playerobject that is received through the network
     Dictionary<string, PlayerObject> playerMap = new Dictionary<string, PlayerObject>();
 
     delegate void OnClientAdded(string networkID, PlayerObject player);
@@ -17,6 +18,7 @@ public class NetworkingManager : MonoBehaviour
     public Vector3 startSpawnPosition;
     [SerializeField] GameObject playerPrefab;
 
+    // Condition to know if the LoadScene() method has been called
     bool isSceneLoading = false;
 
     private void Awake()
@@ -64,15 +66,16 @@ public class NetworkingManager : MonoBehaviour
             }
         }
 
+        // Check if we called or not the LoadScene() method to avoid spawns before loading
         if (!isSceneLoading)
         {
             lock (networking.playerMapLock)
             {
                 playerMap = networking.playerMap;
-
-                if (playerMap.Count != 0)
-                    HandlePlayerMap();
             }
+
+            if (playerMap.Count != 0)
+                HandlePlayerMap();
         }
     }
 
@@ -129,7 +132,7 @@ public class NetworkingManager : MonoBehaviour
 
         playerGOMap.Add(networkID, playerGO);
 
-        // Set the spawned player to be action none
+        // Set the spawned player to be action none as it has already spawned
         lock (networking.playerMapLock)
         {
             if (networking.playerMap.ContainsKey(networkID))
@@ -146,6 +149,7 @@ public class NetworkingManager : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        // We need to spawn the players ASAP as some scripts require that they exist at first
         foreach (var player in playerMap)
         {
             if (player.Value.action == PlayerObject.Action.CREATE)

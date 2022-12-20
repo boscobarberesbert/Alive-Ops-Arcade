@@ -82,16 +82,11 @@ public class NetworkingClient : INetworking
     {
         ServerPacket serverPacket = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
 
-        if (serverPacket.type == PacketType.WELCOME || serverPacket.type == PacketType.WORLD_STATE)
+        if (serverPacket.type == PacketType.WORLD_STATE)
         {
             lock (playerMapLock)
             {
                 playerMap = serverPacket.playerMap;
-            }
-
-            foreach (var player in serverPacket.playerMap)
-            {
-                Debug.Log("[Player Data] Network ID: " + player.Key);
             }
         }
         else if (serverPacket.type == PacketType.GAME_START)
