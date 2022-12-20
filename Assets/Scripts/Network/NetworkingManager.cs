@@ -72,10 +72,10 @@ public class NetworkingManager : MonoBehaviour
             lock (networking.playerMapLock)
             {
                 playerMap = networking.playerMap;
-            }
 
-            if (playerMap.Count != 0)
-                HandlePlayerMap();
+                if (playerMap.Count != 0)
+                    HandlePlayerMap();
+            }
         }
     }
 
@@ -133,12 +133,9 @@ public class NetworkingManager : MonoBehaviour
         playerGOMap.Add(networkID, playerGO);
 
         // Set the spawned player to be action none as it has already spawned
-        lock (networking.playerMapLock)
+        if (networking.playerMap.ContainsKey(networkID))
         {
-            if (networking.playerMap.ContainsKey(networkID))
-            {
-                networking.playerMap[networkID].action = PlayerObject.Action.NONE;
-            }
+            networking.playerMap[networkID].action = PlayerObject.Action.NONE;
         }
     }
 
@@ -156,7 +153,10 @@ public class NetworkingManager : MonoBehaviour
             {
                 if (onClientAdded != null)
                 {
-                    onClientAdded(player.Key, player.Value);
+                    lock (networking.playerMapLock)
+                    {
+                        onClientAdded(player.Key, player.Value);
+                    }
                 }
             }
         }

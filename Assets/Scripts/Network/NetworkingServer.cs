@@ -93,7 +93,10 @@ public class NetworkingServer : INetworking
             if (!clients.ContainsKey(helloPacket.clientData.networkID))
                 clients.Add(helloPacket.clientData.networkID, fromAddress);
 
-            SpawnPlayer(helloPacket.clientData);
+            lock (playerMapLock)
+            {
+                SpawnPlayer(helloPacket.clientData);
+            }
         }
         else if (packet.type == PacketType.WORLD_STATE)
         {
@@ -111,11 +114,8 @@ public class NetworkingServer : INetworking
     public void SpawnPlayer(User userData)
     {
         // Add the player to our object map (includes server player)
-        lock (playerMapLock)
-        {
-            Vector3 spawnPosition = new Vector3(NetworkingManager.Instance.startSpawnPosition.x + playerMap.Count * 3, 1, 0);
-            playerMap.Add(userData.networkID, new PlayerObject(PlayerObject.Action.CREATE, spawnPosition, new Quaternion(0, 0, 0, 0)));
-        }
+        Vector3 spawnPosition = new Vector3(NetworkingManager.Instance.startSpawnPosition.x + playerMap.Count * 3, 1, 0);
+        playerMap.Add(userData.networkID, new PlayerObject(PlayerObject.Action.CREATE, spawnPosition, new Quaternion(0, 0, 0, 0)));
 
         // If it's a client
         if (clients.ContainsKey(userData.networkID))
