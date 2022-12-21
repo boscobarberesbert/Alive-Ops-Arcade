@@ -102,7 +102,7 @@ public class NetworkingManager : MonoBehaviour
                     }
                 case PlayerObject.Action.UPDATE:
                     {
-                        if (player.Key != networking.myUserData.networkID)
+                        if (player.Key != networking.myUserData.networkID && playerGOMap.ContainsKey(player.Key))
                         {
                             // TODO: Perform interpolation
                             playerGOMap[player.Key].transform.position = player.Value.position;
