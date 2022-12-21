@@ -82,18 +82,7 @@ public class NetworkingClient : INetworking
     {
         ServerPacket serverPacket = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
 
-        if (serverPacket.type == PacketType.WELCOME)
-        {
-            lock (playerMapLock)
-            {
-                playerMap = serverPacket.playerMap;
-                foreach (var entry in playerMap)
-                {
-                    playerMap[entry.Key].action = PlayerObject.Action.CREATE;
-                }
-            }
-        }
-        else if (serverPacket.type == PacketType.WORLD_STATE)
+        if (serverPacket.type == PacketType.WORLD_STATE)
         {
             lock (playerMapLock)
             {

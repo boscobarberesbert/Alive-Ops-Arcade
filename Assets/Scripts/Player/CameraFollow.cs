@@ -7,17 +7,24 @@ public class CameraFollow : MonoBehaviour
     public Vector2 cameraLimitWidth;
     public Vector2 cameraLimitHeight;
 
-    private Transform target;
+    Transform target;
+    bool isTargetActive = false;
 
     private void Start()
     {
-        // TODO Instance Players without Player Tag
-        target = GameObject.Find(NetworkingManager.Instance.networking.myUserData.networkID).transform;
-        //target = GameObject.FindGameObjectWithTag("Player").transform;
+        isTargetActive = false;
     }
 
     void LateUpdate()
     {
+        if (!isTargetActive)
+        {
+            // TODO Instance Players without Player Tag
+            //target = GameObject.Find(NetworkingManager.Instance.networking.myUserData.networkID).transform;
+            target = GameObject.FindGameObjectWithTag("Player").transform;
+            isTargetActive = true;
+        }
+
         Vector3 desiredPosition = target.position + offset;
 
         desiredPosition.x = Mathf.Clamp(desiredPosition.x, cameraLimitWidth.x, cameraLimitWidth.y);

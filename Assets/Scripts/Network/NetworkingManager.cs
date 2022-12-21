@@ -69,13 +69,19 @@ public class NetworkingManager : MonoBehaviour
         // Check if we called or not the LoadScene() method to avoid spawns before loading
         if (!isSceneLoading)
         {
+            playerMap.Clear();
             lock (networking.playerMapLock)
             {
-                playerMap = networking.playerMap;
-
-                if (playerMap.Count != 0)
-                    HandlePlayerMap();
+                // Copy the dictionary from INetworking
+                foreach (var entry in networking.playerMap)
+                {
+                    PlayerObject newObj = new PlayerObject(entry.Value.action, entry.Value.position, entry.Value.rotation);
+                    playerMap.Add(entry.Key, newObj);
+                }
             }
+
+            if (playerMap.Count != 0)
+                HandlePlayerMap();
         }
     }
 
@@ -127,15 +133,18 @@ public class NetworkingManager : MonoBehaviour
             playerGO.GetComponent<MouseAim>().enabled = false;
 
             // TODO: Instance Players without Player Tag
-            //playerGO.tag = "Untagged";
+            playerGO.tag = "Untagged";
         }
 
         playerGOMap.Add(networkID, playerGO);
 
-        // Set the spawned player to be action none as it has already spawned
-        if (networking.playerMap.ContainsKey(networkID))
+        lock (networking.playerMapLock)
         {
-            networking.playerMap[networkID].action = PlayerObject.Action.NONE;
+            // Set the spawned player to be action none as it has already spawned
+            if (networking.playerMap.ContainsKey(networkID))
+            {
+                networking.playerMap[networkID].action = PlayerObject.Action.NONE;
+            }
         }
     }
 
@@ -153,10 +162,7 @@ public class NetworkingManager : MonoBehaviour
             {
                 if (onClientAdded != null)
                 {
-                    lock (networking.playerMapLock)
-                    {
-                        onClientAdded(player.Key, player.Value);
-                    }
+                    onClientAdded(player.Key, player.Value);
                 }
             }
         }
