@@ -31,5 +31,5 @@ public interface INetworking
     PlayerObject myPlayerData { get; set; }
 
     // Relates network ID with its player object (the world state basically)
-    public Dictionary<string, PlayerObject> playerMap { get; set; }
+    Dictionary<string, PlayerObject> playerMap { get; set; }
 }

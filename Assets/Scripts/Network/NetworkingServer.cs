@@ -1,5 +1,6 @@
 using AliveOpsArcade.OdinSerializer;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -130,14 +131,8 @@ public class NetworkingServer : INetworking
                 BroadcastPacket(dataBroadcast, true);
             }
 
-            // A copy of the players' map to be sent to the new client
-            Dictionary<string, PlayerObject> welcomePlayerMap = new Dictionary<string, PlayerObject>(playerMap);
-
-            // Set all player objects to be created
-            SetActionToAll(welcomePlayerMap, PlayerObject.Action.CREATE);
-
             // Prepare the packet to be sent back notifying the connection
-            ServerPacket welcomePacket = new ServerPacket(PacketType.WORLD_STATE, welcomePlayerMap);
+            ServerPacket welcomePacket = new ServerPacket(PacketType.WELCOME, playerMap);
 
             byte[] dataWelcome = SerializationUtility.SerializeValue(welcomePacket, DataFormat.JSON);
 
@@ -165,20 +160,15 @@ public class NetworkingServer : INetworking
         }
     }
 
-    public void SetActionToAll(Dictionary<string, PlayerObject> playerMap, PlayerObject.Action action)
-    {
-        foreach (var entry in playerMap)
-        {
-            playerMap[entry.Key].action = action;
-        }
-    }
-
     public void LoadScene()
     {
         // Set all player objects to be created
         lock (playerMapLock)
         {
-            SetActionToAll(playerMap, PlayerObject.Action.CREATE);
+            foreach (var entry in playerMap)
+            {
+                playerMap[entry.Key].action = PlayerObject.Action.CREATE;
+            }
         }
 
         ServerPacket serverPacket = new ServerPacket(PacketType.GAME_START, playerMap);
