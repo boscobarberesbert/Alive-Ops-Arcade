@@ -77,10 +77,12 @@ public class ServerPacket : Packet
 public class ClientPacket : Packet
 {
     public PlayerObject playerObject;
+    public string networkID = "";
 
-    public ClientPacket(PacketType type, PlayerObject playerObject)
+    public ClientPacket(PacketType type, string networkID, PlayerObject playerObject)
     {
         this.type = type;
+        this.networkID = networkID;
         this.playerObject = playerObject;
     }
 }

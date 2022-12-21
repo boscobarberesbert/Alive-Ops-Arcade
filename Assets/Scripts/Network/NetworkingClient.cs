@@ -29,7 +29,10 @@ public class NetworkingClient : INetworking
     public bool triggerClientDisconected { get; set; } = false;
     public bool triggerLoadScene { get; set; } = false;
 
-    float elapsedTime = 0f;
+    float elapsedUpdateTime = 0f;
+    float updateTime = 0.1f;
+
+    float elapsedPingTime = 0f;
     float pingTime = 30f;
 
     public void Start()
@@ -109,18 +112,23 @@ public class NetworkingClient : INetworking
 
     public void OnUpdate()
     {
-        elapsedTime += Time.deltaTime;
-        if (elapsedTime >= pingTime)
+        //elapsedUpdateTime += Time.deltaTime;
+        //if (elapsedUpdateTime >= updateTime)
+        //{
+
+        //}
+
+        elapsedPingTime += Time.deltaTime;
+        if (elapsedPingTime >= pingTime)
         {
-            elapsedTime = elapsedTime % 1f;
+            elapsedPingTime = elapsedPingTime % 1f;
             //PingServer();
         }
     }
 
-    public void PingServer()
+    public void OnConnectionReset(EndPoint fromAddress)
     {
-        byte[] packet = Encoding.ASCII.GetBytes("Hello");
-        SendPacketToServer(packet);
+        throw new System.NotImplementedException();
     }
 
     public void SendPacket(byte[] outputPacket, EndPoint toAddress)
@@ -133,21 +141,22 @@ public class NetworkingClient : INetworking
         clientSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, ipep);
     }
 
-    public void reportError()
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public void OnConnectionReset(EndPoint fromAddress)
-    {
-        throw new System.NotImplementedException();
-    }
-
     public void OnDisconnect()
     {
         clientSocket.Close();
         clientThread.Abort();
     }
+    public void reportError()
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void PingServer()
+    {
+        byte[] packet = Encoding.ASCII.GetBytes("Hello");
+        SendPacketToServer(packet);
+    }
+
     private void OnDisable()
     {
         Debug.Log("Destroying Scene");

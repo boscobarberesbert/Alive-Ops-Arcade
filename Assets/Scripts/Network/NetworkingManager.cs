@@ -102,7 +102,12 @@ public class NetworkingManager : MonoBehaviour
                     }
                 case PlayerObject.Action.UPDATE:
                     {
-
+                        if (player.Key != networking.myUserData.networkID)
+                        {
+                            // TODO: Perform interpolation
+                            playerGOMap[player.Key].transform.position = player.Value.position;
+                            playerGOMap[player.Key].transform.rotation = player.Value.rotation;
+                        }
                         break;
                     }
                 case PlayerObject.Action.DESTROY:

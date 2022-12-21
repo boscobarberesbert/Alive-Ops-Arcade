@@ -102,6 +102,11 @@ public class NetworkingServer : INetworking
         {
             ClientPacket clientPacket = SerializationUtility.DeserializeValue<ClientPacket>(inputPacket, DataFormat.JSON);
 
+            lock (playerMapLock)
+            {
+                playerMap[clientPacket.networkID] = clientPacket.playerObject;
+            }
+
             // TODO: process update packets
             //packetQueue.Enqueue(clientPacket);
         }
@@ -109,6 +114,44 @@ public class NetworkingServer : INetworking
         {
             // TODO: What to do when we are pinged
         }
+    }
+
+    public void OnUpdate() { }
+
+    public void OnConnectionReset(EndPoint fromAddress)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void SendPacket(byte[] outputPacket, EndPoint toAddress)
+    {
+        if (clients.Count != 0)
+        {
+            serverSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, toAddress);
+        }
+    }
+
+    public void BroadcastPacket(byte[] data, bool fromClient) // True: doesn't include the client that sent the packet in the broadcast
+    {
+        // Broadcast the message to the other clients
+        foreach (var entry in clients)
+        {
+            if (fromClient && entry.Value.Equals(endPoint))
+                continue;
+
+            SendPacket(data, entry.Value);
+        }
+    }
+
+    public void OnDisconnect()
+    {
+        serverSocket.Close();
+        serverThread.Abort();
+    }
+
+    public void reportError()
+    {
+        throw new System.NotImplementedException();
     }
 
     public void SpawnPlayer(User userData)
@@ -149,26 +192,6 @@ public class NetworkingServer : INetworking
         }
     }
 
-    public void BroadcastPacket(byte[] data, bool fromClient) // True: doesn't include the client that sent the packet in the broadcast
-    {
-        // Broadcast the message to the other clients
-        foreach (var entry in clients)
-        {
-            if (fromClient && entry.Value.Equals(endPoint))
-                continue;
-
-            SendPacket(data, entry.Value);
-        }
-    }
-
-    public void SendPacket(byte[] outputPacket, EndPoint toAddress)
-    {
-        if (clients.Count != 0)
-        {
-            serverSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, toAddress);
-        }
-    }
-
     public void LoadScene()
     {
         // Set all player objects to be created
@@ -190,24 +213,6 @@ public class NetworkingServer : INetworking
         {
             triggerLoadScene = true;
         }
-    }
-
-    public void OnUpdate() { }
-
-    public void reportError()
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public void OnConnectionReset(EndPoint fromAddress)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public void OnDisconnect()
-    {
-        serverSocket.Close();
-        serverThread.Abort();
     }
 
     void OnDisable()
