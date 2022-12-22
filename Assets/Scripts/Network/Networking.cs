@@ -7,6 +7,8 @@ public interface INetworking
 
     void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress);
 
+    void UpdatePlayerState();
+
     void OnUpdate();
 
     void OnConnectionReset(EndPoint fromAddress);
@@ -26,9 +28,6 @@ public interface INetworking
 
     // Information about the user
     User myUserData { get; set; }
-    
-    // The player data
-    PlayerObject myPlayerData { get; set; }
 
     // Relates network ID with its player object (the world state basically)
     Dictionary<string, PlayerObject> playerMap { get; set; }

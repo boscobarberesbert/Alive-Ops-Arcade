@@ -22,15 +22,15 @@ public class NetworkingClient : INetworking
     int channel1Port = 9050;
     int channel2Port = 9051;
 
+    // User & Players
     public User myUserData { get; set; }
-    public PlayerObject myPlayerData { get; set; }
     public Dictionary<string, PlayerObject> playerMap { get; set; }
+    PlayerObject myPlayerData; // Data to send
 
     public bool triggerClientDisconected { get; set; } = false;
     public bool triggerLoadScene { get; set; } = false;
 
     float elapsedUpdateTime = 0f;
-    float updateTime = 0.1f;
 
     float elapsedPingTime = 0f;
     float pingTime = 30f;
@@ -38,6 +38,7 @@ public class NetworkingClient : INetworking
     public void Start()
     {
         playerMap = new Dictionary<string, PlayerObject>();
+        myPlayerData = new PlayerObject();
 
         InitializeSocket();
     }
@@ -85,7 +86,14 @@ public class NetworkingClient : INetworking
     {
         ServerPacket serverPacket = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
 
-        if (serverPacket.type == PacketType.WORLD_STATE)
+        if (serverPacket.type == PacketType.WELCOME)
+        {
+            lock (playerMapLock)
+            {
+                playerMap = serverPacket.playerMap;
+            }
+        }
+        else if (serverPacket.type == PacketType.WORLD_STATE)
         {
             lock (playerMapLock)
             {
@@ -110,13 +118,28 @@ public class NetworkingClient : INetworking
         }
     }
 
+    public void UpdatePlayerState()
+    {
+        if (NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed)
+        {
+            myPlayerData.action = PlayerObject.Action.UPDATE;
+            myPlayerData.position = NetworkingManager.Instance.myPlayerGO.transform.position;
+            myPlayerData.rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
+        }
+    }
+
     public void OnUpdate()
     {
-        //elapsedUpdateTime += Time.deltaTime;
-        //if (elapsedUpdateTime >= updateTime)
-        //{
+        elapsedUpdateTime += Time.deltaTime;
+        if (elapsedUpdateTime >= NetworkingManager.Instance.updateTime)
+        {
+            ClientPacket packet = new ClientPacket(PacketType.WORLD_STATE, myUserData.networkID, myPlayerData);
 
-        //}
+            byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
+
+            SendPacketToServer(data);
+            elapsedUpdateTime = elapsedUpdateTime % 1f;
+        }
 
         elapsedPingTime += Time.deltaTime;
         if (elapsedPingTime >= pingTime)

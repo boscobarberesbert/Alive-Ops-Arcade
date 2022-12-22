@@ -13,9 +13,16 @@ public enum PacketType
 
 public class User
 {
-    public string networkID = "";
-    public string username = "";
-    public string connectToIP = "";
+    public string networkID;
+    public string username;
+    public string connectToIP;
+
+    public User()
+    {
+        networkID = "";
+        username = "";
+        connectToIP = "";
+    }
 
     public User(string networkID, string username, string connectToIP)
     {
@@ -36,7 +43,7 @@ public class PlayerObject
     }
 
     // World State
-    public Action action = Action.NONE;
+    public Action action;
     public Vector3 position;
     public Quaternion rotation;
 
@@ -57,15 +64,25 @@ public class PlayerObject
 
 public class Packet
 {
-    public PacketType type = PacketType.DEFAULT;
+    public PacketType type;
+
+    public Packet()
+    {
+        type = PacketType.DEFAULT;
+    }
 }
 
 public class ServerPacket : Packet
 {
     // List of players (including server)
     public Dictionary<string, PlayerObject> playerMap;
-    
+
     // TODO: List of enemies
+
+    public ServerPacket()
+    {
+        playerMap = new Dictionary<string, PlayerObject>();
+    }
 
     public ServerPacket(PacketType type, Dictionary<string, PlayerObject> playerMap)
     {
@@ -77,7 +94,13 @@ public class ServerPacket : Packet
 public class ClientPacket : Packet
 {
     public PlayerObject playerObject;
-    public string networkID = "";
+    public string networkID;
+
+    public ClientPacket()
+    {
+        playerObject = new PlayerObject();
+        networkID = "";
+    }
 
     public ClientPacket(PacketType type, string networkID, PlayerObject playerObject)
     {
@@ -90,6 +113,11 @@ public class ClientPacket : Packet
 public class HelloPacket : Packet
 {
     public User clientData;
+
+    public HelloPacket()
+    {
+        clientData = new User();
+    }
 
     public HelloPacket(User clientData)
     {

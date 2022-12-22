@@ -9,9 +9,10 @@ public class PlayerController : MonoBehaviour
     PlayerInput playerInput;
     CharacterController characterController;
 
+    // Movement members
+    public bool isMovementPressed;
     Vector2 currentMovementInput;
     Vector3 currentMovement;
-    bool isMovementPressed;
 
     void Awake()
     {

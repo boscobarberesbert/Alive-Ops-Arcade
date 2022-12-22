@@ -9,17 +9,22 @@ public class NetworkingManager : MonoBehaviour
 
     // Map to relate networkID to its gameobject
     public Dictionary<string, GameObject> playerGOMap = new Dictionary<string, GameObject>();
+
+    // Reference to our player gameobject
+    public GameObject myPlayerGO;
+
     // Map to relate networkID to its playerobject that is received through the network
-    Dictionary<string, PlayerObject> playerMap = new Dictionary<string, PlayerObject>();
+    public Dictionary<string, PlayerObject> playerMap = new Dictionary<string, PlayerObject>();
 
     delegate void OnClientAdded(string networkID, PlayerObject player);
     event OnClientAdded onClientAdded;
 
-    public Vector3 startSpawnPosition;
-    [SerializeField] GameObject playerPrefab;
-
     // Condition to know if the LoadScene() method has been called
     bool isSceneLoading = false;
+
+    [SerializeField] GameObject playerPrefab;
+    public Vector3 startSpawnPosition;
+    public float updateTime = 0.1f;
 
     private void Awake()
     {
@@ -36,11 +41,11 @@ public class NetworkingManager : MonoBehaviour
         // Creating network (client or server) Interface Networking
         networking = MainMenuInfo.isClient ? new NetworkingClient() : new NetworkingServer();
 
-        // Initializing user data
+        // Initializing user and player data
         networking.myUserData = new User(System.Guid.NewGuid().ToString(), MainMenuInfo.username, MainMenuInfo.connectToIp);
     }
 
-    private void Start()
+    void Start()
     {
         // Starting networking
         networking.Start();
@@ -48,9 +53,10 @@ public class NetworkingManager : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    private void Update()
+    void Update()
     {
-        networking.OnUpdate();
+        if (NetworkingManager.Instance.myPlayerGO)
+            networking.UpdatePlayerState();
 
         lock (networking.loadSceneLock)
         {
@@ -70,9 +76,10 @@ public class NetworkingManager : MonoBehaviour
         if (!isSceneLoading)
         {
             playerMap.Clear();
+
+            // Copy the dictionary from INetworking
             lock (networking.playerMapLock)
             {
-                // Copy the dictionary from INetworking
                 foreach (var entry in networking.playerMap)
                 {
                     PlayerObject newObj = new PlayerObject(entry.Value.action, entry.Value.position, entry.Value.rotation);
@@ -80,47 +87,46 @@ public class NetworkingManager : MonoBehaviour
                 }
             }
 
-            if (playerMap.Count != 0)
-                HandlePlayerMap();
+            foreach (var player in playerMap)
+                HandlePlayerObject(player);
         }
+
+        networking.OnUpdate();
     }
 
-    void HandlePlayerMap()
+    void HandlePlayerObject(KeyValuePair<string, PlayerObject> player)
     {
         // TODO
-        foreach (var player in playerMap)
+        switch (player.Value.action)
         {
-            switch (player.Value.action)
-            {
-                case PlayerObject.Action.CREATE:
+            case PlayerObject.Action.CREATE:
+                {
+                    if (onClientAdded != null)
                     {
-                        if (onClientAdded != null)
-                        {
-                            onClientAdded(player.Key, player.Value);
-                        }
-                        break;
+                        onClientAdded(player.Key, player.Value);
                     }
-                case PlayerObject.Action.UPDATE:
+                    break;
+                }
+            case PlayerObject.Action.UPDATE:
+                {
+                    if (playerGOMap.ContainsKey(player.Key) && player.Key != networking.myUserData.networkID)
                     {
-                        if (player.Key != networking.myUserData.networkID && playerGOMap.ContainsKey(player.Key))
-                        {
-                            // TODO: Perform interpolation
-                            playerGOMap[player.Key].transform.position = player.Value.position;
-                            playerGOMap[player.Key].transform.rotation = player.Value.rotation;
-                        }
-                        break;
+                        // TODO: Perform interpolation
+                        playerGOMap[player.Key].transform.position = player.Value.position;
+                        playerGOMap[player.Key].transform.rotation = player.Value.rotation;
                     }
-                case PlayerObject.Action.DESTROY:
-                    {
+                    break;
+                }
+            case PlayerObject.Action.DESTROY:
+                {
 
-                        break;
-                    }
-                case PlayerObject.Action.NONE:
-                    {
+                    break;
+                }
+            case PlayerObject.Action.NONE:
+                {
 
-                        break;
-                    }
-            }
+                    break;
+                }
         }
     }
 
@@ -130,9 +136,12 @@ public class NetworkingManager : MonoBehaviour
         playerGO.GetComponent<PlayerID>().networkID = networkID;
         playerGO.name = networkID;
 
-        // Disable scripts as we are don't want to be controlling the rest of players
-        if (networkID != networking.myUserData.networkID)
+
+        if (networkID == networking.myUserData.networkID)
+            myPlayerGO = playerGO;
+        else
         {
+            // Disable scripts as we are don't want to be controlling the rest of players
             playerGO.GetComponent<PlayerController>().enabled = false;
             playerGO.GetComponent<CharacterController>().enabled = false;
             playerGO.GetComponent<MouseAim>().enabled = false;

@@ -26,11 +26,12 @@ public class NetworkingServer : INetworking
     //Queue<ClientPacket> packetQueue = new Queue<ClientPacket>();
 
     public User myUserData { get; set; }
-    public PlayerObject myPlayerData { get; set; }
     public Dictionary<string, PlayerObject> playerMap { get; set; }
 
     public bool triggerClientDisconected { get; set; } = false;
     public bool triggerLoadScene { get; set; } = false;
+
+    float elapsedUpdateTime = 0f;
 
     public void Start()
     {
@@ -116,7 +117,36 @@ public class NetworkingServer : INetworking
         }
     }
 
-    public void OnUpdate() { }
+    public void UpdatePlayerState()
+    {
+        if (NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed)
+        {
+            lock (playerMapLock)
+            {
+                playerMap[myUserData.networkID].action = PlayerObject.Action.UPDATE;
+                playerMap[myUserData.networkID].position = NetworkingManager.Instance.myPlayerGO.transform.position;
+                playerMap[myUserData.networkID].rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
+            }
+        }
+    }
+
+    public void OnUpdate()
+    {
+        elapsedUpdateTime += Time.deltaTime;
+        if (elapsedUpdateTime >= NetworkingManager.Instance.updateTime)
+        {
+            lock (playerMapLock)
+            {
+                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap);
+
+                byte[] dataBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
+
+                BroadcastPacket(dataBroadcast, false);
+            }
+
+            elapsedUpdateTime = elapsedUpdateTime % 1f;
+        }
+    }
 
     public void OnConnectionReset(EndPoint fromAddress)
     {
@@ -158,6 +188,7 @@ public class NetworkingServer : INetworking
     {
         // Add the player to our object map (includes server player)
         Vector3 spawnPosition = new Vector3(NetworkingManager.Instance.startSpawnPosition.x + playerMap.Count * 3, 1, 0);
+
         playerMap.Add(userData.networkID, new PlayerObject(PlayerObject.Action.CREATE, spawnPosition, new Quaternion(0, 0, 0, 0)));
 
         // If it's a client
@@ -184,7 +215,7 @@ public class NetworkingServer : INetworking
             }
 
             // Prepare the packet to be sent back notifying the connection
-            ServerPacket welcomePacket = new ServerPacket(PacketType.WORLD_STATE, welcomePlayerMap);
+            ServerPacket welcomePacket = new ServerPacket(PacketType.WELCOME, welcomePlayerMap);
 
             byte[] dataWelcome = SerializationUtility.SerializeValue(welcomePacket, DataFormat.JSON);
 
