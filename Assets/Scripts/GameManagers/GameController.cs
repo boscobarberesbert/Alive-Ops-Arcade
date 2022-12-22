@@ -6,14 +6,19 @@ public class GameController : MonoBehaviour
 {
     NetworkingManager networkManager;
 
-    // Dynamic objects to be updated
-    List<GameObject> playerList;
-    List<GameObject> enemyList;
+    // Lerp
+    float timeElapsed = 0;
+    float lerpDuration = 0.05f;
+    float startValue = 0; // It should be the start position of the vector we want to interpolate.
+    float endValue = 10; // It should be the end position of the vector we want to interpolate.
+    float valueToLerp; // It should be the current value of the vector we want to interpolate.
 
     // Start is called before the first frame update
     void Start()
     {
         networkManager = GameObject.FindGameObjectWithTag("NetworkingManager").GetComponent<NetworkingManager>();
+
+        StartCoroutine(InterpolatePositions());
     }
 
     // Update is called once per frame
@@ -39,5 +44,24 @@ public class GameController : MonoBehaviour
         //{
         //    Debug.Log("[WARNING] Player Action is NONE.");
         //}
+    }
+
+    IEnumerator InterpolatePositions()
+    {
+        for (int i = 0; i < networkManager.playerMap.Count; ++i)
+        {
+            if (timeElapsed < lerpDuration)
+            {
+                valueToLerp = Mathf.Lerp(startValue, endValue, timeElapsed / lerpDuration);
+                timeElapsed += Time.deltaTime;
+            }
+            else
+            {
+                valueToLerp = endValue;
+                timeElapsed = 0;
+            }
+        }
+
+        yield return null;
     }
 }
