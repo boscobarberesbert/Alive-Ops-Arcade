@@ -13,7 +13,7 @@ public class PlayerController : MonoBehaviour
     Vector3 currentMovement;
     bool isMovementPressed;
 
-    private void Awake()
+    void Awake()
     {
         playerInput = new PlayerInput();
         characterController = GetComponent<CharacterController>();
@@ -28,7 +28,7 @@ public class PlayerController : MonoBehaviour
         playerInput.CharacterControls.Move.performed += OnMovementInput;
     }
 
-    private void OnMovementInput(InputAction.CallbackContext context)
+    void OnMovementInput(InputAction.CallbackContext context)
     {
         currentMovementInput = context.ReadValue<Vector2>();
         currentMovement.x = currentMovementInput.x * speed;
@@ -36,7 +36,7 @@ public class PlayerController : MonoBehaviour
         isMovementPressed = currentMovementInput.x != 0 || currentMovementInput.y != 0;
     }
 
-    private void HandleGravity()
+    void HandleGravity()
     {
         if (characterController.isGrounded)
         {
@@ -59,12 +59,12 @@ public class PlayerController : MonoBehaviour
         characterController.Move(currentMovement * Time.deltaTime);
     }
 
-    private void OnEnable()
+    void OnEnable()
     {
         playerInput.CharacterControls.Enable();
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         playerInput.CharacterControls.Disable();
     }
