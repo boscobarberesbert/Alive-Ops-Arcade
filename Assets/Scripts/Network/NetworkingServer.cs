@@ -175,7 +175,7 @@ public class NetworkingServer : INetworking
         // Broadcast the message to the other clients
         foreach (var entry in clients)
         {
-            if (fromClient && entry.Value.Equals(endPoint) && entry.Value.isPrepared)
+            if (fromClient && entry.Value.Equals(endPoint) && !entry.Value.isPrepared)
                 continue;
 
             SendPacket(data, entry.Value.ep);
