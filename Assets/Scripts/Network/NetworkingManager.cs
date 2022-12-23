@@ -7,14 +7,14 @@ public class NetworkingManager : MonoBehaviour
     public static NetworkingManager Instance;
     public INetworking networking;
 
-    // Map to relate networkID to its gameobject
-    public Dictionary<string, GameObject> playerGOMap = new Dictionary<string, GameObject>();
-
     // Reference to our player gameobject
     public GameObject myPlayerGO;
 
-    // Map to relate networkID to its playerobject that is received through the network
+    // Map to relate networkID to its playerobject that will be sent through the network
     public Dictionary<string, PlayerObject> playerMap = new Dictionary<string, PlayerObject>();
+
+    // Map to relate networkID to its gameobject
+    Dictionary<string, GameObject> playerGOMap = new Dictionary<string, GameObject>();
 
     delegate void OnClientAdded(string networkID, PlayerObject player);
     event OnClientAdded onClientAdded;
@@ -55,8 +55,8 @@ public class NetworkingManager : MonoBehaviour
 
     void Update()
     {
-        if (NetworkingManager.Instance.myPlayerGO)
-            networking.UpdatePlayerState();
+        // Updates the player data (the actual data that we will be sending)
+        networking.UpdatePlayerState();
 
         lock (networking.loadSceneLock)
         {
@@ -72,26 +72,30 @@ public class NetworkingManager : MonoBehaviour
             }
         }
 
+        // Copy the dictionary from INetworking
+        lock (networking.playerMapLock)
+        {
+            foreach (var entry in networking.playerMap)
+            {
+                PlayerObject playerObj = new PlayerObject(entry.Value.action, entry.Value.position, entry.Value.rotation);
+
+                if (playerMap.ContainsKey(entry.Key))
+                    playerMap[entry.Key] = playerObj;
+                else
+                    playerMap.Add(entry.Key, playerObj);
+            }
+            networking.playerMap.Clear();
+        }
+
         // Check if we called or not the LoadScene() method to avoid spawns before loading
         if (!isSceneLoading)
         {
-            playerMap.Clear();
-
-            // Copy the dictionary from INetworking
-            lock (networking.playerMapLock)
-            {
-                foreach (var entry in networking.playerMap)
-                {
-                    PlayerObject newObj = new PlayerObject(entry.Value.action, entry.Value.position, entry.Value.rotation);
-                    playerMap.Add(entry.Key, newObj);
-                }
-            }
-
             foreach (var player in playerMap)
                 HandlePlayerObject(player);
-        }
 
-        networking.OnUpdate();
+            // Sends the data to the server/clients
+            networking.OnUpdate();
+        }
     }
 
     void HandlePlayerObject(KeyValuePair<string, PlayerObject> player)
@@ -136,7 +140,6 @@ public class NetworkingManager : MonoBehaviour
         playerGO.GetComponent<PlayerID>().networkID = networkID;
         playerGO.name = networkID;
 
-
         if (networkID == networking.myUserData.networkID)
             myPlayerGO = playerGO;
         else
@@ -152,19 +155,30 @@ public class NetworkingManager : MonoBehaviour
 
         playerGOMap.Add(networkID, playerGO);
 
-        lock (networking.playerMapLock)
-        {
-            // Set the spawned player to be action none as it has already spawned
-            if (networking.playerMap.ContainsKey(networkID))
-            {
-                networking.playerMap[networkID].action = PlayerObject.Action.NONE;
-            }
-        }
+        // Broadcast the corresponding message to the clients
+        if (networking is NetworkingServer)
+            (networking as NetworkingServer).NotifySpawn(networkID);
+
+        // Set the spawned player to be action none as it has already spawned
+        playerMap[networkID].action = PlayerObject.Action.NONE;
     }
 
     public void LoadScene(string sceneName)
     {
-        (networking as NetworkingServer).LoadScene();
+        // Set all player objects to be created with its respective positions
+        int i = 0;
+        foreach (var entry in playerMap)
+        {
+            Vector3 spawnPosition = new Vector3(NetworkingManager.Instance.startSpawnPosition.x + i * 3, 1, 0);
+            playerMap[entry.Key].action = PlayerObject.Action.CREATE;
+            ++i;
+        }
+
+        // Broadcast the corresponding message to the clients
+        if (networking is NetworkingServer)
+            (networking as NetworkingServer).NotifySceneChange(sceneName);
+
+        networking.triggerLoadScene = true;
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)

@@ -10,6 +10,8 @@ public class MouseAim : MonoBehaviour
     Vector3 aimDirection;
     Quaternion lookRotation;
 
+    public bool isAiming = false;
+
     [SerializeField] LayerMask mouseColliderLayerMask;
 
     // Shoot Members
@@ -54,6 +56,8 @@ public class MouseAim : MonoBehaviour
 
         // Perform rotation to look
         lookRotation = Quaternion.LookRotation(aimDirection);
+
+        isAiming = (transform.rotation != lookRotation) ? true : false;
 
         // Rotate over time according to speed
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, rotationSpeed * Time.deltaTime);

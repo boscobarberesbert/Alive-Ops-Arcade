@@ -11,8 +11,12 @@ public class NetworkingClient : INetworking
     // Thread and safety
     Thread clientThread;
     public object playerMapLock { get; set; } = new object();
+
     public object loadSceneLock { get; set; } = new object();
+    public bool triggerLoadScene { get; set; } = false;
+
     public object clientDisconnectLock { get; set; } = new object();
+    public bool triggerClientDisconected { get; set; } = false;
 
     // Network
     Socket clientSocket;
@@ -25,12 +29,12 @@ public class NetworkingClient : INetworking
     // User & Players
     public User myUserData { get; set; }
     public Dictionary<string, PlayerObject> playerMap { get; set; }
-    PlayerObject myPlayerData; // Data to send
 
-    public bool triggerClientDisconected { get; set; } = false;
-    public bool triggerLoadScene { get; set; } = false;
+    // Data to send to the server
+    PlayerObject myPlayerData;
 
-    float elapsedUpdateTime = 0f;
+    // Queue of received packets
+    //Queue<ServerPacket> packetQueue = new Queue<ServerPacket>();
 
     float elapsedPingTime = 0f;
     float pingTime = 30f;
@@ -38,6 +42,7 @@ public class NetworkingClient : INetworking
     public void Start()
     {
         playerMap = new Dictionary<string, PlayerObject>();
+
         myPlayerData = new PlayerObject();
 
         InitializeSocket();
@@ -120,25 +125,26 @@ public class NetworkingClient : INetworking
 
     public void UpdatePlayerState()
     {
-        if (NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed)
+        if (NetworkingManager.Instance.myPlayerGO)
         {
-            myPlayerData.action = PlayerObject.Action.UPDATE;
-            myPlayerData.position = NetworkingManager.Instance.myPlayerGO.transform.position;
-            myPlayerData.rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
+            if (NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed || NetworkingManager.Instance.myPlayerGO.GetComponent<MouseAim>().isAiming)
+            {
+                myPlayerData.action = PlayerObject.Action.UPDATE;
+                myPlayerData.position = NetworkingManager.Instance.myPlayerGO.transform.position;
+                myPlayerData.rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
+            }
         }
     }
 
     public void OnUpdate()
     {
-        elapsedUpdateTime += Time.deltaTime;
-        if (elapsedUpdateTime >= NetworkingManager.Instance.updateTime)
+        if (NetworkingManager.Instance.myPlayerGO && NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed)
         {
             ClientPacket packet = new ClientPacket(PacketType.WORLD_STATE, myUserData.networkID, myPlayerData);
 
             byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
 
             SendPacketToServer(data);
-            elapsedUpdateTime = elapsedUpdateTime % 1f;
         }
 
         elapsedPingTime += Time.deltaTime;
@@ -147,11 +153,6 @@ public class NetworkingClient : INetworking
             elapsedPingTime = elapsedPingTime % 1f;
             //PingServer();
         }
-    }
-
-    public void OnConnectionReset(EndPoint fromAddress)
-    {
-        throw new System.NotImplementedException();
     }
 
     public void SendPacket(byte[] outputPacket, EndPoint toAddress)
@@ -164,27 +165,26 @@ public class NetworkingClient : INetworking
         clientSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, ipep);
     }
 
-    public void OnDisconnect()
-    {
-        clientSocket.Close();
-        clientThread.Abort();
-    }
-    public void reportError()
-    {
-        throw new System.NotImplementedException();
-    }
-
     public void PingServer()
     {
         byte[] packet = Encoding.ASCII.GetBytes("Hello");
         SendPacketToServer(packet);
     }
+    public void OnConnectionReset(EndPoint fromAddress)
+    {
+        throw new System.NotImplementedException();
+    }
 
-    private void OnDisable()
+    public void OnDisconnect()
     {
         Debug.Log("Destroying Scene");
 
         clientSocket.Close();
         clientThread.Abort();
+    }
+
+    public void reportError()
+    {
+        throw new System.NotImplementedException();
     }
 }
