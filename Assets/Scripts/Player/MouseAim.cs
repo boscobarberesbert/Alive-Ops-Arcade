@@ -37,6 +37,8 @@ public class MouseAim : MonoBehaviour
 
     void Update()
     {
+        isAiming = Mouse.current.delta.ReadValue() != Vector2.zero;
+
         HandleAim();
     }
 
@@ -56,8 +58,6 @@ public class MouseAim : MonoBehaviour
 
         // Perform rotation to look
         lookRotation = Quaternion.LookRotation(aimDirection);
-
-        isAiming = (transform.rotation != lookRotation) ? true : false;
 
         // Rotate over time according to speed
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, rotationSpeed * Time.deltaTime);
