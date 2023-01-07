@@ -41,13 +41,17 @@ public class NetworkingClient : INetworking
 
     public void Start()
     {
+        //Defining myPlayerData
+        myPlayerData = new PlayerObject();
+
+        //Defining playerMap
         playerMap = new Dictionary<string, PlayerObject>();
 
-        myPlayerData = new PlayerObject();
 
         InitializeSocket();
     }
 
+    //Initializes the socket as a client in UDP and starts the thread that is constantly listening for messages
     private void InitializeSocket()
     {
         Debug.Log("[CLIENT] Client Initializing...");
@@ -65,6 +69,7 @@ public class NetworkingClient : INetworking
         clientThread.Start();
     }
 
+    //It sends a hello message to the server and when the server responds with a welcome packet it goes into listening mode
     private void ClientListener()
     {
         // Sending hello packet with user data
@@ -87,6 +92,7 @@ public class NetworkingClient : INetworking
         }
     }
 
+    //handles packages received
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
         ServerPacket serverPacket = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);

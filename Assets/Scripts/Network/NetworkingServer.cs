@@ -59,6 +59,7 @@ public class NetworkingServer : INetworking
         InitializeSocket();
     }
 
+    //Initializes the server socket in UDP and starts the thread that is constantly listening for messages
     private void InitializeSocket()
     {
         Debug.Log("[SERVER] Server Initializing...");
@@ -81,6 +82,7 @@ public class NetworkingServer : INetworking
         serverThread.Start();
     }
 
+    //Servers starts listening and when a package is received it executes OnPackageReceived function
     private void ServerListener()
     {
         Debug.Log("[SERVER] Server started listening");
@@ -98,7 +100,7 @@ public class NetworkingServer : INetworking
             OnPackageReceived(data, recv, endPoint);
         }
     }
-
+    //handles packages received
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
         Packet packet = SerializationUtility.DeserializeValue<Packet>(inputPacket, DataFormat.JSON);
