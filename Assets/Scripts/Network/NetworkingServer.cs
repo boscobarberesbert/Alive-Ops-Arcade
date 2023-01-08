@@ -7,17 +7,7 @@ using UnityEngine;
 
 public class NetworkingServer : INetworking
 {
-    class EndPointState
-    {
-        public EndPoint ep;
-        public bool isPrepared;
 
-        public EndPointState(EndPoint ep, bool isPrepared)
-        {
-            this.ep = ep;
-            this.isPrepared = isPrepared;
-        }
-    }
 
     // Thread and safety
     Thread serverThread;
@@ -41,7 +31,7 @@ public class NetworkingServer : INetworking
     public Dictionary<string, PlayerObject> playerMap { get; set; }
 
     // Dictionary to link a network ID (of a client) with an endpoint (server not included)
-    Dictionary<string, EndPointState> clients;
+    Dictionary<string, EndPoint> clients;
 
     // Queue of received packets
     //Queue<ClientPacket> packetQueue = new Queue<ClientPacket>();
@@ -49,10 +39,12 @@ public class NetworkingServer : INetworking
     int totalNumPlayers = 0;
 
     float elapsedUpdateTime = 0f;
+    float lastPinged = 35f;
+    float elapsedPingTime = 35f;
 
     public void Start()
     {
-        clients = new Dictionary<string, EndPointState>();
+        clients = new Dictionary<string, EndPoint>();
 
         playerMap = new Dictionary<string, PlayerObject>();
 
@@ -108,68 +100,51 @@ public class NetworkingServer : INetworking
         // If the client that sent a message to this server is new, add it to the list of clients.
         if (packet.type == PacketType.HELLO)
         {
+            // when a client sends a hello packet it is saved in the clients dictionary.
             HelloPacket helloPacket = SerializationUtility.DeserializeValue<HelloPacket>(inputPacket, DataFormat.JSON);
 
             if (!clients.ContainsKey(helloPacket.clientData.networkID))
-                clients.Add(helloPacket.clientData.networkID, new EndPointState(fromAddress, false));
+                clients.Add(helloPacket.clientData.networkID, fromAddress);
 
             SpawnPlayer(helloPacket.clientData);
         }
         else if (packet.type == PacketType.WORLD_STATE)
         {
-            ClientPacket clientPacket = SerializationUtility.DeserializeValue<ClientPacket>(inputPacket, DataFormat.JSON);
 
-            lock (playerMapLock)
-            {
-                if (playerMap.ContainsKey(clientPacket.networkID))
-                    playerMap[clientPacket.networkID] = clientPacket.playerObject;
-                else
-                    playerMap.Add(clientPacket.networkID, clientPacket.playerObject);
-            }
-
-            // TODO: process update packets
-            //packetQueue.Enqueue(clientPacket);
         }
         else if (packet.type == PacketType.PING)
         {
-            // TODO: What to do when we are pinged
+            elapsedPingTime = elapsedPingTime % 1f;
+            Debug.Log("Client has pinged");
         }
     }
 
     public void UpdatePlayerState()
     {
-        if (NetworkingManager.Instance.myPlayerGO)
-        {
-            if (NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed || NetworkingManager.Instance.myPlayerGO.GetComponent<MouseAim>().isAiming)
-            {
-                NetworkingManager.Instance.playerMap[myUserData.networkID].action = PlayerObject.Action.UPDATE;
-                NetworkingManager.Instance.playerMap[myUserData.networkID].position = NetworkingManager.Instance.myPlayerGO.transform.position;
-                NetworkingManager.Instance.playerMap[myUserData.networkID].rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
-            }
-        }
+
     }
 
     public void OnUpdate()
     {
+        //limit to 10 packets per second to mitigate lag
         elapsedUpdateTime += Time.deltaTime;
+        elapsedPingTime += Time.deltaTime;
         if (elapsedUpdateTime >= NetworkingManager.Instance.updateTime)
         {
-            ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, NetworkingManager.Instance.playerMap);
 
-            byte[] dataBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
-
-            BroadcastPacket(dataBroadcast, false);
 
             elapsedUpdateTime = elapsedUpdateTime % 1f;
         }
+
+        //if(elapsedPingTime > lastPinged)
+        //{
+        //    Debug.Log("ClientDisconnected");
+        //}
     }
 
     public void SendPacket(byte[] outputPacket, EndPoint toAddress)
     {
-        if (clients.Count != 0)
-        {
-            serverSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, toAddress);
-        }
+        serverSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, toAddress);
     }
 
     public void BroadcastPacket(byte[] data, bool fromClient) // True: doesn't include the client that sent the packet in the broadcast
@@ -177,46 +152,43 @@ public class NetworkingServer : INetworking
         // Broadcast the message to the other clients
         foreach (var entry in clients)
         {
-            if (fromClient && entry.Value.Equals(endPoint) && !entry.Value.isPrepared)
+            if (fromClient && entry.Value.Equals(endPoint))
                 continue;
 
-            SendPacket(data, entry.Value.ep);
+            SendPacket(data, entry.Value);
         }
     }
 
     public void SpawnPlayer(User userData)
     {
-        lock (playerMapLock)
-        {
-            // Add the player to our map (includes server player)
-            Vector3 spawnPosition = new Vector3(NetworkingManager.Instance.startSpawnPosition.x + totalNumPlayers * 3, 1, 0);
-            ++totalNumPlayers;
-
-            playerMap.Add(userData.networkID, new PlayerObject(PlayerObject.Action.CREATE, spawnPosition, new Quaternion(0, 0, 0, 0)));
-        }
+        Vector3 spawnPos = new Vector3(NetworkingManager.Instance.startSpawnPosition.x + totalNumPlayers * 3, 1, 0);
+        ++totalNumPlayers;
+        PlayerObject newPlayer = new PlayerObject(PlayerObject.Action.CREATE, spawnPos, new Quaternion(0, 0, 0, 0));
+        playerMap.Add(userData.networkID, newPlayer);
     }
 
     public void NotifySpawn(string networkID)
     {
-        // If it's a client
+        //if the new spawned object is a client
         if (clients.ContainsKey(networkID))
         {
-            clients[networkID].isPrepared = true;
-
-            // Broadcast to all active clients that a player has joined
-            if (clients.Count != 0)
+            //Broadcast to all the other active clients that a player has joined
+            if(clients.Count != 0)
             {
-                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, NetworkingManager.Instance.playerMap);
+                //we send a packet with the player map to the client to copy
+                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap);
 
-                byte[] dataBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
+                byte[] dataToBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
+                BroadcastPacket(dataToBroadcast, true);
 
-                BroadcastPacket(dataBroadcast, true);
             }
 
-            // A copy of the players' map to be sent to the new client
+            //To our newly joined client we send the welcome packet with the player map to be copied and start the spawning process
+
+            // A copy of the players' map to be sent to the new client but with all players sent to create since the new client doesn't have any
             Dictionary<string, PlayerObject> welcomePlayerMap = new Dictionary<string, PlayerObject>();
 
-            foreach (var entry in NetworkingManager.Instance.playerMap)
+            foreach (var entry in playerMap)
             {
                 // Set all player objects to be created
                 PlayerObject newObj = new PlayerObject(PlayerObject.Action.CREATE, entry.Value.position, entry.Value.rotation);
@@ -228,21 +200,14 @@ public class NetworkingServer : INetworking
 
             byte[] dataWelcome = SerializationUtility.SerializeValue(welcomePacket, DataFormat.JSON);
 
-            SendPacket(dataWelcome, clients[networkID].ep);
+            SendPacket(dataWelcome, clients[networkID]);
+
         }
     }
 
     public void NotifySceneChange(string sceneName)
     {
-        // TODO: add the scene to where we change
-        lock (playerMapLock)
-        {
-            ServerPacket serverPacket = new ServerPacket(PacketType.GAME_START, NetworkingManager.Instance.playerMap);
 
-            byte[] data = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
-
-            BroadcastPacket(data, false);
-        }
     }
 
     public void OnConnectionReset(EndPoint fromAddress)

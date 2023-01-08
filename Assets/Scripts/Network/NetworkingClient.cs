@@ -97,14 +97,7 @@ public class NetworkingClient : INetworking
     {
         ServerPacket serverPacket = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
 
-        if (serverPacket.type == PacketType.WELCOME)
-        {
-            lock (playerMapLock)
-            {
-                playerMap = serverPacket.playerMap;
-            }
-        }
-        else if (serverPacket.type == PacketType.WORLD_STATE)
+        if (serverPacket.type == PacketType.WELCOME || serverPacket.type == PacketType.WORLD_STATE)
         {
             lock (playerMapLock)
             {
@@ -131,33 +124,16 @@ public class NetworkingClient : INetworking
 
     public void UpdatePlayerState()
     {
-        if (NetworkingManager.Instance.myPlayerGO)
-        {
-            if (NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed || NetworkingManager.Instance.myPlayerGO.GetComponent<MouseAim>().isAiming)
-            {
-                myPlayerData.action = PlayerObject.Action.UPDATE;
-                myPlayerData.position = NetworkingManager.Instance.myPlayerGO.transform.position;
-                myPlayerData.rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
-            }
-        }
+       
     }
 
     public void OnUpdate()
     {
-        if (NetworkingManager.Instance.myPlayerGO && NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed)
-        {
-            ClientPacket packet = new ClientPacket(PacketType.WORLD_STATE, myUserData.networkID, myPlayerData);
-
-            byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
-
-            SendPacketToServer(data);
-        }
-
         elapsedPingTime += Time.deltaTime;
         if (elapsedPingTime >= pingTime)
         {
             elapsedPingTime = elapsedPingTime % 1f;
-            //PingServer();
+            PingServer();
         }
     }
 
@@ -173,8 +149,9 @@ public class NetworkingClient : INetworking
 
     public void PingServer()
     {
-        byte[] packet = Encoding.ASCII.GetBytes("Hello");
-        SendPacketToServer(packet);
+        Packet pingPacket = new Packet(PacketType.PING);
+        byte[] data = SerializationUtility.SerializeValue(pingPacket, DataFormat.JSON);
+        SendPacketToServer(data);
     }
     public void OnConnectionReset(EndPoint fromAddress)
     {

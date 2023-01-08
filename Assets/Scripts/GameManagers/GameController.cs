@@ -18,7 +18,7 @@ public class GameController : MonoBehaviour
     {
         networkManager = GameObject.FindGameObjectWithTag("NetworkingManager").GetComponent<NetworkingManager>();
 
-        StartCoroutine(InterpolatePositions());
+        //StartCoroutine(InterpolatePositions());
     }
 
     // Update is called once per frame
@@ -46,22 +46,22 @@ public class GameController : MonoBehaviour
         //}
     }
 
-    IEnumerator InterpolatePositions()
-    {
-        for (int i = 0; i < networkManager.playerMap.Count; ++i)
-        {
-            if (timeElapsed < lerpDuration)
-            {
-                valueToLerp = Mathf.Lerp(startValue, endValue, timeElapsed / lerpDuration);
-                timeElapsed += Time.deltaTime;
-            }
-            else
-            {
-                valueToLerp = endValue;
-                timeElapsed = 0;
-            }
-        }
+    //IEnumerator InterpolatePositions()
+    //{
+    //    for (int i = 0; i < networkManager.playerMap.Count; ++i)
+    //    {
+    //        if (timeElapsed < lerpDuration)
+    //        {
+    //            valueToLerp = Mathf.Lerp(startValue, endValue, timeElapsed / lerpDuration);
+    //            timeElapsed += Time.deltaTime;
+    //        }
+    //        else
+    //        {
+    //            valueToLerp = endValue;
+    //            timeElapsed = 0;
+    //        }
+    //    }
 
-        yield return null;
-    }
+    //    yield return null;
+    //}
 }

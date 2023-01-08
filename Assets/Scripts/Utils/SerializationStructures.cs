@@ -11,6 +11,7 @@ public enum PacketType
     WORLD_STATE
 }
 
+//data structure that stores all the client networking information passed throught the network
 public class User
 {
     public string networkID;
@@ -32,6 +33,7 @@ public class User
     }
 }
 
+//data structure that stores all the player game object information passed through the network
 public class PlayerObject
 {
     public enum Action
@@ -62,6 +64,7 @@ public class PlayerObject
     }
 }
 
+//Definition of a packet sent through the internet
 public class Packet
 {
     public PacketType type;
@@ -70,8 +73,13 @@ public class Packet
     {
         type = PacketType.DEFAULT;
     }
+    public Packet(PacketType type)
+    {
+        this.type = type;
+    }
 }
 
+//Type of packet sent by the server
 public class ServerPacket : Packet
 {
     // List of players (including server)
@@ -90,7 +98,7 @@ public class ServerPacket : Packet
         this.playerMap = playerMap;
     }
 }
-
+//type of packet sent by the client
 public class ClientPacket : Packet
 {
     public PlayerObject playerObject;
@@ -110,6 +118,7 @@ public class ClientPacket : Packet
     }
 }
 
+//Hello packet that sends the user information when a client is added
 public class HelloPacket : Packet
 {
     public User clientData;
