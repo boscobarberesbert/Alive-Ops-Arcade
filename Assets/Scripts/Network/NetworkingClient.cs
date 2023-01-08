@@ -124,17 +124,30 @@ public class NetworkingClient : INetworking
 
     public void UpdatePlayerState()
     {
-       
+        if (NetworkingManager.Instance.myPlayerGO)
+        {
+            if (NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed || NetworkingManager.Instance.myPlayerGO.GetComponent<MouseAim>().isAiming)
+            {
+                playerMap[myUserData.networkID].action = PlayerObject.Action.UPDATE;
+                playerMap[myUserData.networkID].position = NetworkingManager.Instance.myPlayerGO.transform.position;
+                playerMap[myUserData.networkID].rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
+
+                ClientPacket clientPacket = new ClientPacket(PacketType.WORLD_STATE, myUserData.networkID, playerMap[myUserData.networkID]);
+                byte[] dataToBroadcast = SerializationUtility.SerializeValue(clientPacket, DataFormat.JSON);
+
+                SendPacketToServer(dataToBroadcast);
+            }
+        }
     }
 
     public void OnUpdate()
     {
-        elapsedPingTime += Time.deltaTime;
-        if (elapsedPingTime >= pingTime)
-        {
-            elapsedPingTime = elapsedPingTime % 1f;
-            PingServer();
-        }
+        //elapsedPingTime += Time.deltaTime;
+        //if (elapsedPingTime >= pingTime)
+        //{
+        //    elapsedPingTime = elapsedPingTime % 1f;
+        //    PingServer();
+        //}
     }
 
     public void SendPacket(byte[] outputPacket, EndPoint toAddress)

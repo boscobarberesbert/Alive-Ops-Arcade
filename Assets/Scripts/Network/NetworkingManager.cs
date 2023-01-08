@@ -54,9 +54,13 @@ public class NetworkingManager : MonoBehaviour
     void Update()
     {
         networking.OnUpdate();
-        foreach(var player in networking.playerMap)
+        lock(networking.playerMapLock)
         {
-            HandlePlayerObject(player);
+            foreach (var player in networking.playerMap)
+            {
+                HandlePlayerObject(player);
+            }
+            networking.UpdatePlayerState();
         }
 
     }
@@ -121,7 +125,7 @@ public class NetworkingManager : MonoBehaviour
 
         //Now we add it to the list of player GO
         playerGOMap.Add(networkID, playerGO);
-        //Finally we broadcast the corresponding packet to the clients
+        ////Finally we broadcast the corresponding packet to the clients
         if (networking is NetworkingServer)
             (networking as NetworkingServer).NotifySpawn(networkID);
 

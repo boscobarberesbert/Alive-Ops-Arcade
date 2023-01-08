@@ -110,6 +110,16 @@ public class NetworkingServer : INetworking
         }
         else if (packet.type == PacketType.WORLD_STATE)
         {
+            lock (playerMapLock)
+            {
+                ClientPacket clientPacket = SerializationUtility.DeserializeValue<ClientPacket>(inputPacket, DataFormat.JSON);
+                playerMap[clientPacket.networkID] = clientPacket.playerObject;
+                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap);
+
+                byte[] dataToBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
+
+                BroadcastPacket(dataToBroadcast, true);
+            }
 
         }
         else if (packet.type == PacketType.PING)
@@ -121,21 +131,41 @@ public class NetworkingServer : INetworking
 
     public void UpdatePlayerState()
     {
+        if (NetworkingManager.Instance.myPlayerGO)
+        {
+            if (NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed || NetworkingManager.Instance.myPlayerGO.GetComponent<MouseAim>().isAiming)
+            {
 
+                playerMap[myUserData.networkID].action = PlayerObject.Action.UPDATE;
+                playerMap[myUserData.networkID].position = NetworkingManager.Instance.myPlayerGO.transform.position;
+                playerMap[myUserData.networkID].rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
+
+                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap);
+
+                byte[] dataToBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
+
+                BroadcastPacket(dataToBroadcast, false);
+
+            }
+        }
     }
 
     public void OnUpdate()
     {
         //limit to 10 packets per second to mitigate lag
-        elapsedUpdateTime += Time.deltaTime;
-        elapsedPingTime += Time.deltaTime;
-        if (elapsedUpdateTime >= NetworkingManager.Instance.updateTime)
-        {
+        //elapsedUpdateTime += Time.deltaTime;
 
+        //if (elapsedUpdateTime >= NetworkingManager.Instance.updateTime)
+        //{
+        //    ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap);
 
-            elapsedUpdateTime = elapsedUpdateTime % 1f;
-        }
+        //    byte[] dataBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
 
+        //    BroadcastPacket(dataBroadcast, false);
+
+        //    elapsedUpdateTime = elapsedUpdateTime % 1f;
+        //}
+        //elapsedPingTime += Time.deltaTime;
         //if(elapsedPingTime > lastPinged)
         //{
         //    Debug.Log("ClientDisconnected");
@@ -165,6 +195,7 @@ public class NetworkingServer : INetworking
         ++totalNumPlayers;
         PlayerObject newPlayer = new PlayerObject(PlayerObject.Action.CREATE, spawnPos, new Quaternion(0, 0, 0, 0));
         playerMap.Add(userData.networkID, newPlayer);
+
     }
 
     public void NotifySpawn(string networkID)
@@ -173,7 +204,7 @@ public class NetworkingServer : INetworking
         if (clients.ContainsKey(networkID))
         {
             //Broadcast to all the other active clients that a player has joined
-            if(clients.Count != 0)
+            if (clients.Count != 0)
             {
                 //we send a packet with the player map to the client to copy
                 ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap);
