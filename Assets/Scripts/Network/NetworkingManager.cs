@@ -53,15 +53,33 @@ public class NetworkingManager : MonoBehaviour
 
     void Update()
     {
-        networking.OnUpdate();
-        lock(networking.playerMapLock)
+
+        lock (networking.loadSceneLock)
         {
-            foreach (var player in networking.playerMap)
+            if (networking.triggerLoadScene)
             {
-                HandlePlayerObject(player);
+                isSceneLoading = true;
+
+                playerGOMap.Clear();
+
+                SceneManager.LoadScene("Game");
+
+                networking.triggerLoadScene = false;
             }
-            networking.UpdatePlayerState();
         }
+        if (!isSceneLoading)
+        {
+            networking.OnUpdate();
+            lock (networking.playerMapLock)
+            {
+                foreach (var player in networking.playerMap)
+                {
+                    HandlePlayerObject(player);
+                }
+                networking.UpdatePlayerState();
+            }
+        }
+
 
     }
 
@@ -109,7 +127,7 @@ public class NetworkingManager : MonoBehaviour
         playerGO.GetComponent<PlayerID>().networkID = networkID;
         playerGO.name = networkID;
         //if the object created is mine, add it to myPlayerGO variable
-        if(networkID == networking.myUserData.networkID)
+        if (networkID == networking.myUserData.networkID)
         {
             myPlayerGO = playerGO;
         }
@@ -123,8 +141,12 @@ public class NetworkingManager : MonoBehaviour
             playerGO.tag = "Untagged";
         }
 
-        //Now we add it to the list of player GO
-        playerGOMap.Add(networkID, playerGO);
+        //Now we add it to the list of player GO if it is not already there (change scene case)
+        if (!playerGOMap.ContainsKey(networkID))
+        {
+            playerGOMap.Add(networkID, playerGO);
+
+        }
         ////Finally we broadcast the corresponding packet to the clients
         if (networking is NetworkingServer)
             (networking as NetworkingServer).NotifySpawn(networkID);
@@ -135,12 +157,42 @@ public class NetworkingManager : MonoBehaviour
 
     public void LoadScene(string sceneName)
     {
-       
+        // Set all player objects to be created with its respective positions
+        int i = 0;
+        foreach (var entry in networking.playerMap)
+        {
+            Vector3 spawnPosition = new Vector3(NetworkingManager.Instance.startSpawnPosition.x + i * 3, 1, 0);
+            networking.playerMap[entry.Key].action = PlayerObject.Action.CREATE;
+            ++i;
+        }
+
+        // Broadcast the corresponding message to the clients
+        if (networking is NetworkingServer)
+            (networking as NetworkingServer).NotifySceneChange(sceneName);
+
+        networking.triggerLoadScene = true;
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-      
+        // We need to spawn the players ASAP as some scripts require that they exist at first
+        lock (networking.playerMapLock)
+        {
+
+
+            foreach (var player in networking.playerMap)
+            {
+                //if (player.Value.action == PlayerObject.Action.CREATE)
+                //{
+                if (onClientAdded != null)
+                {
+                    onClientAdded(player.Key, player.Value);
+                }
+                //}
+            }
+        }
+
+        isSceneLoading = false;
     }
 
     void OnDisable()

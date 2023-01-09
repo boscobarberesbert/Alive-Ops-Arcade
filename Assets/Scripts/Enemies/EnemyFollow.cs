@@ -20,7 +20,10 @@ public class EnemyFollow : MonoBehaviour
     {
         // Fill the array with the active players (GameObjects with tag "Player").
         players = GameObject.FindGameObjectsWithTag("Player");
-
+        if(players.Length == 0)
+        {
+            return;
+        }
         // Setting the first player in the array as the closest one (as a starting point).
         closestPlayer = players[0];
         float closestPlayerDistance = Vector3.Distance(closestPlayer.transform.position, this.transform.position);

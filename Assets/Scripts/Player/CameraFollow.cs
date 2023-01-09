@@ -17,19 +17,22 @@ public class CameraFollow : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!isTargetActive)
+        GameObject targetGO = GameObject.FindGameObjectWithTag("Player");
+
+
+        if (targetGO)
         {
-            // TODO Instance Players without Player Tag
-            //target = GameObject.Find(NetworkingManager.Instance.networking.myUserData.networkID).transform;
-            target = GameObject.FindGameObjectWithTag("Player").transform;
+            target = targetGO.transform;
             isTargetActive = true;
+
+
+
+            Vector3 desiredPosition = target.position + offset;
+
+            desiredPosition.x = Mathf.Clamp(desiredPosition.x, cameraLimitWidth.x, cameraLimitWidth.y);
+            desiredPosition.z = Mathf.Clamp(desiredPosition.z, cameraLimitHeight.x, cameraLimitHeight.y);
+
+            transform.position = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed * Time.deltaTime);
         }
-
-        Vector3 desiredPosition = target.position + offset;
-
-        desiredPosition.x = Mathf.Clamp(desiredPosition.x, cameraLimitWidth.x, cameraLimitWidth.y);
-        desiredPosition.z = Mathf.Clamp(desiredPosition.z, cameraLimitHeight.x, cameraLimitHeight.y);
-
-        transform.position = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed * Time.deltaTime);
     }
 }

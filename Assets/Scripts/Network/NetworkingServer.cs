@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class NetworkingServer : INetworking
 {
@@ -133,7 +134,7 @@ public class NetworkingServer : INetworking
     {
         if (NetworkingManager.Instance.myPlayerGO)
         {
-            if (NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed || NetworkingManager.Instance.myPlayerGO.GetComponent<MouseAim>().isAiming)
+            if (NetworkingManager.Instance.myPlayerGO.transform.position.x != playerMap[myUserData.networkID].position.x || NetworkingManager.Instance.myPlayerGO.transform.rotation != playerMap[myUserData.networkID].rotation)
             {
 
                 playerMap[myUserData.networkID].action = PlayerObject.Action.UPDATE;
@@ -238,7 +239,16 @@ public class NetworkingServer : INetworking
 
     public void NotifySceneChange(string sceneName)
     {
+        lock (playerMapLock)
+        {
+            ServerPacket serverPacket = new ServerPacket(PacketType.GAME_START, playerMap);
 
+            byte[] data = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
+
+            BroadcastPacket(data, false);
+
+            triggerLoadScene = true;
+        }
     }
 
     public void OnConnectionReset(EndPoint fromAddress)

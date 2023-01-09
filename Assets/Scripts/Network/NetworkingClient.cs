@@ -126,7 +126,7 @@ public class NetworkingClient : INetworking
     {
         if (NetworkingManager.Instance.myPlayerGO)
         {
-            if (NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed || NetworkingManager.Instance.myPlayerGO.GetComponent<MouseAim>().isAiming)
+            if (NetworkingManager.Instance.myPlayerGO.transform.position.x != playerMap[myUserData.networkID].position.x || NetworkingManager.Instance.myPlayerGO.transform.rotation != playerMap[myUserData.networkID].rotation)
             {
                 playerMap[myUserData.networkID].action = PlayerObject.Action.UPDATE;
                 playerMap[myUserData.networkID].position = NetworkingManager.Instance.myPlayerGO.transform.position;
