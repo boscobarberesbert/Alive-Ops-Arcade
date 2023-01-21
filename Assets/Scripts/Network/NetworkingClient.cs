@@ -131,6 +131,7 @@ public class NetworkingClient : INetworking
                 playerMap[myUserData.networkID].action = PlayerObject.Action.UPDATE;
                 playerMap[myUserData.networkID].position = NetworkingManager.Instance.myPlayerGO.transform.position;
                 playerMap[myUserData.networkID].rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
+                playerMap[myUserData.networkID].isRunning = NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed;
 
                 ClientPacket clientPacket = new ClientPacket(PacketType.WORLD_STATE, myUserData.networkID, playerMap[myUserData.networkID]);
                 byte[] dataToBroadcast = SerializationUtility.SerializeValue(clientPacket, DataFormat.JSON);

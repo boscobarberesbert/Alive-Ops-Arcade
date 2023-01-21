@@ -140,6 +140,7 @@ public class NetworkingServer : INetworking
                 playerMap[myUserData.networkID].action = PlayerObject.Action.UPDATE;
                 playerMap[myUserData.networkID].position = NetworkingManager.Instance.myPlayerGO.transform.position;
                 playerMap[myUserData.networkID].rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
+                playerMap[myUserData.networkID].isRunning = NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed;
 
                 ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap);
 
@@ -192,9 +193,9 @@ public class NetworkingServer : INetworking
 
     public void SpawnPlayer(User userData)
     {
-        Vector3 spawnPos = new Vector3(NetworkingManager.Instance.startSpawnPosition.x + totalNumPlayers * 3, 1, 0);
+        Vector3 spawnPos = new Vector3(NetworkingManager.Instance.initialSpawnPosition.x + totalNumPlayers * 3, NetworkingManager.Instance.initialSpawnPosition.y, NetworkingManager.Instance.initialSpawnPosition.z);
         ++totalNumPlayers;
-        PlayerObject newPlayer = new PlayerObject(PlayerObject.Action.CREATE, spawnPos, new Quaternion(0, 0, 0, 0));
+        PlayerObject newPlayer = new PlayerObject(PlayerObject.Action.CREATE, spawnPos, new Quaternion(0, 0, 0, 0),false);
         playerMap.Add(userData.networkID, newPlayer);
 
     }
@@ -223,7 +224,7 @@ public class NetworkingServer : INetworking
             foreach (var entry in playerMap)
             {
                 // Set all player objects to be created
-                PlayerObject newObj = new PlayerObject(PlayerObject.Action.CREATE, entry.Value.position, entry.Value.rotation);
+                PlayerObject newObj = new PlayerObject(PlayerObject.Action.CREATE, entry.Value.position, entry.Value.rotation,entry.Value.isRunning);
                 welcomePlayerMap.Add(entry.Key, newObj);
             }
 

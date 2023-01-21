@@ -21,7 +21,7 @@ public class EnemySpawnManager : MonoBehaviour
 
         if (enemies.Length < 4)
         {
-            GameObject.Instantiate(enemyPrefab, Vector3.zero, Quaternion.identity);
+            GameObject.Instantiate(enemyPrefab, gameObject.transform.position, Quaternion.identity);
         }
     }
 }

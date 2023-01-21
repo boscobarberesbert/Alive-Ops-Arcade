@@ -13,7 +13,9 @@ public class PlayerController : MonoBehaviour
     public bool isMovementPressed;
     Vector2 currentMovementInput;
     Vector3 currentMovement;
-
+    Animator animator;
+    //Variables to store optimized setter/getter parameter IDs
+    int isRunningHash;
     void Awake()
     {
         playerInput = new PlayerInput();
@@ -27,6 +29,9 @@ public class PlayerController : MonoBehaviour
 
         // Performed: continues to update changes
         playerInput.CharacterControls.Move.performed += OnMovementInput;
+        animator = GetComponent<Animator>();
+        isRunningHash = Animator.StringToHash("isRunning");
+
     }
 
     void OnMovementInput(InputAction.CallbackContext context)
@@ -35,8 +40,13 @@ public class PlayerController : MonoBehaviour
         currentMovement.x = currentMovementInput.x * speed;
         currentMovement.z = currentMovementInput.y * speed;
         isMovementPressed = currentMovementInput.x != 0 || currentMovementInput.y != 0;
+        SetAnimatorRunning(isMovementPressed);
     }
+    public void SetAnimatorRunning(bool isRunning)
+    {
+        animator.SetBool(isRunningHash, isRunning);
 
+    }
     void HandleGravity()
     {
         if (characterController.isGrounded)

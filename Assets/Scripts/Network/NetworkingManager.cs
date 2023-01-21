@@ -1,4 +1,5 @@
 using AliveOpsArcade.OdinSerializer.Utilities;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,8 +10,9 @@ public class NetworkingManager : MonoBehaviour
     public INetworking networking;
 
     // Reference to our player gameobject
-    public GameObject myPlayerGO;
-
+    [NonSerialized]public GameObject myPlayerGO;
+    Transform initialSpawnPoint;
+    [NonSerialized] public Vector3 initialSpawnPosition;
     // Map to relate networkID to its gameobject
     Dictionary<string, GameObject> playerGOMap = new Dictionary<string, GameObject>();
 
@@ -21,12 +23,13 @@ public class NetworkingManager : MonoBehaviour
     bool isSceneLoading = false;
 
     [SerializeField] GameObject playerPrefab;
-    public Vector3 startSpawnPosition;
     public float updateTime = 0.1f;
 
     private void Awake()
     {
         onClientAdded += Spawn;
+        initialSpawnPoint = GameObject.FindGameObjectWithTag("Spawn Point").transform;
+        initialSpawnPosition = initialSpawnPoint.position;
         if (Instance != null)
         {
             Destroy(gameObject);
@@ -103,6 +106,7 @@ public class NetworkingManager : MonoBehaviour
                         // TODO: Perform interpolation
                         playerGOMap[player.Key].transform.position = player.Value.position;
                         playerGOMap[player.Key].transform.rotation = player.Value.rotation;
+                        playerGOMap[player.Key].GetComponent<PlayerController>().SetAnimatorRunning(player.Value.isRunning);
                     }
                     break;
                 }
@@ -161,7 +165,7 @@ public class NetworkingManager : MonoBehaviour
         int i = 0;
         foreach (var entry in networking.playerMap)
         {
-            Vector3 spawnPosition = new Vector3(NetworkingManager.Instance.startSpawnPosition.x + i * 3, 1, 0);
+            Vector3 spawnPosition = new Vector3(NetworkingManager.Instance.initialSpawnPoint.position.x + i * 3, 1, 0);
             networking.playerMap[entry.Key].action = PlayerObject.Action.CREATE;
             ++i;
         }
@@ -175,6 +179,8 @@ public class NetworkingManager : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        initialSpawnPoint = GameObject.FindGameObjectWithTag("Spawn Point").transform;
+        initialSpawnPosition = initialSpawnPoint.position;
         // We need to spawn the players ASAP as some scripts require that they exist at first
         lock (networking.playerMapLock)
         {
@@ -182,6 +188,7 @@ public class NetworkingManager : MonoBehaviour
 
             foreach (var player in networking.playerMap)
             {
+                player.Value.position = initialSpawnPosition;
                 //if (player.Value.action == PlayerObject.Action.CREATE)
                 //{
                 if (onClientAdded != null)

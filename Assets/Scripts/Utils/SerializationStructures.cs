@@ -47,6 +47,7 @@ public class PlayerObject
     // World State
     public Action action;
     public Vector3 position;
+    public bool isRunning;
     public Quaternion rotation;
 
     public PlayerObject()
@@ -54,9 +55,42 @@ public class PlayerObject
         action = Action.NONE;
         position = new Vector3(0f, 0f, 0f);
         rotation = new Quaternion(0f, 0f, 0f, 0f);
+        isRunning = false;
     }
 
-    public PlayerObject(Action action, Vector3 position, Quaternion rotation)
+    public PlayerObject(Action action, Vector3 position, Quaternion rotation,bool isRunning)
+    {
+        this.action = action;
+        this.position = position;
+        this.rotation = rotation;
+        this.isRunning = isRunning;
+    }
+}
+
+//data structure that stores all the player game object information passed through the network
+public class EnemyObject
+{
+    public enum Action
+    {
+        NONE,
+        CREATE,
+        UPDATE,
+        DESTROY
+    }
+
+    // World State
+    public Action action;
+    public Vector3 position;
+    public Quaternion rotation;
+
+    public EnemyObject()
+    {
+        action = Action.NONE;
+        position = new Vector3(0f, 0f, 0f);
+        rotation = new Quaternion(0f, 0f, 0f, 0f);
+    }
+
+    public EnemyObject(Action action, Vector3 position, Quaternion rotation)
     {
         this.action = action;
         this.position = position;
@@ -86,7 +120,7 @@ public class ServerPacket : Packet
     public Dictionary<string, PlayerObject> playerMap;
 
     // TODO: List of enemies
-
+    public Dictionary<string, EnemyObject> enemiesMap;
     public ServerPacket()
     {
         playerMap = new Dictionary<string, PlayerObject>();
