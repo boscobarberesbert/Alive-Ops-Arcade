@@ -5,6 +5,7 @@ public class MouseAim : MonoBehaviour
 {
     // Aim members
     public float rotationSpeed = 5f;
+    public Transform gunPoint;
 
     Vector3 worldPosition;
     Vector3 aimDirection;
@@ -51,7 +52,7 @@ public class MouseAim : MonoBehaviour
         }
 
         // Find vector pointing from the player position to the mouse world position
-        aimDirection = (worldPosition - transform.position).normalized;
+        aimDirection = (worldPosition - gunPoint.position).normalized;
 
         // We want to only aim in the xz plane
         aimDirection.y = 0;
