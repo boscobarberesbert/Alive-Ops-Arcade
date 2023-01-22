@@ -79,6 +79,10 @@ public class NetworkingManager : MonoBehaviour
                     HandlePlayerObject(player);
                 }
                 networking.UpdatePlayerState();
+                if(networking is NetworkingServer)
+                {
+                    (networking as NetworkingServer).UpdateEnemiesState(GameObject.FindGameObjectsWithTag("Enemy"));
+                }
             }
         }
     }
@@ -142,7 +146,7 @@ public class NetworkingManager : MonoBehaviour
             playerGO.GetComponent<MouseAim>().enabled = false;
 
             // TODO: Instance Players without Player Tag
-            playerGO.tag = "Untagged";
+            playerGO.transform.GetChild(0).tag = "Untagged";
         }
 
         // Now we add it to the list of player GO if it is not already there (change scene case)

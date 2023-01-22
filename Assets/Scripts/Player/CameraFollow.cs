@@ -17,7 +17,7 @@ public class CameraFollow : MonoBehaviour
 
     void LateUpdate()
     {
-        GameObject targetGO = GameObject.FindGameObjectWithTag("Player");
+        GameObject targetGO = GameObject.FindGameObjectWithTag("MainPlayer");
 
 
         if (targetGO)

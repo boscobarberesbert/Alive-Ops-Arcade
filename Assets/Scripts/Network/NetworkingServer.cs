@@ -133,18 +133,18 @@ public class NetworkingServer : INetworking
     public void OnUpdate()
     {
         // Limit to 10 packets per second to mitigate lag
-        elapsedUpdateTime += Time.deltaTime;
+        //elapsedUpdateTime += Time.deltaTime;
 
-        if (elapsedUpdateTime >= NetworkingManager.Instance.updateTime)
-        {
-            ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
+        //if (elapsedUpdateTime >= NetworkingManager.Instance.updateTime)
+        //{
+        //    ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
 
-            byte[] dataBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
+        //    byte[] dataBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
 
-            BroadcastPacket(dataBroadcast, false);
+        //    BroadcastPacket(dataBroadcast, false);
 
-            elapsedUpdateTime = elapsedUpdateTime % 1f;
-        }
+        //    elapsedUpdateTime = elapsedUpdateTime % 1f;
+        //}
 
         //elapsedPingTime += Time.deltaTime;
         //if(elapsedPingTime > lastPinged)
