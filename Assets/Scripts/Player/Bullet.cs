@@ -14,7 +14,7 @@ public class Bullet : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (collision.collider.CompareTag("Enemy"))
+        if (collision.collider.CompareTag("Enemy") && !MainMenuInfo.isClient)
         {
             collision.gameObject.GetComponent<Enemy>().Respawn();
         }

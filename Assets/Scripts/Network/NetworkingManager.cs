@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.AI;
+using UnityEngine.Networking.Types;
 using UnityEngine.SceneManagement;
 
 public class NetworkingManager : MonoBehaviour
@@ -15,11 +17,14 @@ public class NetworkingManager : MonoBehaviour
     [NonSerialized] public Vector3 initialSpawnPosition;
     // Map to relate networkID to its gameobject
     public Dictionary<string, GameObject> playerGOMap = new Dictionary<string, GameObject>();
+    // Map to relate networkID to its enemyObject
+    public Dictionary<string, GameObject> enemyGOMap = new Dictionary<string, GameObject>();
 
     // Condition to know if the LoadScene() method has been called
     bool isSceneLoading = false;
 
     [SerializeField] GameObject playerPrefab;
+    [SerializeField] GameObject enemyPrefab;
     public float updateTime = 0.1f;
 
     private void Awake()
@@ -59,8 +64,17 @@ public class NetworkingManager : MonoBehaviour
                 isSceneLoading = true;
 
                 playerGOMap.Clear();
+                enemyGOMap.Clear();
+                if (networking is NetworkingServer)
+                {
+                    SceneManager.LoadSceneAsync("Game");
 
-                SceneManager.LoadSceneAsync("Game");
+                }
+                else
+                {
+                    SceneManager.LoadSceneAsync("GameClient");
+
+                }
 
                 networking.triggerLoadScene = false;
             }
@@ -86,6 +100,10 @@ public class NetworkingManager : MonoBehaviour
                                 {
                                     HandlePlayerObject(player.Key, player.Value);
                                 }
+                                foreach (var enemy in (packet as ServerPacket).enemiesMap)
+                                {
+                                    HandleEnemyObject(enemy.Key, enemy.Value);
+                                }
                                 break;
                             }
                         case PacketType.GAME_START:
@@ -107,6 +125,10 @@ public class NetworkingManager : MonoBehaviour
                                     foreach (var player in (packet as ServerPacket).playerMap)
                                     {
                                         HandlePlayerObject(player.Key, player.Value);
+                                    }
+                                    foreach (var enemy in (packet as ServerPacket).enemiesMap)
+                                    {
+                                        HandleEnemyObject(enemy.Key, enemy.Value);
                                     }
                                 }
 
@@ -144,7 +166,7 @@ public class NetworkingManager : MonoBehaviour
                     if (playerGOMap.ContainsKey(key) && key != networking.myUserData.networkID)
                     {
                         // TODO: Perform interpolation
-                        playerGOMap[key].transform.position = player.position;
+                        playerGOMap[key].transform.position = InterpolatePosition(playerGOMap[key].transform.position, player.position);
                         playerGOMap[key].transform.rotation = player.rotation;
                         playerGOMap[key].GetComponent<PlayerController>().SetAnimatorRunning(player.isRunning);
                     }
@@ -162,7 +184,52 @@ public class NetworkingManager : MonoBehaviour
                 }
         }
     }
+    public void HandleEnemyObject(string key, EnemyObject enemy)
+    {
+        // TODO
+        switch (enemy.action)
+        {
+            case EnemyObject.Action.CREATE:
+                {
+                    SpawnEnemy(enemy);
+                    break;
+                }
+            case EnemyObject.Action.UPDATE:
+                {
+                    if (enemyGOMap.ContainsKey(key))
+                    {
+                        // TODO: Perform interpolation
+                        enemyGOMap[key].transform.position = InterpolatePosition(enemyGOMap[key].transform.position, enemy.position);
+                        enemyGOMap[key].transform.rotation = enemy.rotation;
+                    }
+                    break;
+                }
+        }
+    }
 
+    Vector3 InterpolatePosition(Vector3 startPos, Vector3 endPos)
+    {
+        float duration = 0.09f;
+        float t = Time.deltaTime / duration;
+        return Vector3.Lerp(startPos, endPos, t);
+    }
+    public void SpawnEnemy(EnemyObject enemyObject)
+    {
+        GameObject enemyGO = Instantiate(enemyPrefab, enemyObject.position, new Quaternion(0, 0, 0, 0));
+        // Set playerGO variables
+        enemyGO.GetComponent<NetworkObject>().networkID = enemyObject.networkID;
+        enemyGO.name = enemyObject.networkID;
+
+        enemyGO.GetComponent<EnemyFollow>().enabled = false;
+        enemyGO.GetComponent<NavMeshAgent>().enabled = false;
+        enemyGO.GetComponent<Enemy>().enabled = false;
+
+        // Now we add it to the list of player GO if it is not already there (change scene case)
+        if (!enemyGOMap.ContainsKey(enemyObject.networkID))
+        {
+            enemyGOMap.Add(enemyObject.networkID, enemyGO);
+        }
+    }
     public void Spawn(string networkID)
     {
         Vector3 spawnPos = new Vector3(NetworkingManager.Instance.initialSpawnPosition.x + playerGOMap.Count * 3, NetworkingManager.Instance.initialSpawnPosition.y, NetworkingManager.Instance.initialSpawnPosition.z);
@@ -202,7 +269,10 @@ public class NetworkingManager : MonoBehaviour
 
     }
 
-  
+    public void Shoot()
+    {
+
+    }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {

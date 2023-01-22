@@ -205,7 +205,7 @@ public class NetworkingServer : INetworking
             else
             {
                 EnemyObject enemyObject = new EnemyObject(
-                    System.Guid.NewGuid().ToString(),
+                    enemy.GetComponent<NetworkObject>().networkID,
                     EnemyObject.Action.CREATE,
                     enemy.transform.position,
                     enemy.transform.rotation
@@ -260,6 +260,7 @@ public class NetworkingServer : INetworking
             // To our newly joined client we send the welcome packet with the player map to be copied and start the spawning process
             // A copy of the players' map to be sent to the new client but with all players sent to create since the new client doesn't have any
             Dictionary<string, PlayerObject> welcomePlayerMap = new Dictionary<string, PlayerObject>();
+            Dictionary<string, EnemyObject> welcomeEnemyMap = new Dictionary<string, EnemyObject>();
 
             foreach (var entry in playerMap)
             {
@@ -267,9 +268,14 @@ public class NetworkingServer : INetworking
                 PlayerObject newObj = new PlayerObject(PlayerObject.Action.CREATE, entry.Value.position, entry.Value.rotation, entry.Value.isRunning);
                 welcomePlayerMap.Add(entry.Key, newObj);
             }
+            foreach(var enemy in enemiesMap)
+            {
+                EnemyObject newObj = new EnemyObject(enemy.Value.networkID,EnemyObject.Action.CREATE, enemy.Value.position, enemy.Value.rotation);
+                welcomeEnemyMap.Add(enemy.Key, newObj);
+            }
 
             // Prepare the packet to be sent back notifying the connection
-            ServerPacket welcomePacket = new ServerPacket(PacketType.WELCOME, welcomePlayerMap, enemiesMap);
+            ServerPacket welcomePacket = new ServerPacket(PacketType.WELCOME, welcomePlayerMap, welcomeEnemyMap);
 
             byte[] dataWelcome = SerializationUtility.SerializeValue(welcomePacket, DataFormat.JSON);
 

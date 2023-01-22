@@ -81,7 +81,7 @@ public class NetworkingClient : INetworking
 
         while (true)
         {
-            data = new byte[5024];
+            data = new byte[8192];
             int recv = clientSocket.ReceiveFrom(data, ref endPoint);
 
             // Call OnPackageReceived
