@@ -26,13 +26,18 @@ public class NetworkingServer : INetworking
 
     // UserData & Players
     public User myUserData { get; set; }
-    public Dictionary<string, PlayerObject> playerMap { get; set; }
-    public Dictionary<string, EnemyObject> enemiesMap { get; set; }
+
+
 
     public Queue<Packet> packetQueue { get; set; }
 
     // Dictionary to link a network ID (of a client) with an endpoint (server not included)
     Dictionary<string, EndPoint> clients;
+
+    // Relates network ID with its player object (the world state basically
+    //used as server to receive world data and send it to clients
+    Dictionary<string, PlayerObject> playerMap;
+    Dictionary<string, EnemyObject> enemiesMap;
 
     int totalNumPlayers = 0;
 
@@ -68,7 +73,7 @@ public class NetworkingServer : INetworking
         endPoint = new IPEndPoint(IPAddress.Any, channel2Port);
 
         Debug.Log("SERVER PLAYER IS SPAWNING");
-        SpawnPlayer(myUserData);
+        NetworkingManager.Instance.Spawn(myUserData.networkID);
 
         serverThread = new Thread(ServerListener);
         serverThread.IsBackground = true;
@@ -121,21 +126,11 @@ public class NetworkingServer : INetworking
             {
                 packetQueue.Enqueue(clientPacket);
             }
-
-            //lock (playerMapLock)
-            //{
-            //    playerMap[clientPacket.networkID] = clientPacket.playerObject;
-            //    ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
-
-            //    byte[] dataToBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
-
-            //    BroadcastPacket(dataToBroadcast, true);
-            //}
         }
         else if (packet.type == PacketType.PING)
         {
-            elapsedPingTime = elapsedPingTime % 1f;
-            Debug.Log("Client has pinged");
+            //elapsedPingTime = elapsedPingTime % 1f;
+            //Debug.Log("Client has pinged");
         }
     }
 
@@ -144,10 +139,12 @@ public class NetworkingServer : INetworking
         // Limit to 10 packets per second to mitigate lag
         elapsedUpdateTime += Time.deltaTime;
 
-        UpdateEnemiesState(GameObject.FindGameObjectsWithTag("Enemy"));
 
         if (elapsedUpdateTime >= NetworkingManager.Instance.updateTime)
         {
+            UpdatePlayersState(NetworkingManager.Instance.playerGOMap);
+            UpdateEnemiesState(GameObject.FindGameObjectsWithTag("Enemy"));
+
             ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
 
             byte[] dataBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
@@ -164,22 +161,29 @@ public class NetworkingServer : INetworking
         //}
     }
 
-    public void UpdatePlayerState()
+    public void UpdatePlayersState(Dictionary<string, GameObject> players)
     {
-        if (NetworkingManager.Instance.myPlayerGO)
+        foreach (var player in players)
         {
-            if (NetworkingManager.Instance.myPlayerGO.transform.position.x != playerMap[myUserData.networkID].position.x || NetworkingManager.Instance.myPlayerGO.transform.rotation != playerMap[myUserData.networkID].rotation)
+            string id = player.Value.GetComponent<NetworkObject>().networkID;
+
+            if (playerMap.ContainsKey(id))
             {
-                playerMap[myUserData.networkID].action = PlayerObject.Action.UPDATE;
-                playerMap[myUserData.networkID].position = NetworkingManager.Instance.myPlayerGO.transform.position;
-                playerMap[myUserData.networkID].rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
-                playerMap[myUserData.networkID].isRunning = NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed;
+                playerMap[id].action = PlayerObject.Action.UPDATE;
+                playerMap[id].position = player.Value.transform.position;
+                playerMap[id].rotation = player.Value.transform.rotation;
+                playerMap[id].isRunning = player.Value.GetComponent<PlayerController>().isMovementPressed;
+            }
+            else
+            {
+                PlayerObject playerObject = new PlayerObject(
+                    PlayerObject.Action.CREATE,
+                    player.Value.transform.position,
+                    player.Value.transform.rotation,
+                    player.Value.GetComponent<PlayerController>().isMovementPressed
+                    );
 
-                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
-
-                byte[] dataToBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
-
-                BroadcastPacket(dataToBroadcast, false);
+                playerMap.Add(id, playerObject);
             }
         }
     }
@@ -227,13 +231,13 @@ public class NetworkingServer : INetworking
         }
     }
 
-    public void SpawnPlayer(User userData)
-    {
-        Vector3 spawnPos = new Vector3(NetworkingManager.Instance.initialSpawnPosition.x + totalNumPlayers * 3, NetworkingManager.Instance.initialSpawnPosition.y, NetworkingManager.Instance.initialSpawnPosition.z);
-        ++totalNumPlayers;
-        PlayerObject newPlayer = new PlayerObject(PlayerObject.Action.CREATE, spawnPos, new Quaternion(0, 0, 0, 0), false);
-        playerMap.Add(userData.networkID, newPlayer);
-    }
+    //public void SpawnPlayer(User userData)
+    //{
+    //    //Vector3 spawnPos = new Vector3(NetworkingManager.Instance.initialSpawnPosition.x + totalNumPlayers * 3, NetworkingManager.Instance.initialSpawnPosition.y, NetworkingManager.Instance.initialSpawnPosition.z);
+    //    //++totalNumPlayers;
+    //    //PlayerObject newPlayer = new PlayerObject(PlayerObject.Action.CREATE, spawnPos, new Quaternion(0, 0, 0, 0), false);
+    //    //playerMap.Add(userData.networkID, newPlayer);
+    //}
 
     public void NotifySpawn(string networkID)
     {

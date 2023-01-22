@@ -28,13 +28,13 @@ public class NetworkingClient : INetworking
 
     // User & Players
     public User myUserData { get; set; }
-    public Dictionary<string, PlayerObject> playerMap { get; set; }
+
 
     public Queue<Packet> packetQueue { get; set; }
 
     // Queue of received packets
     //Queue<ServerPacket> packetQueue = new Queue<ServerPacket>();
-
+    PlayerObject myPlayerObject;
     float elapsedPingTime = 0f;
     float pingTime = 30f;
 
@@ -42,7 +42,7 @@ public class NetworkingClient : INetworking
     {
         packetQueue = new Queue<Packet>();
 
-        playerMap = new Dictionary<string, PlayerObject>();
+        myPlayerObject = new PlayerObject();
 
         InitializeSocket();
     }
@@ -104,27 +104,28 @@ public class NetworkingClient : INetworking
         }
     }
 
-    public void UpdatePlayerState()
+    public void UpdateMyPlayerState()
     {
         if (NetworkingManager.Instance.myPlayerGO)
         {
-            if (NetworkingManager.Instance.myPlayerGO.transform.position.x != playerMap[myUserData.networkID].position.x || NetworkingManager.Instance.myPlayerGO.transform.rotation != playerMap[myUserData.networkID].rotation)
+            if (NetworkingManager.Instance.myPlayerGO.transform.position.x != myPlayerObject.position.x || NetworkingManager.Instance.myPlayerGO.transform.rotation != myPlayerObject.rotation)
             {
-                playerMap[myUserData.networkID].action = PlayerObject.Action.UPDATE;
-                playerMap[myUserData.networkID].position = NetworkingManager.Instance.myPlayerGO.transform.position;
-                playerMap[myUserData.networkID].rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
-                playerMap[myUserData.networkID].isRunning = NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed;
+                myPlayerObject.action = PlayerObject.Action.UPDATE;
+                myPlayerObject.position = NetworkingManager.Instance.myPlayerGO.transform.position;
+                myPlayerObject.rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
+                myPlayerObject.isRunning = NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed;
 
-                //ClientPacket clientPacket = new ClientPacket(PacketType.WORLD_STATE, myUserData.networkID, playerMap[myUserData.networkID]);
-                //byte[] dataToBroadcast = SerializationUtility.SerializeValue(clientPacket, DataFormat.JSON);
+                ClientPacket clientPacket = new ClientPacket(PacketType.WORLD_STATE, myUserData.networkID, myPlayerObject);
+                byte[] dataToBroadcast = SerializationUtility.SerializeValue(clientPacket, DataFormat.JSON);
 
-                //SendPacketToServer(dataToBroadcast);
+                SendPacketToServer(dataToBroadcast);
             }
         }
     }
 
     public void OnUpdate()
     {
+        UpdateMyPlayerState();
         //elapsedPingTime += Time.deltaTime;
         //if (elapsedPingTime >= pingTime)
         //{

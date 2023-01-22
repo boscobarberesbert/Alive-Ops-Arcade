@@ -7,8 +7,6 @@ public interface INetworking
 
     void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress);
 
-    void UpdatePlayerState();
-
     void OnUpdate();
 
     void SendPacket(byte[] outputPacket, EndPoint toAddress);
@@ -33,6 +31,4 @@ public interface INetworking
     // Queue of received packets
     Queue<Packet> packetQueue { get; set; }
 
-    // Relates network ID with its player object (the world state basically)
-    Dictionary<string, PlayerObject> playerMap { get; set; }
 }

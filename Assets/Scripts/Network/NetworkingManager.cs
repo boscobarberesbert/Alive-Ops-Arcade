@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -13,10 +14,7 @@ public class NetworkingManager : MonoBehaviour
     Transform initialSpawnPoint;
     [NonSerialized] public Vector3 initialSpawnPosition;
     // Map to relate networkID to its gameobject
-    Dictionary<string, GameObject> playerGOMap = new Dictionary<string, GameObject>();
-
-    delegate void OnClientAdded(string networkID, PlayerObject player);
-    event OnClientAdded onClientAdded;
+    public Dictionary<string, GameObject> playerGOMap = new Dictionary<string, GameObject>();
 
     // Condition to know if the LoadScene() method has been called
     bool isSceneLoading = false;
@@ -26,7 +24,6 @@ public class NetworkingManager : MonoBehaviour
 
     private void Awake()
     {
-        onClientAdded += Spawn;
         initialSpawnPoint = GameObject.FindGameObjectWithTag("Spawn Point").transform;
         initialSpawnPosition = initialSpawnPoint.position;
         if (Instance != null)
@@ -73,18 +70,22 @@ public class NetworkingManager : MonoBehaviour
         {
             lock (networking.playerMapLock)
             {
-                foreach (var packet in networking.packetQueue)
+
+                foreach (var packet in networking.packetQueue.ToList())
                 {
                     switch (packet.type)
                     {
                         case PacketType.HELLO:
                             {
-                                //SpawnPlayer(helloPacket.clientData);
-
+                                Spawn((packet as HelloPacket).clientData.networkID);
                                 break;
                             }
                         case PacketType.WELCOME:
                             {
+                                foreach (var player in (packet as ServerPacket).playerMap)
+                                {
+                                    HandlePlayerObject(player.Key, player.Value);
+                                }
                                 break;
                             }
                         case PacketType.GAME_START:
@@ -93,6 +94,18 @@ public class NetworkingManager : MonoBehaviour
                             }
                         case PacketType.WORLD_STATE:
                             {
+                                if (networking is NetworkingServer)
+                                {
+                                    HandlePlayerObject((packet as ClientPacket).networkID, (packet as ClientPacket).playerObject);
+                                }
+                                else
+                                {
+                                    foreach (var player in (packet as ServerPacket).playerMap)
+                                    {
+                                        HandlePlayerObject(player.Key, player.Value);
+                                    }
+                                }
+
                                 break;
                             }
                         case PacketType.PING:
@@ -104,36 +117,32 @@ public class NetworkingManager : MonoBehaviour
                                 break;
                             }
                     }
-                        HandlePlayerObject(player);
+                    networking.packetQueue.Dequeue();
                 }
-                networking.UpdatePlayerState();
             }
 
             networking.OnUpdate();
         }
     }
 
-    public void HandlePlayerObject(KeyValuePair<string, PlayerObject> player)
+    public void HandlePlayerObject(string key, PlayerObject player)
     {
         // TODO
-        switch (player.Value.action)
+        switch (player.action)
         {
             case PlayerObject.Action.CREATE:
                 {
-                    if (onClientAdded != null)
-                    {
-                        onClientAdded(player.Key, player.Value);
-                    }
+                    Spawn(key);
                     break;
                 }
             case PlayerObject.Action.UPDATE:
                 {
-                    if (playerGOMap.ContainsKey(player.Key) && player.Key != networking.myUserData.networkID)
+                    if (playerGOMap.ContainsKey(key) && key != networking.myUserData.networkID)
                     {
                         // TODO: Perform interpolation
-                        playerGOMap[player.Key].transform.position = player.Value.position;
-                        playerGOMap[player.Key].transform.rotation = player.Value.rotation;
-                        playerGOMap[player.Key].GetComponent<PlayerController>().SetAnimatorRunning(player.Value.isRunning);
+                        playerGOMap[key].transform.position = player.position;
+                        playerGOMap[key].transform.rotation = player.rotation;
+                        playerGOMap[key].GetComponent<PlayerController>().SetAnimatorRunning(player.isRunning);
                     }
                     break;
                 }
@@ -150,10 +159,12 @@ public class NetworkingManager : MonoBehaviour
         }
     }
 
-    public void Spawn(string networkID, PlayerObject player)
+    public void Spawn(string networkID)
     {
+        Vector3 spawnPos = new Vector3(NetworkingManager.Instance.initialSpawnPosition.x + playerGOMap.Count * 3, NetworkingManager.Instance.initialSpawnPosition.y, NetworkingManager.Instance.initialSpawnPosition.z);
+
         // Instantiate the game object at the required position
-        GameObject playerGO = Instantiate(playerPrefab, player.position, player.rotation);
+        GameObject playerGO = Instantiate(playerPrefab, spawnPos, new Quaternion(0,0,0,0));
 
         // Set playerGO variables
         playerGO.GetComponent<NetworkObject>().networkID = networkID;
@@ -185,50 +196,46 @@ public class NetworkingManager : MonoBehaviour
         if (networking is NetworkingServer)
             (networking as NetworkingServer).NotifySpawn(networkID);
 
-        networking.playerMap[networkID].action = PlayerObject.Action.NONE;
     }
 
     public void LoadScene(string sceneName)
     {
-        // Set all player objects to be created with its respective positions
-        int i = 0;
-        foreach (var entry in networking.playerMap)
-        {
-            Vector3 spawnPosition = new Vector3(NetworkingManager.Instance.initialSpawnPoint.position.x + i * 3, 1, 0);
-            networking.playerMap[entry.Key].action = PlayerObject.Action.CREATE;
-            ++i;
-        }
+        //// Set all player objects to be created with its respective positions
+        //int i = 0;
+        //foreach (var entry in networking.playerMap)
+        //{
+        //    Vector3 spawnPosition = new Vector3(NetworkingManager.Instance.initialSpawnPoint.position.x + i * 3, 1, 0);
+        //    networking.playerMap[entry.Key].action = PlayerObject.Action.CREATE;
+        //    ++i;
+        //}
 
-        // Broadcast the corresponding message to the clients
-        if (networking is NetworkingServer)
-            (networking as NetworkingServer).NotifySceneChange(sceneName);
+        //// Broadcast the corresponding message to the clients
+        //if (networking is NetworkingServer)
+        //    (networking as NetworkingServer).NotifySceneChange(sceneName);
 
-        networking.triggerLoadScene = true;
+        //networking.triggerLoadScene = true;
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        initialSpawnPoint = GameObject.FindGameObjectWithTag("Spawn Point").transform;
-        initialSpawnPosition = initialSpawnPoint.position;
+        //initialSpawnPoint = GameObject.FindGameObjectWithTag("Spawn Point").transform;
+        //initialSpawnPosition = initialSpawnPoint.position;
 
-        // We need to spawn the players ASAP as some scripts require that they exist at first
-        lock (networking.playerMapLock)
-        {
-            foreach (var player in networking.playerMap)
-            {
-                player.Value.position = initialSpawnPosition;
+        //// We need to spawn the players ASAP as some scripts require that they exist at first
+        //lock (networking.playerMapLock)
+        //{
+        //    foreach (var player in networking.playerMap)
+        //    {
+        //        player.Value.position = initialSpawnPosition;
 
-                //if (player.Value.action == PlayerObject.Action.CREATE)
-                //{
-                if (onClientAdded != null)
-                {
-                    onClientAdded(player.Key, player.Value);
-                }
-                //}
-            }
-        }
+        //        //if (player.Value.action == PlayerObject.Action.CREATE)
+        //        //{
+        //        Spawn(player.Key);
+        //        //}
+        //    }
+        //}
 
-        isSceneLoading = false;
+        //isSceneLoading = false;
     }
 
     void OnDisable()
