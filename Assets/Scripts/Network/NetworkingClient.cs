@@ -92,15 +92,9 @@ public class NetworkingClient : INetworking
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
         ServerPacket serverPacket = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
-
-        packetQueue.Enqueue(serverPacket);
-
-        if (serverPacket.type == PacketType.GAME_START)
+        lock (playerMapLock)
         {
-            lock (loadSceneLock)
-            {
-                triggerLoadScene = true;
-            }
+            packetQueue.Enqueue(serverPacket);
         }
     }
 

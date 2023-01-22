@@ -4,6 +4,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
+using static UnityEngine.EventSystems.EventTrigger;
+using UnityEngine.Networking.Types;
 
 public class NetworkingServer : INetworking
 {
@@ -277,16 +279,19 @@ public class NetworkingServer : INetworking
 
     public void NotifySceneChange(string sceneName)
     {
-        lock (playerMapLock)
+        foreach (var player in playerMap)
         {
-            ServerPacket serverPacket = new ServerPacket(PacketType.GAME_START, playerMap, enemiesMap);
-
-            byte[] data = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
-
-            BroadcastPacket(data, false);
-
-            triggerLoadScene = true;
+            player.Value.action = PlayerObject.Action.CREATE;
         }
+        packetQueue.Clear();
+        ServerPacket serverPacket = new ServerPacket(PacketType.GAME_START, playerMap, enemiesMap);
+
+        byte[] data = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
+
+        BroadcastPacket(data, false);
+
+        triggerLoadScene = true;
+
     }
 
     public void OnConnectionReset(EndPoint fromAddress)

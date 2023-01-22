@@ -90,6 +90,10 @@ public class NetworkingManager : MonoBehaviour
                             }
                         case PacketType.GAME_START:
                             {
+                                lock (networking.loadSceneLock)
+                                {
+                                    networking.triggerLoadScene = true;
+                                }
                                 break;
                             }
                         case PacketType.WORLD_STATE:
@@ -164,7 +168,7 @@ public class NetworkingManager : MonoBehaviour
         Vector3 spawnPos = new Vector3(NetworkingManager.Instance.initialSpawnPosition.x + playerGOMap.Count * 3, NetworkingManager.Instance.initialSpawnPosition.y, NetworkingManager.Instance.initialSpawnPosition.z);
 
         // Instantiate the game object at the required position
-        GameObject playerGO = Instantiate(playerPrefab, spawnPos, new Quaternion(0,0,0,0));
+        GameObject playerGO = Instantiate(playerPrefab, spawnPos, new Quaternion(0, 0, 0, 0));
 
         // Set playerGO variables
         playerGO.GetComponent<NetworkObject>().networkID = networkID;
@@ -200,42 +204,21 @@ public class NetworkingManager : MonoBehaviour
 
     public void LoadScene(string sceneName)
     {
-        //// Set all player objects to be created with its respective positions
-        //int i = 0;
-        //foreach (var entry in networking.playerMap)
-        //{
-        //    Vector3 spawnPosition = new Vector3(NetworkingManager.Instance.initialSpawnPoint.position.x + i * 3, 1, 0);
-        //    networking.playerMap[entry.Key].action = PlayerObject.Action.CREATE;
-        //    ++i;
-        //}
+        // Broadcast the corresponding message to the clients
+        if (networking is NetworkingServer)
+        {
+            (networking as NetworkingServer).NotifySceneChange(sceneName);
+            networking.triggerLoadScene = true;
 
-        //// Broadcast the corresponding message to the clients
-        //if (networking is NetworkingServer)
-        //    (networking as NetworkingServer).NotifySceneChange(sceneName);
-
-        //networking.triggerLoadScene = true;
+        }
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        //initialSpawnPoint = GameObject.FindGameObjectWithTag("Spawn Point").transform;
-        //initialSpawnPosition = initialSpawnPoint.position;
+        initialSpawnPoint = GameObject.FindGameObjectWithTag("Spawn Point").transform;
+        initialSpawnPosition = initialSpawnPoint.position;
 
-        //// We need to spawn the players ASAP as some scripts require that they exist at first
-        //lock (networking.playerMapLock)
-        //{
-        //    foreach (var player in networking.playerMap)
-        //    {
-        //        player.Value.position = initialSpawnPosition;
-
-        //        //if (player.Value.action == PlayerObject.Action.CREATE)
-        //        //{
-        //        Spawn(player.Key);
-        //        //}
-        //    }
-        //}
-
-        //isSceneLoading = false;
+        isSceneLoading = false;
     }
 
     void OnDisable()
