@@ -32,8 +32,11 @@ public class MouseAim : MonoBehaviour
 
     void OnShoot(InputAction.CallbackContext context)
     {
+        NetworkingManager.Instance.OnShoot();
         if (context.ReadValueAsButton()) // If Shoot button has been pressed
+        {
             Shoot();
+        }
     }
 
     void Update()

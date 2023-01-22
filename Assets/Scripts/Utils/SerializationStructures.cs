@@ -68,7 +68,7 @@ public class PlayerObject
 }
 
 //data structure that stores all the player game object information passed through the network
-public class EnemyObject
+public class GenericObject
 {
     public enum Action
     {
@@ -84,7 +84,7 @@ public class EnemyObject
     public Vector3 position;
     public Quaternion rotation;
 
-    public EnemyObject()
+    public GenericObject()
     {
         networkID = "";
         action = Action.NONE;
@@ -92,7 +92,7 @@ public class EnemyObject
         rotation = new Quaternion(0f, 0f, 0f, 0f);
     }
 
-    public EnemyObject(string networkID, Action action, Vector3 position, Quaternion rotation)
+    public GenericObject(string networkID, Action action, Vector3 position, Quaternion rotation)
     {
         this.networkID = networkID;
         this.action = action;
@@ -100,6 +100,7 @@ public class EnemyObject
         this.rotation = rotation;
     }
 }
+
 
 //Definition of a packet sent through the internet
 public class Packet
@@ -122,18 +123,22 @@ public class ServerPacket : Packet
     // List of players (including server)
     public Dictionary<string, PlayerObject> playerMap;
 
-    // TODO: List of enemies
-    public Dictionary<string, EnemyObject> enemiesMap;
+    //  List of enemies and bullets
+    public Dictionary<string, GenericObject> enemiesMap;
+    public Dictionary<string, GenericObject> bulletsMap;
     public ServerPacket()
     {
         playerMap = new Dictionary<string, PlayerObject>();
+        enemiesMap = new Dictionary<string, GenericObject>();
+        bulletsMap = new Dictionary<string, GenericObject>();
     }
 
-    public ServerPacket(PacketType type, Dictionary<string, PlayerObject> playerMap,Dictionary<string,EnemyObject> enemiesMap)
+    public ServerPacket(PacketType type, Dictionary<string, PlayerObject> playerMap,Dictionary<string,GenericObject> enemiesMap, Dictionary<string, GenericObject> bulletsMap)
     {
         this.type = type;
         this.playerMap = playerMap;
         this.enemiesMap = enemiesMap;
+        this.bulletsMap = bulletsMap;
     }
 }
 //type of packet sent by the client
