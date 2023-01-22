@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class EnemySpawnManager : MonoBehaviour
 {
+    public Vector3[] spawnPoints;
     [SerializeField] GameObject enemyPrefab;
     [SerializeField] int numberOfEnemiesToSpawn;
 

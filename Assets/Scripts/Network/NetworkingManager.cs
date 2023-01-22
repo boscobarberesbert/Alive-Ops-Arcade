@@ -68,22 +68,48 @@ public class NetworkingManager : MonoBehaviour
                 networking.triggerLoadScene = false;
             }
         }
+
         if (!isSceneLoading)
         {
-            networking.OnUpdate();
-
             lock (networking.playerMapLock)
             {
-                foreach (var player in networking.playerMap)
+                foreach (var packet in networking.packetQueue)
                 {
-                    HandlePlayerObject(player);
+                    switch (packet.type)
+                    {
+                        case PacketType.HELLO:
+                            {
+                                //SpawnPlayer(helloPacket.clientData);
+
+                                break;
+                            }
+                        case PacketType.WELCOME:
+                            {
+                                break;
+                            }
+                        case PacketType.GAME_START:
+                            {
+                                break;
+                            }
+                        case PacketType.WORLD_STATE:
+                            {
+                                break;
+                            }
+                        case PacketType.PING:
+                            {
+                                break;
+                            }
+                        case PacketType.DEFAULT:
+                            {
+                                break;
+                            }
+                    }
+                        HandlePlayerObject(player);
                 }
                 networking.UpdatePlayerState();
-                if(networking is NetworkingServer)
-                {
-                    (networking as NetworkingServer).UpdateEnemiesState(GameObject.FindGameObjectsWithTag("Enemy"));
-                }
             }
+
+            networking.OnUpdate();
         }
     }
 

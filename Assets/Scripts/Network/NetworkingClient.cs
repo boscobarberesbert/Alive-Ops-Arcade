@@ -30,8 +30,7 @@ public class NetworkingClient : INetworking
     public User myUserData { get; set; }
     public Dictionary<string, PlayerObject> playerMap { get; set; }
 
-    // Data to send to the server
-    PlayerObject myPlayerData;
+    public Queue<Packet> packetQueue { get; set; }
 
     // Queue of received packets
     //Queue<ServerPacket> packetQueue = new Queue<ServerPacket>();
@@ -41,12 +40,9 @@ public class NetworkingClient : INetworking
 
     public void Start()
     {
-        //Defining myPlayerData
-        myPlayerData = new PlayerObject();
+        packetQueue = new Queue<Packet>();
 
-        //Defining playerMap
         playerMap = new Dictionary<string, PlayerObject>();
-
 
         InitializeSocket();
     }
@@ -97,28 +93,14 @@ public class NetworkingClient : INetworking
     {
         ServerPacket serverPacket = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
 
-        if (serverPacket.type == PacketType.WELCOME || serverPacket.type == PacketType.WORLD_STATE)
-        {
-            lock (playerMapLock)
-            {
-                playerMap = serverPacket.playerMap;
-            }
-        }
-        else if (serverPacket.type == PacketType.GAME_START)
-        {
-            lock (playerMapLock)
-            {
-                playerMap = serverPacket.playerMap;
-            }
+        packetQueue.Enqueue(serverPacket);
 
+        if (serverPacket.type == PacketType.GAME_START)
+        {
             lock (loadSceneLock)
             {
                 triggerLoadScene = true;
             }
-        }
-        else if (serverPacket.type == PacketType.PING)
-        {
-            // TODO: What to do when we are pinged
         }
     }
 
@@ -133,10 +115,10 @@ public class NetworkingClient : INetworking
                 playerMap[myUserData.networkID].rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
                 playerMap[myUserData.networkID].isRunning = NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed;
 
-                ClientPacket clientPacket = new ClientPacket(PacketType.WORLD_STATE, myUserData.networkID, playerMap[myUserData.networkID]);
-                byte[] dataToBroadcast = SerializationUtility.SerializeValue(clientPacket, DataFormat.JSON);
+                //ClientPacket clientPacket = new ClientPacket(PacketType.WORLD_STATE, myUserData.networkID, playerMap[myUserData.networkID]);
+                //byte[] dataToBroadcast = SerializationUtility.SerializeValue(clientPacket, DataFormat.JSON);
 
-                SendPacketToServer(dataToBroadcast);
+                //SendPacketToServer(dataToBroadcast);
             }
         }
     }

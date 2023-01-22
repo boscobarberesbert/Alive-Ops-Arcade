@@ -29,11 +29,10 @@ public class NetworkingServer : INetworking
     public Dictionary<string, PlayerObject> playerMap { get; set; }
     public Dictionary<string, EnemyObject> enemiesMap { get; set; }
 
+    public Queue<Packet> packetQueue { get; set; }
+
     // Dictionary to link a network ID (of a client) with an endpoint (server not included)
     Dictionary<string, EndPoint> clients;
-
-    // Queue of received packets
-    //Queue<ClientPacket> packetQueue = new Queue<ClientPacket>();
 
     int totalNumPlayers = 0;
 
@@ -44,6 +43,8 @@ public class NetworkingServer : INetworking
     public void Start()
     {
         clients = new Dictionary<string, EndPoint>();
+
+        packetQueue = new Queue<Packet>();
 
         playerMap = new Dictionary<string, PlayerObject>();
         enemiesMap = new Dictionary<string, EnemyObject>();
@@ -107,21 +108,29 @@ public class NetworkingServer : INetworking
             if (!clients.ContainsKey(helloPacket.clientData.networkID))
                 clients.Add(helloPacket.clientData.networkID, fromAddress);
 
-            SpawnPlayer(helloPacket.clientData);
+            lock (playerMapLock)
+            {
+                packetQueue.Enqueue(helloPacket);
+            }
         }
         else if (packet.type == PacketType.WORLD_STATE)
         {
+            ClientPacket clientPacket = SerializationUtility.DeserializeValue<ClientPacket>(inputPacket, DataFormat.JSON);
+
             lock (playerMapLock)
             {
-                ClientPacket clientPacket = SerializationUtility.DeserializeValue<ClientPacket>(inputPacket, DataFormat.JSON);
-                playerMap[clientPacket.networkID] = clientPacket.playerObject;
-                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
-
-                byte[] dataToBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
-
-                BroadcastPacket(dataToBroadcast, true);
+                packetQueue.Enqueue(clientPacket);
             }
 
+            //lock (playerMapLock)
+            //{
+            //    playerMap[clientPacket.networkID] = clientPacket.playerObject;
+            //    ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
+
+            //    byte[] dataToBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
+
+            //    BroadcastPacket(dataToBroadcast, true);
+            //}
         }
         else if (packet.type == PacketType.PING)
         {
@@ -133,18 +142,20 @@ public class NetworkingServer : INetworking
     public void OnUpdate()
     {
         // Limit to 10 packets per second to mitigate lag
-        //elapsedUpdateTime += Time.deltaTime;
+        elapsedUpdateTime += Time.deltaTime;
 
-        //if (elapsedUpdateTime >= NetworkingManager.Instance.updateTime)
-        //{
-        //    ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
+        UpdateEnemiesState(GameObject.FindGameObjectsWithTag("Enemy"));
 
-        //    byte[] dataBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
+        if (elapsedUpdateTime >= NetworkingManager.Instance.updateTime)
+        {
+            ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
 
-        //    BroadcastPacket(dataBroadcast, false);
+            byte[] dataBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
 
-        //    elapsedUpdateTime = elapsedUpdateTime % 1f;
-        //}
+            BroadcastPacket(dataBroadcast, false);
+
+            elapsedUpdateTime = elapsedUpdateTime % 1f;
+        }
 
         //elapsedPingTime += Time.deltaTime;
         //if(elapsedPingTime > lastPinged)

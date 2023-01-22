@@ -30,6 +30,9 @@ public interface INetworking
     // Information about the user: networkID, username
     User myUserData { get; set; }
 
+    // Queue of received packets
+    Queue<Packet> packetQueue { get; set; }
+
     // Relates network ID with its player object (the world state basically)
     Dictionary<string, PlayerObject> playerMap { get; set; }
 }
