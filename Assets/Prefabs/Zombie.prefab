@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 9018501966492335942}
   - component: {fileID: 1765067796767887495}
   - component: {fileID: 6143942676194488206}
+  - component: {fileID: 8746069594988475871}
   m_Layer: 0
   m_Name: Zombie
   m_TagString: Enemy
@@ -84,6 +85,19 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
+--- !u!114 &8746069594988475871
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9018501966492335936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a57097923ca96f4db5f5a997a25adf7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  spawnPos: {x: 0, y: 0, z: 0}
 --- !u!1001 &7235566486057719965
 PrefabInstance:
   m_ObjectHideFlags: 0

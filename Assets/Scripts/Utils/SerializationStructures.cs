@@ -126,10 +126,11 @@ public class ServerPacket : Packet
         playerMap = new Dictionary<string, PlayerObject>();
     }
 
-    public ServerPacket(PacketType type, Dictionary<string, PlayerObject> playerMap)
+    public ServerPacket(PacketType type, Dictionary<string, PlayerObject> playerMap,Dictionary<string,EnemyObject> enemiesMap)
     {
         this.type = type;
         this.playerMap = playerMap;
+        this.enemiesMap = enemiesMap;
     }
 }
 //type of packet sent by the client

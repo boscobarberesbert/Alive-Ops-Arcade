@@ -123,6 +123,8 @@ public class NetworkingManager : MonoBehaviour
         }
     }
 
+
+
     public void Spawn(string networkID, PlayerObject player)
     {
         //Instantiate the game object at the required position

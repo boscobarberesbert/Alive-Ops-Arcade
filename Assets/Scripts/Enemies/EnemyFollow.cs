@@ -5,22 +5,22 @@ using UnityEngine.AI;
 
 public class EnemyFollow : MonoBehaviour
 {
-    public NavMeshAgent enemy;
+    [HideInInspector]public NavMeshAgent enemyAgent;
     GameObject closestPlayer;
     GameObject[] players;
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        enemyAgent = GetComponent<NavMeshAgent>();
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         // Fill the array with the active players (GameObjects with tag "Player").
         players = GameObject.FindGameObjectsWithTag("Player");
-        if(players.Length == 0)
+        if (players.Length == 0)
         {
             return;
         }
@@ -41,6 +41,6 @@ public class EnemyFollow : MonoBehaviour
             }
         }
 
-        enemy.SetDestination(closestPlayer.transform.position);
+        enemyAgent.SetDestination(closestPlayer.transform.position);
     }
 }

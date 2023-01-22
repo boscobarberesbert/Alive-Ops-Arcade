@@ -276,6 +276,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rotationSpeed: 20
+  gunPoint: {fileID: 1445034780}
   isAiming: 0
   mouseColliderLayerMask:
     serializedVersion: 2
