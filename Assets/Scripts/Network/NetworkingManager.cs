@@ -1,4 +1,3 @@
-using AliveOpsArcade.OdinSerializer.Utilities;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,7 +9,7 @@ public class NetworkingManager : MonoBehaviour
     public INetworking networking;
 
     // Reference to our player gameobject
-    [NonSerialized]public GameObject myPlayerGO;
+    [NonSerialized] public GameObject myPlayerGO;
     Transform initialSpawnPoint;
     [NonSerialized] public Vector3 initialSpawnPosition;
     // Map to relate networkID to its gameobject
@@ -56,7 +55,6 @@ public class NetworkingManager : MonoBehaviour
 
     void Update()
     {
-
         lock (networking.loadSceneLock)
         {
             if (networking.triggerLoadScene)
@@ -73,6 +71,7 @@ public class NetworkingManager : MonoBehaviour
         if (!isSceneLoading)
         {
             networking.OnUpdate();
+
             lock (networking.playerMapLock)
             {
                 foreach (var player in networking.playerMap)
@@ -82,8 +81,6 @@ public class NetworkingManager : MonoBehaviour
                 networking.UpdatePlayerState();
             }
         }
-
-
     }
 
     public void HandlePlayerObject(KeyValuePair<string, PlayerObject> player)
@@ -123,40 +120,40 @@ public class NetworkingManager : MonoBehaviour
         }
     }
 
-
-
     public void Spawn(string networkID, PlayerObject player)
     {
-        //Instantiate the game object at the required position
+        // Instantiate the game object at the required position
         GameObject playerGO = Instantiate(playerPrefab, player.position, player.rotation);
-        //Set playerGO variables
-        playerGO.GetComponent<PlayerID>().networkID = networkID;
+
+        // Set playerGO variables
+        playerGO.GetComponent<NetworkObject>().networkID = networkID;
         playerGO.name = networkID;
-        //if the object created is mine, add it to myPlayerGO variable
+
+        // If the object created is mine, add it to myPlayerGO variable
         if (networkID == networking.myUserData.networkID)
         {
             myPlayerGO = playerGO;
         }
         else
         {
-            //since the player is not ours we don't want to control it with our inputs
+            // Since the player is not ours we don't want to control it with our inputs
             playerGO.GetComponent<PlayerController>().enabled = false;
             playerGO.GetComponent<CharacterController>().enabled = false;
             playerGO.GetComponent<MouseAim>().enabled = false;
+
             // TODO: Instance Players without Player Tag
             playerGO.tag = "Untagged";
         }
 
-        //Now we add it to the list of player GO if it is not already there (change scene case)
+        // Now we add it to the list of player GO if it is not already there (change scene case)
         if (!playerGOMap.ContainsKey(networkID))
         {
             playerGOMap.Add(networkID, playerGO);
-
         }
-        ////Finally we broadcast the corresponding packet to the clients
+
+        // Finally we broadcast the corresponding packet to the clients
         if (networking is NetworkingServer)
             (networking as NetworkingServer).NotifySpawn(networkID);
-
 
         networking.playerMap[networkID].action = PlayerObject.Action.NONE;
     }
@@ -183,14 +180,14 @@ public class NetworkingManager : MonoBehaviour
     {
         initialSpawnPoint = GameObject.FindGameObjectWithTag("Spawn Point").transform;
         initialSpawnPosition = initialSpawnPoint.position;
+
         // We need to spawn the players ASAP as some scripts require that they exist at first
         lock (networking.playerMapLock)
         {
-
-
             foreach (var player in networking.playerMap)
             {
                 player.Value.position = initialSpawnPosition;
+
                 //if (player.Value.action == PlayerObject.Action.CREATE)
                 //{
                 if (onClientAdded != null)

@@ -203,8 +203,8 @@ GameObject:
   - component: {fileID: 814990484125564517}
   - component: {fileID: 814990484125564516}
   - component: {fileID: 1487135051}
-  - component: {fileID: 5392011712828243627}
   - component: {fileID: 1582140145431828766}
+  - component: {fileID: 1337439469843880923}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -284,19 +284,6 @@ MonoBehaviour:
   bullet: {fileID: 3664657836030253579, guid: 2c30adb40cf64fb4fb803e3368af1ced, type: 3}
   shootForce: 65
   muzzlePoint: {fileID: 1445034780}
---- !u!114 &5392011712828243627
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 814990484125564527}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7f68e547746952b458442a5ceb3495fc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  networkID: 
 --- !u!95 &1582140145431828766
 Animator:
   serializedVersion: 4
@@ -317,6 +304,19 @@ Animator:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorControllerStateOnDisable: 0
+--- !u!114 &1337439469843880923
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 814990484125564527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f68e547746952b458442a5ceb3495fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  networkID: 
 --- !u!1 &1007157680544715609
 GameObject:
   m_ObjectHideFlags: 0

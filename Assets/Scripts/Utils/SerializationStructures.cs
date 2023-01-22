@@ -58,7 +58,7 @@ public class PlayerObject
         isRunning = false;
     }
 
-    public PlayerObject(Action action, Vector3 position, Quaternion rotation,bool isRunning)
+    public PlayerObject(Action action, Vector3 position, Quaternion rotation, bool isRunning)
     {
         this.action = action;
         this.position = position;
@@ -79,19 +79,22 @@ public class EnemyObject
     }
 
     // World State
+    public string networkID;
     public Action action;
     public Vector3 position;
     public Quaternion rotation;
 
     public EnemyObject()
     {
+        networkID = "";
         action = Action.NONE;
         position = new Vector3(0f, 0f, 0f);
         rotation = new Quaternion(0f, 0f, 0f, 0f);
     }
 
-    public EnemyObject(Action action, Vector3 position, Quaternion rotation)
+    public EnemyObject(string networkID, Action action, Vector3 position, Quaternion rotation)
     {
+        this.networkID = networkID;
         this.action = action;
         this.position = position;
         this.rotation = rotation;

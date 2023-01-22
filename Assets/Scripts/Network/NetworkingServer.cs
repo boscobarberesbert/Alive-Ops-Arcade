@@ -4,12 +4,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class NetworkingServer : INetworking
 {
-
-
     // Thread and safety
     Thread serverThread;
     public object playerMapLock { get; set; } = new object();
@@ -54,7 +51,7 @@ public class NetworkingServer : INetworking
         InitializeSocket();
     }
 
-    //Initializes the server socket in UDP and starts the thread that is constantly listening for messages
+    // Initializes the server socket in UDP and starts the thread that is constantly listening for messages
     private void InitializeSocket()
     {
         Debug.Log("[SERVER] Server Initializing...");
@@ -77,7 +74,7 @@ public class NetworkingServer : INetworking
         serverThread.Start();
     }
 
-    //Servers starts listening and when a package is received it executes OnPackageReceived function
+    // Servers starts listening and when a package is received it executes OnPackageReceived function
     private void ServerListener()
     {
         Debug.Log("[SERVER] Server started listening");
@@ -95,7 +92,8 @@ public class NetworkingServer : INetworking
             OnPackageReceived(data, recv, endPoint);
         }
     }
-    //handles packages received
+
+    // Handles packages received
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
         Packet packet = SerializationUtility.DeserializeValue<Packet>(inputPacket, DataFormat.JSON);
@@ -117,7 +115,7 @@ public class NetworkingServer : INetworking
             {
                 ClientPacket clientPacket = SerializationUtility.DeserializeValue<ClientPacket>(inputPacket, DataFormat.JSON);
                 playerMap[clientPacket.networkID] = clientPacket.playerObject;
-                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap,enemiesMap);
+                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
 
                 byte[] dataToBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
 
@@ -131,51 +129,10 @@ public class NetworkingServer : INetworking
             Debug.Log("Client has pinged");
         }
     }
-    public void UpdateEnemiesState(GameObject[] enemies)
-    {
-        foreach ( GameObject enemy in enemies)
-        {
-            if (enemiesMap.ContainsKey(enemy.name))
-            {
-                enemiesMap[enemy.name].action = EnemyObject.Action.UPDATE;
-                enemiesMap[enemy.name].position = enemy.transform.position;
-                enemiesMap[enemy.name].rotation = enemy.transform.rotation;
-            }
-            else
-            {
-                EnemyObject enemyObject = new EnemyObject();
-                enemyObject.action = EnemyObject.Action.CREATE;
-                enemyObject.position = enemy.transform.position;
-                enemyObject.rotation = enemy.transform.rotation;
-                enemiesMap.Add(enemy.name, enemyObject);
-            }
-        }
-    }
-    public void UpdatePlayerState()
-    {
-        if (NetworkingManager.Instance.myPlayerGO)
-        {
-            if (NetworkingManager.Instance.myPlayerGO.transform.position.x != playerMap[myUserData.networkID].position.x || NetworkingManager.Instance.myPlayerGO.transform.rotation != playerMap[myUserData.networkID].rotation)
-            {
-
-                playerMap[myUserData.networkID].action = PlayerObject.Action.UPDATE;
-                playerMap[myUserData.networkID].position = NetworkingManager.Instance.myPlayerGO.transform.position;
-                playerMap[myUserData.networkID].rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
-                playerMap[myUserData.networkID].isRunning = NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed;
-
-                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
-
-                byte[] dataToBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
-
-                BroadcastPacket(dataToBroadcast, false);
-
-            }
-        }
-    }
 
     public void OnUpdate()
     {
-        //limit to 10 packets per second to mitigate lag
+        // Limit to 10 packets per second to mitigate lag
         elapsedUpdateTime += Time.deltaTime;
 
         if (elapsedUpdateTime >= NetworkingManager.Instance.updateTime)
@@ -188,11 +145,58 @@ public class NetworkingServer : INetworking
 
             elapsedUpdateTime = elapsedUpdateTime % 1f;
         }
+
         //elapsedPingTime += Time.deltaTime;
         //if(elapsedPingTime > lastPinged)
         //{
         //    Debug.Log("ClientDisconnected");
         //}
+    }
+
+    public void UpdatePlayerState()
+    {
+        if (NetworkingManager.Instance.myPlayerGO)
+        {
+            if (NetworkingManager.Instance.myPlayerGO.transform.position.x != playerMap[myUserData.networkID].position.x || NetworkingManager.Instance.myPlayerGO.transform.rotation != playerMap[myUserData.networkID].rotation)
+            {
+                playerMap[myUserData.networkID].action = PlayerObject.Action.UPDATE;
+                playerMap[myUserData.networkID].position = NetworkingManager.Instance.myPlayerGO.transform.position;
+                playerMap[myUserData.networkID].rotation = NetworkingManager.Instance.myPlayerGO.transform.rotation;
+                playerMap[myUserData.networkID].isRunning = NetworkingManager.Instance.myPlayerGO.GetComponent<PlayerController>().isMovementPressed;
+
+                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
+
+                byte[] dataToBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
+
+                BroadcastPacket(dataToBroadcast, false);
+            }
+        }
+    }
+
+    public void UpdateEnemiesState(GameObject[] enemies)
+    {
+        foreach (GameObject enemy in enemies)
+        {
+            string id = enemy.GetComponent<NetworkObject>().networkID;
+
+            if (enemiesMap.ContainsKey(id))
+            {
+                enemiesMap[id].action = EnemyObject.Action.UPDATE;
+                enemiesMap[id].position = enemy.transform.position;
+                enemiesMap[id].rotation = enemy.transform.rotation;
+            }
+            else
+            {
+                EnemyObject enemyObject = new EnemyObject(
+                    System.Guid.NewGuid().ToString(),
+                    EnemyObject.Action.CREATE,
+                    enemy.transform.position,
+                    enemy.transform.rotation
+                    );
+
+                enemiesMap.Add(id, enemyObject);
+            }
+        }
     }
 
     public void SendPacket(byte[] outputPacket, EndPoint toAddress)
@@ -216,17 +220,16 @@ public class NetworkingServer : INetworking
     {
         Vector3 spawnPos = new Vector3(NetworkingManager.Instance.initialSpawnPosition.x + totalNumPlayers * 3, NetworkingManager.Instance.initialSpawnPosition.y, NetworkingManager.Instance.initialSpawnPosition.z);
         ++totalNumPlayers;
-        PlayerObject newPlayer = new PlayerObject(PlayerObject.Action.CREATE, spawnPos, new Quaternion(0, 0, 0, 0),false);
+        PlayerObject newPlayer = new PlayerObject(PlayerObject.Action.CREATE, spawnPos, new Quaternion(0, 0, 0, 0), false);
         playerMap.Add(userData.networkID, newPlayer);
-
     }
 
     public void NotifySpawn(string networkID)
     {
-        //if the new spawned object is a client
+        // If the new spawned object is a client
         if (clients.ContainsKey(networkID))
         {
-            //Broadcast to all the other active clients that a player has joined
+            // Broadcast to all the other active clients that a player has joined
             if (clients.Count != 0)
             {
                 //we send a packet with the player map to the client to copy
@@ -237,15 +240,14 @@ public class NetworkingServer : INetworking
 
             }
 
-            //To our newly joined client we send the welcome packet with the player map to be copied and start the spawning process
-
+            // To our newly joined client we send the welcome packet with the player map to be copied and start the spawning process
             // A copy of the players' map to be sent to the new client but with all players sent to create since the new client doesn't have any
             Dictionary<string, PlayerObject> welcomePlayerMap = new Dictionary<string, PlayerObject>();
 
             foreach (var entry in playerMap)
             {
                 // Set all player objects to be created
-                PlayerObject newObj = new PlayerObject(PlayerObject.Action.CREATE, entry.Value.position, entry.Value.rotation,entry.Value.isRunning);
+                PlayerObject newObj = new PlayerObject(PlayerObject.Action.CREATE, entry.Value.position, entry.Value.rotation, entry.Value.isRunning);
                 welcomePlayerMap.Add(entry.Key, newObj);
             }
 
@@ -255,7 +257,6 @@ public class NetworkingServer : INetworking
             byte[] dataWelcome = SerializationUtility.SerializeValue(welcomePacket, DataFormat.JSON);
 
             SendPacket(dataWelcome, clients[networkID]);
-
         }
     }
 

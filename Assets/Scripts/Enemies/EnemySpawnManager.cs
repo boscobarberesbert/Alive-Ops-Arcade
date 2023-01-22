@@ -4,10 +4,9 @@ using UnityEngine;
 
 public class EnemySpawnManager : MonoBehaviour
 {
-
-    [SerializeField]
-    GameObject enemyPrefab;
+    [SerializeField] GameObject enemyPrefab;
     [SerializeField] int numberOfEnemiesToSpawn;
+
     // Start is called before the first frame update
     void Start()
     {
