@@ -17,6 +17,6 @@ public class Lobby : MonoBehaviour
 
     public void OnStartGamePressed()
     {
-        NetworkingManager.Instance.LoadScene("Game");
+        NetworkingManager.Instance.networking.LoadScene("Game");
     }
 }

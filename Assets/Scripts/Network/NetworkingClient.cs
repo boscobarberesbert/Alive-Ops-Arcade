@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Networking.Types;
 
 public class NetworkingClient : INetworking
 {
@@ -37,6 +38,7 @@ public class NetworkingClient : INetworking
     PlayerObject myPlayerObject;
     float elapsedPingTime = 0f;
     float pingTime = 30f;
+    bool hasSceneLoaded = false;
 
     public void Start()
     {
@@ -92,6 +94,10 @@ public class NetworkingClient : INetworking
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
         ServerPacket serverPacket = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
+        if(serverPacket.type == PacketType.GAME_START)
+        {
+            LoadScene("Game");
+        }
         lock (playerMapLock)
         {
             packetQueue.Enqueue(serverPacket);
@@ -143,6 +149,28 @@ public class NetworkingClient : INetworking
         Packet pingPacket = new Packet(PacketType.PING);
         byte[] data = SerializationUtility.SerializeValue(pingPacket, DataFormat.JSON);
         SendPacketToServer(data);
+    }
+
+    public void LoadScene(string sceneName)
+    {
+        lock (loadSceneLock)
+        {
+            triggerLoadScene = true;
+        }
+    }
+
+    public void OnSceneLoaded()
+    {
+        if(!hasSceneLoaded)
+        {
+            HelloPacket packet = new HelloPacket(myUserData);
+
+            byte[] data = SerializationUtility.SerializeValue(packet, DataFormat.JSON);
+
+            SendPacketToServer(data);
+            hasSceneLoaded = true;
+        }
+       
     }
     public void OnConnectionReset(EndPoint fromAddress)
     {

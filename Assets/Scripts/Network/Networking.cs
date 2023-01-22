@@ -16,7 +16,8 @@ public interface INetworking
     void OnDisconnect();
 
     void reportError();
-
+    void LoadScene(string sceneName);
+    void OnSceneLoaded();
     object playerMapLock { get; set; }
 
     object loadSceneLock { get; set; }

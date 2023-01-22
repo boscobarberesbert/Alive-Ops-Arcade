@@ -279,21 +279,30 @@ public class NetworkingServer : INetworking
 
     public void NotifySceneChange(string sceneName)
     {
-        foreach (var player in playerMap)
-        {
-            player.Value.action = PlayerObject.Action.CREATE;
-        }
-        packetQueue.Clear();
+
         ServerPacket serverPacket = new ServerPacket(PacketType.GAME_START, playerMap, enemiesMap);
 
         byte[] data = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
 
         BroadcastPacket(data, false);
 
-        triggerLoadScene = true;
-
+    }
+    public void LoadScene(string sceneName)
+    {
+        lock (loadSceneLock)
+        {
+            triggerLoadScene = true;
+        }
+        
     }
 
+    public void OnSceneLoaded()
+    {
+        NetworkingManager.Instance.Spawn(myUserData.networkID);
+        // Broadcast the corresponding message to the clients
+        NotifySceneChange("Game");
+
+    }
     public void OnConnectionReset(EndPoint fromAddress)
     {
         throw new System.NotImplementedException();

@@ -60,7 +60,7 @@ public class NetworkingManager : MonoBehaviour
 
                 playerGOMap.Clear();
 
-                SceneManager.LoadScene("Game");
+                SceneManager.LoadSceneAsync("Game");
 
                 networking.triggerLoadScene = false;
             }
@@ -202,27 +202,19 @@ public class NetworkingManager : MonoBehaviour
 
     }
 
-    public void LoadScene(string sceneName)
-    {
-        // Broadcast the corresponding message to the clients
-        if (networking is NetworkingServer)
-        {
-            (networking as NetworkingServer).NotifySceneChange(sceneName);
-            networking.triggerLoadScene = true;
-
-        }
-    }
+  
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         initialSpawnPoint = GameObject.FindGameObjectWithTag("Spawn Point").transform;
         initialSpawnPosition = initialSpawnPoint.position;
-
+        networking.OnSceneLoaded();
         isSceneLoading = false;
     }
 
     void OnDisable()
     {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
         networking.OnDisconnect();
     }
 }
