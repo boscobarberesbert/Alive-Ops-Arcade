@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.InputSystem;
 using UnityEngine.Networking.Types;
 using UnityEngine.SceneManagement;
 
@@ -20,17 +19,13 @@ public class NetworkingManager : MonoBehaviour
     public Dictionary<string, GameObject> playerGOMap = new Dictionary<string, GameObject>();
     // Map to relate networkID to its enemyObject
     public Dictionary<string, GameObject> enemyGOMap = new Dictionary<string, GameObject>();
-    // Map to relate networkID to its bulletsObject
-    public Dictionary<string, GameObject> bulletGOMap = new Dictionary<string, GameObject>();
 
     // Condition to know if the LoadScene() method has been called
     bool isSceneLoading = false;
 
     [SerializeField] GameObject playerPrefab;
     [SerializeField] GameObject enemyPrefab;
-    [SerializeField] GameObject bulletPrefab;
     public float updateTime = 0.1f;
-
 
     private void Awake()
     {
@@ -50,7 +45,6 @@ public class NetworkingManager : MonoBehaviour
 
         // Initializing user and player data
         networking.myUserData = new User(System.Guid.NewGuid().ToString(), MainMenuInfo.username, MainMenuInfo.connectToIp);
-
     }
 
     void Start()
@@ -59,7 +53,6 @@ public class NetworkingManager : MonoBehaviour
         networking.Start();
 
         SceneManager.sceneLoaded += OnSceneLoaded;
-
     }
 
     void Update()
@@ -72,7 +65,6 @@ public class NetworkingManager : MonoBehaviour
 
                 playerGOMap.Clear();
                 enemyGOMap.Clear();
-                bulletGOMap.Clear();
                 if (networking is NetworkingServer)
                 {
                     SceneManager.LoadSceneAsync("Game");
@@ -112,10 +104,6 @@ public class NetworkingManager : MonoBehaviour
                                 {
                                     HandleEnemyObject(enemy.Key, enemy.Value);
                                 }
-                                foreach (var bullet in (packet as ServerPacket).bulletsMap)
-                                {
-                                    HandleBulletObject(bullet.Key, bullet.Value);
-                                }
                                 break;
                             }
                         case PacketType.GAME_START:
@@ -141,10 +129,6 @@ public class NetworkingManager : MonoBehaviour
                                     foreach (var enemy in (packet as ServerPacket).enemiesMap)
                                     {
                                         HandleEnemyObject(enemy.Key, enemy.Value);
-                                    }
-                                    foreach (var bullet in (packet as ServerPacket).bulletsMap)
-                                    {
-                                        HandleBulletObject(bullet.Key, bullet.Value);
                                     }
                                 }
 
@@ -200,17 +184,17 @@ public class NetworkingManager : MonoBehaviour
                 }
         }
     }
-    public void HandleEnemyObject(string key, GenericObject enemy)
+    public void HandleEnemyObject(string key, EnemyObject enemy)
     {
         // TODO
         switch (enemy.action)
         {
-            case GenericObject.Action.CREATE:
+            case EnemyObject.Action.CREATE:
                 {
                     SpawnEnemy(enemy);
                     break;
                 }
-            case GenericObject.Action.UPDATE:
+            case EnemyObject.Action.UPDATE:
                 {
                     if (enemyGOMap.ContainsKey(key))
                     {
@@ -222,29 +206,6 @@ public class NetworkingManager : MonoBehaviour
                 }
         }
     }
-    public void HandleBulletObject(string key, GenericObject bullet)
-    {
-        // TODO
-        switch (bullet.action)
-        {
-            case GenericObject.Action.CREATE:
-                {
-                    SpawnBullet(bullet);
-                    break;
-                }
-            case GenericObject.Action.UPDATE:
-                {
-                    if (bulletGOMap.ContainsKey(key))
-                    {
-                        // TODO: Perform interpolation
-                        bulletGOMap[key].transform.position = InterpolatePosition(bulletGOMap[key].transform.position, bullet.position);
-                        bulletGOMap[key].transform.rotation = bullet.rotation;
-                    }
-                    break;
-                }
-           
-        }
-    }
 
     Vector3 InterpolatePosition(Vector3 startPos, Vector3 endPos)
     {
@@ -252,7 +213,7 @@ public class NetworkingManager : MonoBehaviour
         float t = Time.deltaTime / duration;
         return Vector3.Lerp(startPos, endPos, t);
     }
-    public void SpawnEnemy(GenericObject enemyObject)
+    public void SpawnEnemy(EnemyObject enemyObject)
     {
         GameObject enemyGO = Instantiate(enemyPrefab, enemyObject.position, new Quaternion(0, 0, 0, 0));
         // Set playerGO variables
@@ -267,21 +228,6 @@ public class NetworkingManager : MonoBehaviour
         if (!enemyGOMap.ContainsKey(enemyObject.networkID))
         {
             enemyGOMap.Add(enemyObject.networkID, enemyGO);
-        }
-    }
-
-    public void SpawnBullet(GenericObject bulletObject)
-    {
-        GameObject bulletGO = Instantiate(bulletPrefab, bulletObject.position, bulletObject.rotation);
-        // Set playerGO variables
-        bulletGO.GetComponent<NetworkObject>().networkID = bulletObject.networkID;
-        bulletGO.name = bulletObject.networkID;
-        bulletGO.GetComponent<Bullet>().Setup();
-
-        // Now we add it to the list of player GO if it is not already there (change scene case)
-        if (!bulletGOMap.ContainsKey(bulletObject.networkID))
-        {
-            bulletGOMap.Add(bulletObject.networkID, bulletGO);
         }
     }
     public void Spawn(string networkID)
@@ -323,9 +269,9 @@ public class NetworkingManager : MonoBehaviour
 
     }
 
-    public void OnShoot()
+    public void Shoot()
     {
-        Debug.Log("SHoot");
+
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)

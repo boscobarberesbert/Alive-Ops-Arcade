@@ -6,7 +6,6 @@ using System.Threading;
 using UnityEngine;
 using static UnityEngine.EventSystems.EventTrigger;
 using UnityEngine.Networking.Types;
-using System.Linq;
 
 public class NetworkingServer : INetworking
 {
@@ -40,8 +39,7 @@ public class NetworkingServer : INetworking
     // Relates network ID with its player object (the world state basically
     //used as server to receive world data and send it to clients
     Dictionary<string, PlayerObject> playerMap;
-    Dictionary<string, GenericObject> enemiesMap;
-    Dictionary<string, GenericObject> bulletsMap;
+    Dictionary<string, EnemyObject> enemiesMap;
 
     int totalNumPlayers = 0;
 
@@ -56,8 +54,7 @@ public class NetworkingServer : INetworking
         packetQueue = new Queue<Packet>();
 
         playerMap = new Dictionary<string, PlayerObject>();
-        enemiesMap = new Dictionary<string, GenericObject>();
-        bulletsMap = new Dictionary<string, GenericObject>();
+        enemiesMap = new Dictionary<string, EnemyObject>();
 
         InitializeSocket();
     }
@@ -149,9 +146,8 @@ public class NetworkingServer : INetworking
         {
             UpdatePlayersState(NetworkingManager.Instance.playerGOMap);
             UpdateEnemiesState(GameObject.FindGameObjectsWithTag("Enemy"));
-            UpdateBulletsState(GameObject.FindGameObjectsWithTag("Bullet"));
 
-            ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap,bulletsMap);
+            ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
 
             byte[] dataBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
 
@@ -202,64 +198,20 @@ public class NetworkingServer : INetworking
 
             if (enemiesMap.ContainsKey(id))
             {
-                enemiesMap[id].action = GenericObject.Action.UPDATE;
+                enemiesMap[id].action = EnemyObject.Action.UPDATE;
                 enemiesMap[id].position = enemy.transform.position;
                 enemiesMap[id].rotation = enemy.transform.rotation;
             }
             else
             {
-                GenericObject enemyObject = new GenericObject(
+                EnemyObject enemyObject = new EnemyObject(
                     enemy.GetComponent<NetworkObject>().networkID,
-                    GenericObject.Action.CREATE,
+                    EnemyObject.Action.CREATE,
                     enemy.transform.position,
                     enemy.transform.rotation
                     );
 
                 enemiesMap.Add(id, enemyObject);
-            }
-        }
-    }
-
-    public void UpdateBulletsState(GameObject[] bullets)
-    {
-        //check if we need to destroy any bullet
-        foreach(var entry in bulletsMap)
-        {
-            bool isInArray = false;
-            foreach (var bullet in bullets)
-            {
-                if(entry.Key == bullet.GetComponent<NetworkObject>().networkID)
-                {
-                   isInArray = true;
-                    break;
-                }
-            }
-            if(!isInArray)
-            {
-                bulletsMap.Remove(entry.Key);
-            }
-        }
-
-        foreach (GameObject bullet in bullets)
-        {
-            string id = bullet.GetComponent<NetworkObject>().networkID;
-
-            if (bulletsMap.ContainsKey(id))
-            {
-                bulletsMap[id].action = GenericObject.Action.UPDATE;
-                bulletsMap[id].position = bullet.transform.position;
-                bulletsMap[id].rotation = bullet.transform.rotation;
-            }
-            else
-            {
-                GenericObject bulletObject = new GenericObject(
-                    bullet.GetComponent<NetworkObject>().networkID,
-                    GenericObject.Action.CREATE,
-                    bullet.transform.position,
-                    bullet.transform.rotation
-                    );
-
-                bulletsMap.Add(id, bulletObject);
             }
         }
     }
@@ -298,7 +250,7 @@ public class NetworkingServer : INetworking
             if (clients.Count != 0)
             {
                 //we send a packet with the player map to the client to copy
-                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap,bulletsMap);
+                ServerPacket serverPacket = new ServerPacket(PacketType.WORLD_STATE, playerMap, enemiesMap);
 
                 byte[] dataToBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
                 BroadcastPacket(dataToBroadcast, true);
@@ -308,8 +260,7 @@ public class NetworkingServer : INetworking
             // To our newly joined client we send the welcome packet with the player map to be copied and start the spawning process
             // A copy of the players' map to be sent to the new client but with all players sent to create since the new client doesn't have any
             Dictionary<string, PlayerObject> welcomePlayerMap = new Dictionary<string, PlayerObject>();
-            Dictionary<string, GenericObject> welcomeEnemyMap = new Dictionary<string, GenericObject>();
-            Dictionary<string, GenericObject> welcomeBulletsMap = new Dictionary<string, GenericObject>();
+            Dictionary<string, EnemyObject> welcomeEnemyMap = new Dictionary<string, EnemyObject>();
 
             foreach (var entry in playerMap)
             {
@@ -319,17 +270,12 @@ public class NetworkingServer : INetworking
             }
             foreach(var enemy in enemiesMap)
             {
-                GenericObject newObj = new GenericObject(enemy.Value.networkID,GenericObject.Action.CREATE, enemy.Value.position, enemy.Value.rotation);
+                EnemyObject newObj = new EnemyObject(enemy.Value.networkID,EnemyObject.Action.CREATE, enemy.Value.position, enemy.Value.rotation);
                 welcomeEnemyMap.Add(enemy.Key, newObj);
-            }
-            foreach (var bullet in bulletsMap)
-            {
-                GenericObject newObj = new GenericObject(bullet.Value.networkID, GenericObject.Action.CREATE, bullet.Value.position, bullet.Value.rotation);
-                welcomeBulletsMap.Add(bullet.Key, newObj);
             }
 
             // Prepare the packet to be sent back notifying the connection
-            ServerPacket welcomePacket = new ServerPacket(PacketType.WELCOME, welcomePlayerMap, welcomeEnemyMap,welcomeBulletsMap);
+            ServerPacket welcomePacket = new ServerPacket(PacketType.WELCOME, welcomePlayerMap, welcomeEnemyMap);
 
             byte[] dataWelcome = SerializationUtility.SerializeValue(welcomePacket, DataFormat.JSON);
 
@@ -340,7 +286,7 @@ public class NetworkingServer : INetworking
     public void NotifySceneChange(string sceneName)
     {
 
-        ServerPacket serverPacket = new ServerPacket(PacketType.GAME_START, playerMap, enemiesMap,bulletsMap);
+        ServerPacket serverPacket = new ServerPacket(PacketType.GAME_START, playerMap, enemiesMap);
 
         byte[] data = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
 
