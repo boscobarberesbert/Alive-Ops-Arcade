@@ -108,7 +108,7 @@ public class NetworkingClient : INetworking
     {
         if (NetworkingManager.Instance.myPlayerGO)
         {
-            if (NetworkingManager.Instance.myPlayerGO.transform.position.x != myPlayerObject.position.x || NetworkingManager.Instance.myPlayerGO.transform.rotation != myPlayerObject.rotation)
+            if (NetworkingManager.Instance.myPlayerGO.transform.position.x != myPlayerObject.position.x || NetworkingManager.Instance.myPlayerGO.transform.rotation != myPlayerObject.rotation || myPlayerObject.hasShot)
             {
                 myPlayerObject.action = PlayerObject.Action.UPDATE;
                 myPlayerObject.position = NetworkingManager.Instance.myPlayerGO.transform.position;
