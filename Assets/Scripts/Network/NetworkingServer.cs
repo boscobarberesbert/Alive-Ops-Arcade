@@ -23,13 +23,13 @@ public class NetworkingServer : INetworking
     Socket serverSocket;
     EndPoint endPoint;
 
+    float updateTime = 0.05f;
+
     int channel1Port = 9050;
     int channel2Port = 9051;
 
     // UserData & Players
     public User myUserData { get; set; }
-
-
 
     public Queue<Packet> packetQueue { get; set; }
 
@@ -40,8 +40,6 @@ public class NetworkingServer : INetworking
     //used as server to receive world data and send it to clients
     Dictionary<string, PlayerObject> playerMap;
     Dictionary<string, EnemyObject> enemiesMap;
-
-    int totalNumPlayers = 0;
 
     float elapsedUpdateTime = 0f;
     float lastPinged = 35f;
@@ -142,7 +140,7 @@ public class NetworkingServer : INetworking
         elapsedUpdateTime += Time.deltaTime;
 
 
-        if (elapsedUpdateTime >= NetworkingManager.Instance.updateTime)
+        if (elapsedUpdateTime >= updateTime)
         {
             UpdatePlayersState(NetworkingManager.Instance.playerGOMap);
             UpdateEnemiesState(GameObject.FindGameObjectsWithTag("Enemy"));
@@ -152,6 +150,8 @@ public class NetworkingServer : INetworking
             byte[] dataBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
 
             BroadcastPacket(dataBroadcast, false);
+
+            playerMap[myUserData.networkID].hasShot = false;
 
             elapsedUpdateTime = elapsedUpdateTime % 1f;
         }
@@ -254,7 +254,6 @@ public class NetworkingServer : INetworking
 
                 byte[] dataToBroadcast = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
                 BroadcastPacket(dataToBroadcast, true);
-
             }
 
             // To our newly joined client we send the welcome packet with the player map to be copied and start the spawning process
@@ -265,7 +264,7 @@ public class NetworkingServer : INetworking
             foreach (var entry in playerMap)
             {
                 // Set all player objects to be created
-                PlayerObject newObj = new PlayerObject(PlayerObject.Action.CREATE, entry.Value.position, entry.Value.rotation, entry.Value.isRunning);
+                PlayerObject newObj = new PlayerObject(PlayerObject.Action.CREATE, entry.Value.position, entry.Value.rotation, entry.Value.isRunning, entry.Value.hasShot);
                 welcomePlayerMap.Add(entry.Key, newObj);
             }
             foreach(var enemy in enemiesMap)
@@ -309,6 +308,12 @@ public class NetworkingServer : INetworking
         NotifySceneChange("Game");
 
     }
+
+    public void OnShoot()
+    {
+        playerMap[myUserData.networkID].hasShot = true;
+    }
+
     public void OnConnectionReset(EndPoint fromAddress)
     {
         throw new System.NotImplementedException();

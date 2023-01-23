@@ -49,6 +49,7 @@ public class PlayerObject
     public Vector3 position;
     public bool isRunning;
     public Quaternion rotation;
+    public bool hasShot;
 
     public PlayerObject()
     {
@@ -56,14 +57,16 @@ public class PlayerObject
         position = new Vector3(0f, 0f, 0f);
         rotation = new Quaternion(0f, 0f, 0f, 0f);
         isRunning = false;
+        hasShot = false;
     }
 
-    public PlayerObject(Action action, Vector3 position, Quaternion rotation, bool isRunning)
+    public PlayerObject(Action action, Vector3 position, Quaternion rotation, bool isRunning, bool hasShot = false)
     {
         this.action = action;
         this.position = position;
         this.rotation = rotation;
         this.isRunning = isRunning;
+        this.hasShot = hasShot;
     }
 }
 

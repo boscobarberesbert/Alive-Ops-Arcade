@@ -119,6 +119,8 @@ public class NetworkingClient : INetworking
                 byte[] dataToBroadcast = SerializationUtility.SerializeValue(clientPacket, DataFormat.JSON);
 
                 SendPacketToServer(dataToBroadcast);
+
+                myPlayerObject.hasShot = false;
             }
         }
     }
@@ -161,7 +163,7 @@ public class NetworkingClient : INetworking
 
     public void OnSceneLoaded()
     {
-        if(!hasSceneLoaded)
+        if (!hasSceneLoaded)
         {
             HelloPacket packet = new HelloPacket(myUserData);
 
@@ -170,8 +172,13 @@ public class NetworkingClient : INetworking
             SendPacketToServer(data);
             hasSceneLoaded = true;
         }
-       
     }
+
+    public void OnShoot()
+    {
+        myPlayerObject.hasShot = true;
+    }
+
     public void OnConnectionReset(EndPoint fromAddress)
     {
         throw new System.NotImplementedException();

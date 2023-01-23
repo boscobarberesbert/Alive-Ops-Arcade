@@ -16,8 +16,13 @@ public interface INetworking
     void OnDisconnect();
 
     void reportError();
+
     void LoadScene(string sceneName);
+
     void OnSceneLoaded();
+
+    void OnShoot();
+
     object playerMapLock { get; set; }
 
     object loadSceneLock { get; set; }
@@ -31,5 +36,4 @@ public interface INetworking
 
     // Queue of received packets
     Queue<Packet> packetQueue { get; set; }
-
 }

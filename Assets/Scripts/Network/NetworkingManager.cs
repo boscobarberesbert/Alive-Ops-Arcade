@@ -25,7 +25,6 @@ public class NetworkingManager : MonoBehaviour
 
     [SerializeField] GameObject playerPrefab;
     [SerializeField] GameObject enemyPrefab;
-    public float updateTime = 0.1f;
 
     private void Awake()
     {
@@ -68,12 +67,10 @@ public class NetworkingManager : MonoBehaviour
                 if (networking is NetworkingServer)
                 {
                     SceneManager.LoadSceneAsync("Game");
-
                 }
                 else
                 {
                     SceneManager.LoadSceneAsync("GameClient");
-
                 }
 
                 networking.triggerLoadScene = false;
@@ -169,6 +166,9 @@ public class NetworkingManager : MonoBehaviour
                         playerGOMap[key].transform.position = InterpolatePosition(playerGOMap[key].transform.position, player.position);
                         playerGOMap[key].transform.rotation = player.rotation;
                         playerGOMap[key].GetComponent<PlayerController>().SetAnimatorRunning(player.isRunning);
+
+                        if (player.hasShot)
+                            playerGOMap[key].GetComponent<Shooting>().Shoot(playerGOMap[key].transform.forward);
                     }
                     break;
                 }
@@ -213,6 +213,7 @@ public class NetworkingManager : MonoBehaviour
         float t = Time.deltaTime / duration;
         return Vector3.Lerp(startPos, endPos, t);
     }
+
     public void SpawnEnemy(EnemyObject enemyObject)
     {
         GameObject enemyGO = Instantiate(enemyPrefab, enemyObject.position, new Quaternion(0, 0, 0, 0));
@@ -230,6 +231,7 @@ public class NetworkingManager : MonoBehaviour
             enemyGOMap.Add(enemyObject.networkID, enemyGO);
         }
     }
+
     public void Spawn(string networkID)
     {
         Vector3 spawnPos = new Vector3(NetworkingManager.Instance.initialSpawnPosition.x + playerGOMap.Count * 3, NetworkingManager.Instance.initialSpawnPosition.y, NetworkingManager.Instance.initialSpawnPosition.z);
@@ -251,7 +253,7 @@ public class NetworkingManager : MonoBehaviour
             // Since the player is not ours we don't want to control it with our inputs
             playerGO.GetComponent<PlayerController>().enabled = false;
             playerGO.GetComponent<CharacterController>().enabled = false;
-            playerGO.GetComponent<MouseAim>().enabled = false;
+            playerGO.GetComponent<MouseInput>().enabled = false;
 
             // TODO: Instance Players without Player Tag
             playerGO.transform.GetChild(0).tag = "Untagged";
@@ -266,12 +268,11 @@ public class NetworkingManager : MonoBehaviour
         // Finally we broadcast the corresponding packet to the clients
         if (networking is NetworkingServer)
             (networking as NetworkingServer).NotifySpawn(networkID);
-
     }
 
-    public void Shoot()
+    public void OnShoot()
     {
-
+        networking.OnShoot();
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)

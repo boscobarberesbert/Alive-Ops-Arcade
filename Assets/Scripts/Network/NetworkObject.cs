@@ -3,7 +3,8 @@ using UnityEngine;
 public class NetworkObject : MonoBehaviour
 {
     public string networkID = "";
-    private void Awake()
+
+    void Awake()
     {
         networkID = System.Guid.NewGuid().ToString();
     }
