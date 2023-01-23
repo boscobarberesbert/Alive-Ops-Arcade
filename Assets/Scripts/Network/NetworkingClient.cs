@@ -33,8 +33,6 @@ public class NetworkingClient : INetworking
     // Queue of received packets
     public Queue<Packet> packetQueue { get; set; }
 
-    float elapsedPingTime = 0f;
-    float pingTime = 30f;
     bool hasSceneLoaded = false;
 
     public void Start()
@@ -91,7 +89,7 @@ public class NetworkingClient : INetworking
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
         ServerPacket serverPacket = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
-        
+
         if (serverPacket.type == PacketType.GAME_START)
         {
             LoadScene("Game");
