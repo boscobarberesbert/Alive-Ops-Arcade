@@ -23,7 +23,7 @@ public interface INetworking
 
     void OnShoot();
 
-    object playerMapLock { get; set; }
+    object packetQueueLock { get; set; }
 
     object loadSceneLock { get; set; }
     bool triggerLoadScene { get; set; }

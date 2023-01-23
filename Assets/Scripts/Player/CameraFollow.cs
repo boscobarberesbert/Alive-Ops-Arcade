@@ -8,12 +8,6 @@ public class CameraFollow : MonoBehaviour
     public Vector2 cameraLimitHeight;
 
     Transform target;
-    bool isTargetActive = false;
-
-    private void Start()
-    {
-        isTargetActive = false;
-    }
 
     void LateUpdate()
     {
@@ -23,9 +17,6 @@ public class CameraFollow : MonoBehaviour
         if (targetGO)
         {
             target = targetGO.transform;
-            isTargetActive = true;
-
-
 
             Vector3 desiredPosition = target.position + offset;
 

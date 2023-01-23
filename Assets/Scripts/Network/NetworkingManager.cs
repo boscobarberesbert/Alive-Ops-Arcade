@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.Networking.Types;
 using UnityEngine.SceneManagement;
 
 public class NetworkingManager : MonoBehaviour
@@ -13,11 +12,14 @@ public class NetworkingManager : MonoBehaviour
 
     // Reference to our player gameobject
     [NonSerialized] public GameObject myPlayerGO;
+
     Transform initialSpawnPoint;
     [NonSerialized] public Vector3 initialSpawnPosition;
-    // Map to relate networkID to its gameobject
+
+    // Map to relate networkID to its player gameobject
     public Dictionary<string, GameObject> playerGOMap = new Dictionary<string, GameObject>();
-    // Map to relate networkID to its enemyObject
+
+    // Map to relate networkID to its enemy gameobject
     public Dictionary<string, GameObject> enemyGOMap = new Dictionary<string, GameObject>();
 
     // Condition to know if the LoadScene() method has been called
@@ -26,7 +28,7 @@ public class NetworkingManager : MonoBehaviour
     [SerializeField] GameObject playerPrefab;
     [SerializeField] GameObject enemyPrefab;
 
-    private void Awake()
+    void Awake()
     {
         initialSpawnPoint = GameObject.FindGameObjectWithTag("Spawn Point").transform;
         initialSpawnPosition = initialSpawnPoint.position;
@@ -79,7 +81,7 @@ public class NetworkingManager : MonoBehaviour
 
         if (!isSceneLoading)
         {
-            lock (networking.playerMapLock)
+            lock (networking.packetQueueLock)
             {
 
                 foreach (var packet in networking.packetQueue.ToList())
@@ -131,10 +133,6 @@ public class NetworkingManager : MonoBehaviour
 
                                 break;
                             }
-                        case PacketType.PING:
-                            {
-                                break;
-                            }
                         case PacketType.DEFAULT:
                             {
                                 break;
@@ -143,14 +141,12 @@ public class NetworkingManager : MonoBehaviour
                     networking.packetQueue.Dequeue();
                 }
             }
-
             networking.OnUpdate();
         }
     }
 
     public void HandlePlayerObject(string key, PlayerObject player)
     {
-        // TODO
         switch (player.action)
         {
             case PlayerObject.Action.CREATE:
@@ -162,7 +158,6 @@ public class NetworkingManager : MonoBehaviour
                 {
                     if (playerGOMap.ContainsKey(key) && key != networking.myUserData.networkID)
                     {
-                        // TODO: Perform interpolation
                         playerGOMap[key].transform.position = InterpolatePosition(playerGOMap[key].transform.position, player.position);
                         playerGOMap[key].transform.rotation = player.rotation;
                         playerGOMap[key].GetComponent<PlayerController>().SetAnimatorRunning(player.isRunning);
@@ -184,9 +179,9 @@ public class NetworkingManager : MonoBehaviour
                 }
         }
     }
+
     public void HandleEnemyObject(string key, EnemyObject enemy)
     {
-        // TODO
         switch (enemy.action)
         {
             case EnemyObject.Action.CREATE:
@@ -198,7 +193,6 @@ public class NetworkingManager : MonoBehaviour
                 {
                     if (enemyGOMap.ContainsKey(key))
                     {
-                        // TODO: Perform interpolation
                         enemyGOMap[key].transform.position = InterpolatePosition(enemyGOMap[key].transform.position, enemy.position);
                         enemyGOMap[key].transform.rotation = enemy.rotation;
                     }
@@ -217,6 +211,7 @@ public class NetworkingManager : MonoBehaviour
     public void SpawnEnemy(EnemyObject enemyObject)
     {
         GameObject enemyGO = Instantiate(enemyPrefab, enemyObject.position, new Quaternion(0, 0, 0, 0));
+
         // Set playerGO variables
         enemyGO.GetComponent<NetworkObject>().networkID = enemyObject.networkID;
         enemyGO.name = enemyObject.networkID;
@@ -255,7 +250,7 @@ public class NetworkingManager : MonoBehaviour
             playerGO.GetComponent<CharacterController>().enabled = false;
             playerGO.GetComponent<MouseInput>().enabled = false;
 
-            // TODO: Instance Players without Player Tag
+            // Instance Players without Player Tag
             playerGO.transform.GetChild(0).tag = "Untagged";
         }
 

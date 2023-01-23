@@ -2,16 +2,15 @@ using AliveOpsArcade.OdinSerializer;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Networking.Types;
 
 public class NetworkingClient : INetworking
 {
     // Thread and safety
     Thread clientThread;
-    public object playerMapLock { get; set; } = new object();
+
+    public object packetQueueLock { get; set; } = new object();
 
     public object loadSceneLock { get; set; } = new object();
     public bool triggerLoadScene { get; set; } = false;
@@ -27,15 +26,13 @@ public class NetworkingClient : INetworking
     int channel1Port = 9050;
     int channel2Port = 9051;
 
-    // User & Players
+    // User & Player data of the Client
     public User myUserData { get; set; }
-
-
-    public Queue<Packet> packetQueue { get; set; }
+    PlayerObject myPlayerObject;
 
     // Queue of received packets
-    //Queue<ServerPacket> packetQueue = new Queue<ServerPacket>();
-    PlayerObject myPlayerObject;
+    public Queue<Packet> packetQueue { get; set; }
+
     float elapsedPingTime = 0f;
     float pingTime = 30f;
     bool hasSceneLoaded = false;
@@ -49,7 +46,7 @@ public class NetworkingClient : INetworking
         InitializeSocket();
     }
 
-    //Initializes the socket as a client in UDP and starts the thread that is constantly listening for messages
+    // Initializes the socket as a client in UDP and starts the thread that is constantly listening for messages
     private void InitializeSocket()
     {
         Debug.Log("[CLIENT] Client Initializing...");
@@ -67,7 +64,7 @@ public class NetworkingClient : INetworking
         clientThread.Start();
     }
 
-    //It sends a hello message to the server and when the server responds with a welcome packet it goes into listening mode
+    // It sends a hello message to the server and when the server responds with a welcome packet it goes into listening mode
     private void ClientListener()
     {
         // Sending hello packet with user data
@@ -90,15 +87,17 @@ public class NetworkingClient : INetworking
         }
     }
 
-    //handles packages received
+    // Handles packages received
     public void OnPackageReceived(byte[] inputPacket, int recv, EndPoint fromAddress)
     {
         ServerPacket serverPacket = SerializationUtility.DeserializeValue<ServerPacket>(inputPacket, DataFormat.JSON);
-        if(serverPacket.type == PacketType.GAME_START)
+        
+        if (serverPacket.type == PacketType.GAME_START)
         {
             LoadScene("Game");
         }
-        lock (playerMapLock)
+
+        lock (packetQueueLock)
         {
             packetQueue.Enqueue(serverPacket);
         }
@@ -128,12 +127,6 @@ public class NetworkingClient : INetworking
     public void OnUpdate()
     {
         UpdateMyPlayerState();
-        //elapsedPingTime += Time.deltaTime;
-        //if (elapsedPingTime >= pingTime)
-        //{
-        //    elapsedPingTime = elapsedPingTime % 1f;
-        //    PingServer();
-        //}
     }
 
     public void SendPacket(byte[] outputPacket, EndPoint toAddress)
@@ -144,13 +137,6 @@ public class NetworkingClient : INetworking
     public void SendPacketToServer(byte[] outputPacket)
     {
         clientSocket.SendTo(outputPacket, outputPacket.Length, SocketFlags.None, ipep);
-    }
-
-    public void PingServer()
-    {
-        Packet pingPacket = new Packet(PacketType.PING);
-        byte[] data = SerializationUtility.SerializeValue(pingPacket, DataFormat.JSON);
-        SendPacketToServer(data);
     }
 
     public void LoadScene(string sceneName)

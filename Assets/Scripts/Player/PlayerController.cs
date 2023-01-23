@@ -14,8 +14,10 @@ public class PlayerController : MonoBehaviour
     Vector2 currentMovementInput;
     Vector3 currentMovement;
     Animator animator;
-    //Variables to store optimized setter/getter parameter IDs
+
+    // Variables to store optimized setter/getter parameter IDs
     int isRunningHash;
+
     void Awake()
     {
         playerInput = new PlayerInput();
@@ -42,11 +44,12 @@ public class PlayerController : MonoBehaviour
         isMovementPressed = currentMovementInput.x != 0 || currentMovementInput.y != 0;
         SetAnimatorRunning(isMovementPressed);
     }
+
     public void SetAnimatorRunning(bool isRunning)
     {
         animator.SetBool(isRunningHash, isRunning);
-
     }
+
     void HandleGravity()
     {
         if (characterController.isGrounded)

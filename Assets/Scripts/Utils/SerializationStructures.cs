@@ -6,7 +6,6 @@ public enum PacketType
     DEFAULT,
     HELLO,
     WELCOME,
-    PING,
     GAME_START,
     WORLD_STATE
 }
@@ -33,7 +32,7 @@ public class User
     }
 }
 
-//data structure that stores all the player game object information passed through the network
+// Data structure that stores all the player game object information passed through the network
 public class PlayerObject
 {
     public enum Action
@@ -70,7 +69,7 @@ public class PlayerObject
     }
 }
 
-//data structure that stores all the player game object information passed through the network
+// Data structure that stores all the player game object information passed through the network
 public class EnemyObject
 {
     public enum Action
@@ -104,7 +103,7 @@ public class EnemyObject
     }
 }
 
-//Definition of a packet sent through the internet
+// Definition of a packet sent through the internet
 public class Packet
 {
     public PacketType type;
@@ -119,27 +118,29 @@ public class Packet
     }
 }
 
-//Type of packet sent by the server
+// Type of packet sent by the server
 public class ServerPacket : Packet
 {
-    // List of players (including server)
+    // Map of players (including server)
     public Dictionary<string, PlayerObject> playerMap;
 
-    // TODO: List of enemies
+    // Map of enemies
     public Dictionary<string, EnemyObject> enemiesMap;
+
     public ServerPacket()
     {
         playerMap = new Dictionary<string, PlayerObject>();
     }
 
-    public ServerPacket(PacketType type, Dictionary<string, PlayerObject> playerMap,Dictionary<string,EnemyObject> enemiesMap)
+    public ServerPacket(PacketType type, Dictionary<string, PlayerObject> playerMap, Dictionary<string, EnemyObject> enemiesMap)
     {
         this.type = type;
         this.playerMap = playerMap;
         this.enemiesMap = enemiesMap;
     }
 }
-//type of packet sent by the client
+
+// Type of packet sent by the client
 public class ClientPacket : Packet
 {
     public PlayerObject playerObject;
@@ -159,7 +160,7 @@ public class ClientPacket : Packet
     }
 }
 
-//Hello packet that sends the user information when a client is added
+// Hello packet that sends the user information when a client is added
 public class HelloPacket : Packet
 {
     public User clientData;

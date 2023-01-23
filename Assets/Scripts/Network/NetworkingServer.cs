@@ -4,14 +4,13 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
-using static UnityEngine.EventSystems.EventTrigger;
-using UnityEngine.Networking.Types;
 
 public class NetworkingServer : INetworking
 {
     // Thread and safety
     Thread serverThread;
-    public object playerMapLock { get; set; } = new object();
+
+    public object packetQueueLock { get; set; } = new object();
 
     public object loadSceneLock { get; set; } = new object();
     public bool triggerLoadScene { get; set; } = false;
@@ -37,13 +36,11 @@ public class NetworkingServer : INetworking
     Dictionary<string, EndPoint> clients;
 
     // Relates network ID with its player object (the world state basically
-    //used as server to receive world data and send it to clients
+    // used as server to receive world data and send it to clients
     Dictionary<string, PlayerObject> playerMap;
     Dictionary<string, EnemyObject> enemiesMap;
 
     float elapsedUpdateTime = 0f;
-    float lastPinged = 35f;
-    float elapsedPingTime = 35f;
 
     public void Start()
     {
@@ -107,13 +104,13 @@ public class NetworkingServer : INetworking
         // If the client that sent a message to this server is new, add it to the list of clients.
         if (packet.type == PacketType.HELLO)
         {
-            // when a client sends a hello packet it is saved in the clients dictionary.
+            // When a client sends a hello packet it is saved in the clients dictionary.
             HelloPacket helloPacket = SerializationUtility.DeserializeValue<HelloPacket>(inputPacket, DataFormat.JSON);
 
             if (!clients.ContainsKey(helloPacket.clientData.networkID))
                 clients.Add(helloPacket.clientData.networkID, fromAddress);
 
-            lock (playerMapLock)
+            lock (packetQueueLock)
             {
                 packetQueue.Enqueue(helloPacket);
             }
@@ -122,15 +119,10 @@ public class NetworkingServer : INetworking
         {
             ClientPacket clientPacket = SerializationUtility.DeserializeValue<ClientPacket>(inputPacket, DataFormat.JSON);
 
-            lock (playerMapLock)
+            lock (packetQueueLock)
             {
                 packetQueue.Enqueue(clientPacket);
             }
-        }
-        else if (packet.type == PacketType.PING)
-        {
-            //elapsedPingTime = elapsedPingTime % 1f;
-            //Debug.Log("Client has pinged");
         }
     }
 
@@ -138,7 +130,6 @@ public class NetworkingServer : INetworking
     {
         // Limit to 10 packets per second to mitigate lag
         elapsedUpdateTime += Time.deltaTime;
-
 
         if (elapsedUpdateTime >= updateTime)
         {
@@ -155,12 +146,6 @@ public class NetworkingServer : INetworking
 
             elapsedUpdateTime = elapsedUpdateTime % 1f;
         }
-
-        //elapsedPingTime += Time.deltaTime;
-        //if(elapsedPingTime > lastPinged)
-        //{
-        //    Debug.Log("ClientDisconnected");
-        //}
     }
 
     public void UpdatePlayersState(Dictionary<string, GameObject> players)
@@ -233,14 +218,6 @@ public class NetworkingServer : INetworking
         }
     }
 
-    //public void SpawnPlayer(User userData)
-    //{
-    //    //Vector3 spawnPos = new Vector3(NetworkingManager.Instance.initialSpawnPosition.x + totalNumPlayers * 3, NetworkingManager.Instance.initialSpawnPosition.y, NetworkingManager.Instance.initialSpawnPosition.z);
-    //    //++totalNumPlayers;
-    //    //PlayerObject newPlayer = new PlayerObject(PlayerObject.Action.CREATE, spawnPos, new Quaternion(0, 0, 0, 0), false);
-    //    //playerMap.Add(userData.networkID, newPlayer);
-    //}
-
     public void NotifySpawn(string networkID)
     {
         // If the new spawned object is a client
@@ -267,9 +244,9 @@ public class NetworkingServer : INetworking
                 PlayerObject newObj = new PlayerObject(PlayerObject.Action.CREATE, entry.Value.position, entry.Value.rotation, entry.Value.isRunning, entry.Value.hasShot);
                 welcomePlayerMap.Add(entry.Key, newObj);
             }
-            foreach(var enemy in enemiesMap)
+            foreach (var enemy in enemiesMap)
             {
-                EnemyObject newObj = new EnemyObject(enemy.Value.networkID,EnemyObject.Action.CREATE, enemy.Value.position, enemy.Value.rotation);
+                EnemyObject newObj = new EnemyObject(enemy.Value.networkID, EnemyObject.Action.CREATE, enemy.Value.position, enemy.Value.rotation);
                 welcomeEnemyMap.Add(enemy.Key, newObj);
             }
 
@@ -284,29 +261,27 @@ public class NetworkingServer : INetworking
 
     public void NotifySceneChange(string sceneName)
     {
-
         ServerPacket serverPacket = new ServerPacket(PacketType.GAME_START, playerMap, enemiesMap);
 
         byte[] data = SerializationUtility.SerializeValue(serverPacket, DataFormat.JSON);
 
         BroadcastPacket(data, false);
-
     }
+
     public void LoadScene(string sceneName)
     {
         lock (loadSceneLock)
         {
             triggerLoadScene = true;
         }
-        
     }
 
     public void OnSceneLoaded()
     {
         NetworkingManager.Instance.Spawn(myUserData.networkID);
+
         // Broadcast the corresponding message to the clients
         NotifySceneChange("Game");
-
     }
 
     public void OnShoot()
