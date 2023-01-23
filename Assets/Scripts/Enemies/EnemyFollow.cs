@@ -1,11 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class EnemyFollow : MonoBehaviour
 {
-    [HideInInspector]public NavMeshAgent enemyAgent;
+    [HideInInspector] public NavMeshAgent enemyAgent;
     GameObject closestPlayer;
     GameObject[] players;
 
@@ -24,6 +22,7 @@ public class EnemyFollow : MonoBehaviour
         {
             return;
         }
+
         // Setting the first player in the array as the closest one (as a starting point).
         closestPlayer = players[0];
         float closestPlayerDistance = Vector3.Distance(closestPlayer.transform.position, this.transform.position);
