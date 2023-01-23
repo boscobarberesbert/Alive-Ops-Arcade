@@ -12,7 +12,7 @@ PlayerSettings:
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
-  companyName: DefaultCompany
+  companyName: BAT Studios
   productName: Alive Ops Arcade
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
@@ -75,7 +75,7 @@ PlayerSettings:
   androidMinimumWindowHeight: 300
   androidFullscreenMode: 1
   defaultIsNativeResolution: 1
-  macRetinaSupport: 1
+  macRetinaSupport: 0
   runInBackground: 1
   captureSingleScreen: 0
   muteOtherAudioSources: 0
