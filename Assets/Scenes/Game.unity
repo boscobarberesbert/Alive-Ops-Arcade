@@ -6499,7 +6499,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spawnPoints: []
   enemyPrefab: {fileID: 9018501966492335936, guid: da2b2fad03a947d4c8e1d5c4811fdb79, type: 3}
-  numberOfEnemiesToSpawn: 4
+  numberOfEnemiesToSpawn: 3
 --- !u!4 &461391388
 Transform:
   m_ObjectHideFlags: 0
